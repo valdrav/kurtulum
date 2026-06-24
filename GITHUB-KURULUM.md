@@ -60,7 +60,7 @@ git commit -m "Ilk surum: ExportFlow ERP"
 
 git branch -M main
 
-git remote add origin https://github.com/KULLANICI_ADINIZ/exportflow.git
+git remote add origin https://github.com/valdrav/kurtulum.git
 
 git push -u origin main
 ```
@@ -95,7 +95,7 @@ Plesk → **Extensions** → **Git** → Install (yoksa).
 1. **Websites & Domains** → `portal.kurtulum.com`  
 2. **Git** (veya **Git Repository**)  
 3. **Clone Repository**  
-   - URL: `https://github.com/KULLANICI_ADINIZ/exportflow.git`  
+   - URL: `https://github.com/valdrav/kurtulum.git`  
    - Private repo ise: GitHub kullanıcı + **Personal Access Token**  
    - Hedef klasör: site kökü (ör. `portal.kurtulum.com` veya `httpdocs`)
 
