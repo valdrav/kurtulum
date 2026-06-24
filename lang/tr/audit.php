@@ -1,0 +1,35 @@
+<?php
+
+return [
+    'user' => 'Kullanıcı',
+    'action' => 'İşlem',
+    'subject' => 'Kayıt',
+    'details' => 'Değişiklik Detayı',
+    'system' => 'Sistem',
+    'events' => [
+        'created' => 'Oluşturuldu',
+        'updated' => 'Güncellendi',
+        'deleted' => 'Silindi',
+        'restored' => 'Geri yüklendi',
+    ],
+    'subjects' => [
+        'Customer' => 'Müşteri',
+        'Supplier' => 'Tedarikçi',
+        'Order' => 'Sipariş',
+        'OrderItem' => 'Sipariş Kalemi',
+        'Shipment' => 'Sevkiyat',
+        'Document' => 'Evrak',
+        'IncomeExpense' => 'Gelir/Gider',
+        'Payment' => 'Ödeme',
+        'Collection' => 'Tahsilat',
+        'Account' => 'Hesap',
+        'User' => 'Kullanıcı',
+        'EmailAccount' => 'E-posta Hesabı',
+        'Vessel' => 'Gemi',
+        'Setting' => 'Ayar',
+    ],
+    'field' => 'Alan',
+    'old_value' => 'Eski',
+    'new_value' => 'Yeni',
+    'no_changes' => 'Detay kaydı yok',
+];

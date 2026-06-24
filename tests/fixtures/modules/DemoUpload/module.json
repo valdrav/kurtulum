@@ -1,0 +1,8 @@
+﻿{
+    "name": "Demo Upload Modulu",
+    "slug": "demo-upload",
+    "version": "1.0.0",
+    "description": "Test modulu",
+    "provider": "Modules\\DemoUpload\\ModuleServiceProvider",
+    "permissions": ["demo-upload.view"]
+}

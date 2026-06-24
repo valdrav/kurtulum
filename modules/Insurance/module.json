@@ -1,0 +1,20 @@
+{
+    "name": "Insurance Tracker",
+    "slug": "insurance",
+    "version": "1.0.0",
+    "description": "Sevkiyat sigorta poliçesi takip modülü — örnek eklenti",
+    "provider": "Modules\\Insurance\\ModuleServiceProvider",
+    "menu": [
+        {
+            "title": "Sigorta Takibi",
+            "route": "insurance.index",
+            "icon": "ti-shield-check",
+            "permission": "insurance.view"
+        }
+    ],
+    "permissions": [
+        "insurance.view",
+        "insurance.create",
+        "insurance.edit"
+    ]
+}

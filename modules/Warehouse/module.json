@@ -1,0 +1,20 @@
+{
+    "name": "Depo & Stok",
+    "slug": "warehouse",
+    "version": "1.0.0",
+    "description": "Depo giriş-çıkış ve stok seviye takibi",
+    "provider": "Modules\\Warehouse\\ModuleServiceProvider",
+    "menu": [
+        {
+            "title": "Depo & Stok",
+            "route": "warehouse.index",
+            "icon": "ti-building-warehouse",
+            "permission": "warehouse.view"
+        }
+    ],
+    "permissions": [
+        "warehouse.view",
+        "warehouse.create",
+        "warehouse.edit"
+    ]
+}

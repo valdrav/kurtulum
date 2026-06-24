@@ -1,0 +1,20 @@
+{
+    "name": "Kalite Kontrol",
+    "slug": "quality-check",
+    "version": "1.0.0",
+    "description": "Ürün ve sevkiyat kalite kontrol listeleri",
+    "provider": "Modules\\QualityCheck\\ModuleServiceProvider",
+    "menu": [
+        {
+            "title": "Kalite Kontrol",
+            "route": "quality-check.index",
+            "icon": "ti-clipboard-check",
+            "permission": "quality-check.view"
+        }
+    ],
+    "permissions": [
+        "quality-check.view",
+        "quality-check.create",
+        "quality-check.edit"
+    ]
+}
