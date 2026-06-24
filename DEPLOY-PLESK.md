@@ -160,6 +160,26 @@ Tüm proje (app, vendor, public…) **portal-kurtulum.zip** ile gelir.
 | 6 | PHP | **8.2+**, `pdo_mysql` açık |
 | 7 | APP_KEY | Boşsa önce **/install** açın (sihirbaz key üretir) |
 
+### AH00124 — 10 internal redirects (500, /install açılmıyor)
+
+Apache log: `Request exceeded the limit of 10 internal redirects`
+
+**Neden:** Site kökünde ( `public` **değil**, bir üst klasörde) `.htaccess` dosyası `public/` yönlendirmesi yapıyor; Document root zaten **`public`** olduğu için Apache sürekli kendi kendine yönlendiriyor.
+
+**Çözüm (hemen):**
+
+1. Plesk **File Manager** → site kökü (`portal.kurtulum.com`, `artisan` ile aynı seviye)
+2. **`.htaccess` dosyasını silin** ( `public/.htaccess` kalacak — onu silmeyin )
+3. **Hosting Settings** → Document root: **`public`**
+4. Tarayıcı önbelleğini temizleyip tekrar: `https://portal.kurtulum.com/install`
+
+SSH ile:
+
+```bash
+cd /var/www/vhosts/kurtulum.com/portal.kurtulum.com
+rm -f .htaccess
+```
+
 **Teşhis:** Tarayıcıda açın (geçici):
 
 ```

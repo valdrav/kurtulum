@@ -15,8 +15,8 @@
 
 ### 2. Dosyaları Yükleme
 1. Tüm proje dosyalarını FTP/File Manager ile yükleyin
-2. **Document Root** mutlaka `public` klasörüne işaret etmeli
-3. Alternatif: Ana dizinde `.htaccess` ile public'e yönlendirme (proje kökündeki `.htaccess` dosyası)
+2. **Document Root** mutlaka `public` klasörüne işaret etmeli (`artisan` ile aynı seviyede `public/index.php` olmalı)
+3. Site kökünde **`.htaccess` olmamalı** — Document root `public` iken kök `.htaccess` Apache redirect döngüsüne (AH00124) neden olur
 
 ### 3. PHP Ayarları
 Plesk → **PHP Settings**:

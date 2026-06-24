@@ -103,6 +103,8 @@ Plesk → **Extensions** → **Git** → Install (yoksa).
 
 **Hosting Settings** → Document root: **`public`**
 
+> **AH00124 / 500 redirect döngüsü:** Document root `public` iken site kökündeki `.htaccess` ( `public/` yönlendiren ) dosyası **silinmeli**. Sadece `public/.htaccess` kalmalı. SSH: `rm -f .htaccess` ( `artisan` ile aynı klasörde).
+
 ### 5.4 Sunucuda kurulum (SSH / Terminal — bir kez)
 
 ```bash
