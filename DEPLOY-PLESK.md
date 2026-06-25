@@ -60,6 +60,23 @@ Document root: `public`
 
 Laravel'e ulaşmıyor → document root `public` değil.
 
+### 403 — ModSecurity (Comodo WAF)
+
+Log: `ModSecurity: Access denied` / `PHP source code leakage` / kural **214620**
+
+Sunucu güvenlik duvarı Laravel sayfasını yanlışlıkla engelliyor. **Uygulama hatası değil.**
+
+**Plesk panelden:**
+
+1. **Websites & Domains** → `portal.kurtulum.com`
+2. **Web Application Firewall** (veya **ModSecurity** / **Güvenlik duvarı**)
+3. Bu site için **Kapalı** veya **Yalnızca izleme (Detection only)** seçin
+4. Kaydet
+
+Geçici olarak doğrudan kurulum adresini deneyin: `https://portal.kurtulum.com/install`
+
+`.env` içinde `APP_DEBUG=false` olmalı (hata sayfaları WAF’i tetikler).
+
 ### InvalidArgumentException — valid cache path
 
 ```bash

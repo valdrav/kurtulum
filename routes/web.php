@@ -29,6 +29,12 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ThemeController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/', function () {
+    return filter_var(config('ticari.installed'), FILTER_VALIDATE_BOOLEAN)
+        ? redirect()->route('login')
+        : redirect()->route('install.welcome');
+})->name('home');
+
 // Installer (no auth required)
 Route::prefix('install')->name('install.')->group(function () {
     Route::get('/', [InstallController::class, 'welcome'])->name('welcome');
@@ -47,7 +53,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/manifest.webmanifest', ManifestController::class)->name('manifest');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
     Route::get('/theme/{theme}', [ThemeController::class, 'switch'])->name('theme.switch');
