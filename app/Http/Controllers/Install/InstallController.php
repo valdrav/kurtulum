@@ -97,7 +97,7 @@ class InstallController extends Controller
         ]);
 
         try {
-            Artisan::call('config:clear');
+            Artisan::call('optimize:clear', ['--no-interaction' => true]);
             $this->installer->runMigrations();
             $this->installer->seedRolesAndPermissions();
             $this->installer->createAdmin($validated);

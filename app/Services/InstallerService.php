@@ -177,6 +177,7 @@ class InstallerService
 
     public function runMigrations(): void
     {
+        Artisan::call('optimize:clear', ['--no-interaction' => true]);
         Artisan::call('migrate', ['--force' => true]);
     }
 
