@@ -66,6 +66,10 @@ class BrandingTest extends FeatureTestCase
         $this->assertSame('Kurtulum', Setting::get('site_short_name'));
         $this->assertSame('#1e40af', Setting::get('site_theme_color'));
         $this->assertNotEmpty(Setting::get('site_logo'));
+        Storage::disk('public')->assertExists(Setting::get('site_logo'));
+
+        $this->get('/media/' . Setting::get('site_logo'))
+            ->assertOk();
 
         $this->get(route('manifest'))
             ->assertOk()

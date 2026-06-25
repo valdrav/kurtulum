@@ -1,33 +1,72 @@
 @extends('layouts.app')
 @section('title', __('app.emails'))
 @section('content')
-@include('partials.page-header', ['title' => 'Gelen Kutum'])
+@include('partials.page-header', ['title' => __('emails.inbox')])
 
 <div class="d-flex flex-wrap gap-2 mb-3">
     @if(can_access('emails.create'))
-    <a href="{{ route('emails.compose') }}" class="btn btn-primary btn-sm"><i class="ti ti-pencil me-1"></i> Yaz</a>
-    <a href="{{ route('emails.accounts') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-settings me-1"></i> Hesaplarım</a>
+    <a href="{{ route('emails.compose') }}" class="btn btn-primary btn-sm"><i class="ti ti-pencil me-1"></i> {{ __('emails.compose') }}</a>
+    <a href="{{ route('emails.accounts') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-settings me-1"></i> {{ __('emails.accounts') }}</a>
     @if($imapAvailable)
     <form method="POST" action="{{ route('emails.sync') }}" class="d-inline">@csrf
-        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="ti ti-refresh me-1"></i> Senkronize</button>
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="ti ti-refresh me-1"></i> {{ __('emails.sync') }}</button>
     </form>
     @else
-    <span class="badge bg-yellow-lt align-self-center">IMAP eklentisi sunucuda kapalı</span>
+    <span class="badge bg-yellow-lt align-self-center">{{ __('emails.imap_missing') }}</span>
     @endif
     @endif
 </div>
 
 @if($accounts->isEmpty())
 <div class="alert alert-info">
-    Henüz e-posta hesabınız yok. <a href="{{ route('emails.accounts') }}">IMAP/SMTP hesabı ekleyin</a> — maillerinizi uygulama içinden okuyabilirsiniz.
+    {{ __('emails.inbox_empty') }} <a href="{{ route('emails.accounts') }}">{{ __('emails.inbox_empty_link') }}</a>
 </div>
 @else
+<div class="card mb-3">
+    <div class="card-body py-3">
+        <form method="GET" action="{{ route('emails.index') }}" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small mb-1">{{ __('app.search') }}</label>
+                <input type="search" name="q" class="form-control form-control-sm" value="{{ request('q') }}"
+                       placeholder="{{ __('emails.search_placeholder') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">{{ __('emails.filter_account') }}</label>
+                <select name="account" class="form-select form-select-sm">
+                    <option value="">{{ __('emails.filter_all_accounts') }}</option>
+                    @foreach($accounts as $acc)
+                    <option value="{{ $acc->id }}" @selected(request('account') == $acc->id)>{{ $acc->email }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">{{ __('emails.filter_type') }}</label>
+                <select name="direction" class="form-select form-select-sm">
+                    <option value="">{{ __('emails.filter_all_types') }}</option>
+                    <option value="inbound" @selected(request('direction') === 'inbound')>{{ __('emails.direction_inbound') }}</option>
+                    <option value="outbound" @selected(request('direction') === 'outbound')>{{ __('emails.direction_outbound') }}</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">{{ __('emails.date_from') }}</label>
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request('date_from') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">{{ __('emails.date_to') }}</label>
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}">
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-filter me-1"></i>{{ __('app.filter') }}</button>
+                <a href="{{ route('emails.index') }}" class="btn btn-outline-secondary btn-sm">{{ __('emails.clear_filters') }}</a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="btn-group btn-group-sm mb-3 flex-wrap" role="group">
-    <a href="{{ route('emails.index') }}" class="btn @if(!request('folder')) btn-primary @else btn-outline-secondary @endif">Tümü</a>
-    <a href="{{ route('emails.index', ['folder' => 'unread']) }}" class="btn @if(request('folder')==='unread') btn-primary @else btn-outline-secondary @endif">Okunmamış</a>
-    @foreach($accounts as $acc)
-    <a href="{{ route('emails.index', ['account' => $acc->id]) }}" class="btn @if(request('account')==$acc->id) btn-primary @else btn-outline-secondary @endif">{{ $acc->email }}</a>
-    @endforeach
+    <a href="{{ route('emails.index', request()->except('folder')) }}" class="btn @if(!request('folder')) btn-primary @else btn-outline-secondary @endif">{{ __('emails.folder_all') }}</a>
+    <a href="{{ route('emails.index', array_merge(request()->except('folder'), ['folder' => 'unread'])) }}" class="btn @if(request('folder')==='unread') btn-primary @else btn-outline-secondary @endif">{{ __('emails.folder_unread') }}</a>
+    <a href="{{ route('emails.index', array_merge(request()->except('folder'), ['folder' => 'starred'])) }}" class="btn @if(request('folder')==='starred') btn-primary @else btn-outline-secondary @endif">{{ __('emails.folder_starred') }}</a>
 </div>
 @endif
 
@@ -35,12 +74,21 @@
     <div class="list-group list-group-flush">
         @forelse($emails as $email)
         <a href="{{ route('emails.show', $email) }}" class="email-list-item @if(!$email->is_read) unread @endif">
-            <div class="d-flex justify-content-between gap-2">
-                <div class="text-truncate">
-                    <div class="small text-muted">{{ $email->from_name ?? $email->from_email }}</div>
-                    <div>{{ $email->subject }}</div>
+            <div class="d-flex justify-content-between gap-3 align-items-start">
+                <div class="min-w-0 flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        @if($email->is_starred)<i class="ti ti-star-filled text-yellow"></i>@endif
+                        @if($email->direction === 'outbound')
+                        <span class="badge bg-azure-lt badge-sm">{{ __('emails.direction_outbound') }}</span>
+                        @endif
+                        <span class="small text-muted text-truncate">{{ $email->from_name ?? $email->from_email }}</span>
+                    </div>
+                    <div class="email-list-subject text-truncate">{{ $email->subject ?: __('emails.no_subject') }}</div>
+                    @if($preview = $email->previewText(100))
+                    <div class="email-list-preview text-muted small text-truncate mt-1">{{ $preview }}</div>
+                    @endif
                 </div>
-                <div class="text-muted small text-nowrap">
+                <div class="text-muted small text-nowrap flex-shrink-0">
                     {{ ($email->received_at ?? $email->sent_at)?->format('d.m H:i') }}
                 </div>
             </div>
@@ -50,5 +98,5 @@
         @endforelse
     </div>
 </div>
-<div class="mt-3">{{ $emails->withQueryString()->links() }}</div>
+<div class="mt-3">{{ $emails->links() }}</div>
 @endsection

@@ -98,7 +98,7 @@ class SiteBrandingService
         $path = trim((string) Setting::get($settingKey, ''));
 
         if ($path !== '' && Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->url($path);
+            return $this->publicAssetUrl($path);
         }
 
         return $fallback ? asset($fallback) : '';
@@ -122,7 +122,7 @@ class SiteBrandingService
 
     public function faviconUrl(): string
     {
-        return $this->assetUrl('site_favicon', 'icons/icon-192.png');
+        return $this->assetUrl('site_favicon', 'icons/icon.svg');
     }
 
     public function appleIconUrl(): string
@@ -133,17 +133,17 @@ class SiteBrandingService
             return $url;
         }
 
-        return $this->assetUrl('site_pwa_icon_192', 'icons/icon-192.png');
+        return $this->assetUrl('site_pwa_icon_192', 'icons/icon.svg');
     }
 
     public function pwaIcon192Url(): string
     {
-        return $this->assetUrl('site_pwa_icon_192', 'icons/icon-192.png');
+        return $this->assetUrl('site_pwa_icon_192', 'icons/icon.svg');
     }
 
     public function pwaIcon512Url(): string
     {
-        return $this->assetUrl('site_pwa_icon_512', 'icons/icon-512.png');
+        return $this->assetUrl('site_pwa_icon_512', 'icons/icon.svg');
     }
 
     public function hasLogo(): bool
@@ -264,7 +264,14 @@ class SiteBrandingService
             return null;
         }
 
-        return Storage::disk('public')->url($user->avatar);
+        return $this->publicAssetUrl($user->avatar);
+    }
+
+    public function publicAssetUrl(string $path): string
+    {
+        $path = ltrim(str_replace('\\', '/', $path), '/');
+
+        return url('/media/' . $path);
     }
 
     public function userInitials(?User $user): string

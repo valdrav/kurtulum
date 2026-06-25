@@ -102,9 +102,23 @@ class EmailController extends Controller
             ->when($request->account, fn ($q, $id) => $q->where('email_account_id', $id))
             ->when($request->folder === 'starred', fn ($q) => $q->where('is_starred', true))
             ->when($request->folder === 'unread', fn ($q) => $q->where('is_read', false))
+            ->when($request->direction === 'inbound', fn ($q) => $q->where('direction', 'inbound'))
+            ->when($request->direction === 'outbound', fn ($q) => $q->where('direction', 'outbound'))
+            ->when($request->q, function ($q, $search) {
+                $term = '%' . str_replace(['%', '_'], ['\%', '\_'], trim($search)) . '%';
+                $q->where(function ($inner) use ($term) {
+                    $inner->where('subject', 'like', $term)
+                        ->orWhere('from_email', 'like', $term)
+                        ->orWhere('from_name', 'like', $term)
+                        ->orWhere('body_text', 'like', $term);
+                });
+            })
+            ->when($request->date_from, fn ($q, $d) => $q->whereRaw('COALESCE(received_at, sent_at) >= ?', [$d]))
+            ->when($request->date_to, fn ($q, $d) => $q->whereRaw('COALESCE(received_at, sent_at) <= ?', [$d . ' 23:59:59']))
             ->latest('received_at')
             ->latest('sent_at')
-            ->paginate(25);
+            ->paginate(25)
+            ->withQueryString();
 
         $accounts = $this->userAccounts()->get();
         $imapAvailable = app(ImapMailService::class)->isAvailable();

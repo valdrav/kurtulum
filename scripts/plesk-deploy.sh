@@ -44,7 +44,9 @@ if [ "$INSTALLED" = false ] && ! grep -q 'APP_KEY=base64:' .env 2>/dev/null; the
 fi
 
 mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+mkdir -p storage/app/public/branding storage/app/public/avatars
 chmod -R u+rwX,g+rwX storage 2>/dev/null || true
+chmod -R u+rwX,g+rwX,g+rX storage/app/public 2>/dev/null || true
 
 $PHP artisan storage:link --force 2>/dev/null || true
 

@@ -15,6 +15,7 @@ use App\Http\Controllers\Logistics\ShipmentController;
 use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicMediaController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Settings\CurrencyController;
 use App\Http\Controllers\Settings\DepartmentController;
@@ -51,6 +52,9 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/manifest.webmanifest', ManifestController::class)->name('manifest');
+Route::get('/media/{path}', [PublicMediaController::class, 'show'])
+    ->where('path', '.*')
+    ->name('media.show');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

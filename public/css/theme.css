@@ -629,6 +629,48 @@ body.ef-app {
 .email-list-item:hover { background: rgba(var(--ef-primary-rgb), 0.04); }
 .email-list-item.unread { font-weight: 600; background: rgba(var(--ef-primary-rgb), 0.03); }
 
+.email-list-subject { font-weight: 500; color: var(--ef-text, inherit); }
+.email-list-preview { line-height: 1.35; }
+
+.email-body-frame {
+    background: #ffffff;
+    color: #1e293b;
+    border: 1px solid var(--ef-border);
+    border-radius: var(--ef-radius-sm);
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.email-body-content {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.email-body-content img { max-width: 100%; height: auto; }
+.email-body-content table { max-width: 100%; }
+.email-body-content a { color: #2563eb; }
+
+.email-body-text {
+    white-space: pre-wrap;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #1e293b;
+    background: transparent;
+}
+
+[data-bs-theme="dark"] .email-body-frame {
+    background: #ffffff;
+    color: #1e293b;
+}
+
+[data-bs-theme="dark"] .email-body-content,
+[data-bs-theme="dark"] .email-body-text {
+    color: #1e293b;
+}
+
 .trade-row {
     background: var(--ef-bg);
     border-radius: var(--ef-radius-sm);

@@ -31,13 +31,23 @@ class ImapMailService
             $header = imap_headerinfo($connection, $msgNo);
             $messageId = $header->message_id ?? ('local-' . $account->id . '-' . $msgNo);
 
-            if (Email::where('message_id', $messageId)->exists()) {
-                continue;
-            }
-
             $structure = imap_fetchstructure($connection, $msgNo);
             $bodyText = $this->fetchBody($connection, $msgNo, $structure, 'plain');
             $bodyHtml = $this->fetchBody($connection, $msgNo, $structure, 'html');
+
+            $existing = Email::where('message_id', $messageId)->first();
+
+            if ($existing) {
+                if ($this->shouldRepairBody($existing, $bodyText, $bodyHtml)) {
+                    $existing->update([
+                        'body_text' => $bodyText ?: $existing->body_text,
+                        'body_html' => $bodyHtml ?: $existing->body_html,
+                    ]);
+                    $synced++;
+                }
+
+                continue;
+            }
 
             Email::create([
                 'email_account_id' => $account->id,
@@ -46,7 +56,7 @@ class ImapMailService
                 'body_text' => $bodyText,
                 'body_html' => $bodyHtml,
                 'from_email' => $header->from[0]->mailbox . '@' . $header->from[0]->host,
-                'from_name' => $header->from[0]->personal ?? null,
+                'from_name' => isset($header->from[0]->personal) ? imap_utf8($header->from[0]->personal) : null,
                 'to' => $this->parseAddresses($header->to ?? []),
                 'received_at' => isset($header->date) ? date('Y-m-d H:i:s', strtotime($header->date)) : now(),
                 'direction' => 'inbound',
@@ -59,6 +69,30 @@ class ImapMailService
         imap_close($connection);
 
         return $synced;
+    }
+
+    protected function shouldRepairBody(Email $email, ?string $bodyText, ?string $bodyHtml): bool
+    {
+        if (! $bodyText && ! $bodyHtml) {
+            return false;
+        }
+
+        $currentText = trim((string) $email->body_text);
+        $currentHtml = trim(strip_tags((string) $email->body_html));
+
+        if ($currentText === '' && $currentHtml === '') {
+            return true;
+        }
+
+        if ($currentText !== '' && strlen($currentText) < 15 && $bodyText && strlen(trim($bodyText)) > strlen($currentText)) {
+            return true;
+        }
+
+        if ($currentHtml === '' && $bodyHtml) {
+            return true;
+        }
+
+        return false;
     }
 
     protected function buildMailboxString(EmailAccount $account): string
@@ -79,34 +113,110 @@ class ImapMailService
     protected function fetchBody($connection, int $msgNo, $structure, string $type): ?string
     {
         if (! $structure) {
-            return imap_body($connection, $msgNo);
+            return $this->decodeBody(imap_body($connection, $msgNo), null);
         }
 
-        if ($structure->type === 0 && ($type === 'plain' || empty($structure->parts))) {
-            return imap_body($connection, $msgNo);
+        $body = $this->findPartBody($connection, $msgNo, $structure, $type, '');
+
+        if ($body !== null) {
+            return $body;
         }
 
         if (empty($structure->parts)) {
-            return imap_body($connection, $msgNo);
-        }
-
-        foreach ($structure->parts as $i => $part) {
-            $partNo = (string) ($i + 1);
-            $subtype = strtolower($part->subtype ?? '');
+            $subtype = strtolower($structure->subtype ?? '');
 
             if (($type === 'plain' && $subtype === 'plain') || ($type === 'html' && $subtype === 'html')) {
-                $body = imap_fetchbody($connection, $msgNo, $partNo);
-                if ($part->encoding == 3) {
-                    $body = base64_decode($body);
-                } elseif ($part->encoding == 4) {
-                    $body = quoted_printable_decode($body);
-                }
-
-                return $body ?: null;
+                return $this->decodePart($connection, $msgNo, '1', $structure);
             }
         }
 
         return null;
+    }
+
+    protected function findPartBody($connection, int $msgNo, $structure, string $type, string $partNumber): ?string
+    {
+        if (($structure->type ?? 0) === 1 && ! empty($structure->parts)) {
+            foreach ($structure->parts as $index => $part) {
+                $subPart = $partNumber === '' ? (string) ($index + 1) : $partNumber . '.' . ($index + 1);
+                $body = $this->findPartBody($connection, $msgNo, $part, $type, $subPart);
+
+                if ($body !== null) {
+                    return $body;
+                }
+            }
+
+            return null;
+        }
+
+        $subtype = strtolower($structure->subtype ?? '');
+
+        if ($type === 'plain' && $subtype !== 'plain') {
+            return null;
+        }
+
+        if ($type === 'html' && $subtype !== 'html') {
+            return null;
+        }
+
+        $fetchPart = $partNumber === '' ? '1' : $partNumber;
+
+        return $this->decodePart($connection, $msgNo, $fetchPart, $structure);
+    }
+
+    protected function decodePart($connection, int $msgNo, string $partNumber, $structure): ?string
+    {
+        $raw = imap_fetchbody($connection, $msgNo, $partNumber);
+
+        if ($raw === false || $raw === '') {
+            return null;
+        }
+
+        return $this->decodeBody($raw, $structure);
+    }
+
+    protected function decodeBody(string $raw, $structure): ?string
+    {
+        $encoding = $structure->encoding ?? 0;
+
+        $body = match ($encoding) {
+            3 => base64_decode($raw, true) ?: $raw,
+            4 => quoted_printable_decode($raw),
+            default => $raw,
+        };
+
+        if (! is_string($body) || trim($body) === '') {
+            return null;
+        }
+
+        $charset = 'UTF-8';
+
+        if ($structure && ! empty($structure->parameters)) {
+            foreach ($structure->parameters as $param) {
+                if (strtolower($param->attribute ?? '') === 'charset') {
+                    $charset = $param->value;
+                    break;
+                }
+            }
+        }
+
+        if ($structure && ! empty($structure->dparameters)) {
+            foreach ($structure->dparameters as $param) {
+                if (strtolower($param->attribute ?? '') === 'charset') {
+                    $charset = $param->value;
+                    break;
+                }
+            }
+        }
+
+        if (strtoupper($charset) !== 'UTF-8' && function_exists('mb_convert_encoding')) {
+            $converted = @mb_convert_encoding($body, 'UTF-8', $charset);
+
+            if ($converted !== false) {
+                $body = $converted;
+            }
+        }
+
+        return $body;
     }
 
     protected function parseAddresses(array $addresses): array
