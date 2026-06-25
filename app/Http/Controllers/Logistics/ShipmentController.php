@@ -219,8 +219,8 @@ class ShipmentController extends Controller
                 'label' => port_display_label($p),
             ])->values(),
             'vessels' => Vessel::orderBy('name')->get(),
-            'vehicles' => Vehicle::where('status', '!=', 'maintenance')->get(),
-            'drivers' => Driver::where('status', '!=', 'off_duty')->get(),
+            'vehicles' => Vehicle::where('is_active', true)->orderBy('plate_number')->get(),
+            'drivers' => Driver::where('is_active', true)->orderBy('name')->get(),
         ];
     }
 
