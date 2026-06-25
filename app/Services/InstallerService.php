@@ -8,11 +8,24 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class InstallerService
 {
+    public function assertVendorReady(): void
+    {
+        if (! is_file(base_path('vendor/autoload.php'))) {
+            throw new \RuntimeException(
+                'vendor/ klasörü yok. Plesk → Git → Deploy çalıştırın (composer install otomatik olmalı).'
+            );
+        }
+
+        if (! class_exists(\Spatie\Permission\Models\Permission::class)) {
+            throw new \RuntimeException(
+                'Spatie Permission paketi yüklü değil. Plesk Git Deploy tekrar çalıştırın veya hosting desteğinden composer install isteyin.'
+            );
+        }
+    }
+
     public function checkRequirements(): array
     {
         return [
@@ -70,6 +83,14 @@ class InstallerService
                 'label' => 'bootstrap/cache/ Writable',
                 'passed' => is_writable(base_path('bootstrap/cache')),
                 'current' => is_writable(base_path('bootstrap/cache')) ? 'Writable' : 'Not Writable',
+            ],
+            'composer_vendor' => [
+                'label' => 'Composer vendor (Spatie paketleri)',
+                'passed' => is_file(base_path('vendor/autoload.php'))
+                    && class_exists(\Spatie\Permission\Models\Permission::class),
+                'current' => is_file(base_path('vendor/autoload.php'))
+                    ? (class_exists(\Spatie\Permission\Models\Permission::class) ? 'OK' : 'Spatie eksik')
+                    : 'vendor/ yok — Plesk Git Deploy',
             ],
         ];
     }

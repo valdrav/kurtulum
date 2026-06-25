@@ -51,5 +51,6 @@
 | 403 ModSecurity | Web Application Firewall → Kapalı |
 | Log Permission denied | File Manager → `storage` → izinler, alt dizinlere uygula |
 | sqlite hatası | `.env` → MariaDB, `APP_INSTALLED=false` |
+| Spatie Permission not found | Plesk Git → **Deploy** (composer install) — Gereksinimler sayfasında vendor satırı OK olmalı |
 
 Detay: [DEPLOY-PLESK.md](DEPLOY-PLESK.md)

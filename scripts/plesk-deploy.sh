@@ -4,9 +4,23 @@ set -e
 cd "$(dirname "$0")/.."
 
 PHP="${PHP_BIN:-php}"
-COMPOSER="${COMPOSER_BIN:-composer}"
+
+if [ -z "${COMPOSER_BIN:-}" ]; then
+    if command -v composer >/dev/null 2>&1; then
+        COMPOSER="composer"
+    elif [ -f /usr/local/bin/composer ]; then
+        COMPOSER="$PHP /usr/local/bin/composer"
+    elif [ -f /opt/psa/var/modules/composer/composer.phar ]; then
+        COMPOSER="$PHP /opt/psa/var/modules/composer/composer.phar"
+    else
+        COMPOSER="composer"
+    fi
+else
+    COMPOSER="$COMPOSER_BIN"
+fi
 
 echo "=== Kurtulum ERP deploy ==="
+echo "Composer: $COMPOSER"
 
 rm -f .htaccess
 
@@ -16,6 +30,11 @@ if [ ! -f artisan ]; then
 fi
 
 $COMPOSER install --no-dev --optimize-autoloader --no-interaction --classmap-authoritative
+
+if [ ! -f vendor/spatie/laravel-permission/src/Models/Permission.php ]; then
+    echo "HATA: spatie/laravel-permission yuklenmedi. composer install basarisiz."
+    exit 1
+fi
 
 if [ ! -f .env ]; then
     cp .env.plesk.example .env 2>/dev/null || cp .env.example .env
@@ -37,4 +56,4 @@ else
     $PHP artisan optimize:clear --no-interaction 2>/dev/null || true
 fi
 
-echo "Deploy tamam."
+echo "Deploy tamam. vendor/spatie OK."
