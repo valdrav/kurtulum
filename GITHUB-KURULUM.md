@@ -98,7 +98,8 @@ bash scripts/plesk-deploy.sh
 |------|--------|
 | 404 (Plesk sayfası) | Document root = `public`, `/ping.php` test |
 | AH00124 redirect | Kök `.htaccess` sil |
-| valid cache path | `bash scripts/plesk-deploy.sh` |
+| valid cache path | `bash scripts/plesk-deploy.sh` (storage klasörlerini oluşturur) |
+| Git pull Permission denied (storage) | Plesk File Manager → `storage/framework/sessions` ve `views` sil → tekrar Pull |
 | vendor hatası | `rm -rf vendor && composer install --no-dev` |
 | `/install` 500 | `.env` → `SESSION_DRIVER=file`, izinler 775 |
 
