@@ -1,0 +1,206 @@
+.pdf-studio-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 7rem);
+    min-height: 32rem;
+    margin: -0.5rem -0.25rem 0;
+}
+
+.pdf-studio-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--ef-border);
+    background: var(--ef-surface);
+    flex-shrink: 0;
+}
+
+.pdf-studio-layout {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr 14rem;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.pdf-studio-sidebar,
+.pdf-studio-props {
+    background: var(--ef-surface);
+    border-right: 1px solid var(--ef-border);
+    overflow: auto;
+}
+
+.pdf-studio-props {
+    border-right: none;
+    border-left: 1px solid var(--ef-border);
+}
+
+.pdf-studio-sidebar-head {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ef-muted);
+    border-bottom: 1px solid var(--ef-border);
+    position: sticky;
+    top: 0;
+    background: var(--ef-surface);
+    z-index: 2;
+}
+
+.pdf-studio-thumb-list {
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pdf-studio-thumb {
+    display: block;
+    width: 100%;
+    border: 2px solid transparent;
+    border-radius: 0.375rem;
+    padding: 0.25rem;
+    background: transparent;
+    cursor: pointer;
+    text-align: center;
+}
+
+.pdf-studio-thumb img {
+    width: 100%;
+    display: block;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.pdf-studio-thumb span {
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--ef-muted);
+    margin-top: 0.2rem;
+}
+
+.pdf-studio-thumb.active {
+    border-color: var(--ef-primary);
+    background: rgba(var(--ef-primary-rgb), 0.08);
+}
+
+.pdf-studio-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #525659;
+}
+
+.pdf-studio-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.75rem;
+    background: var(--ef-surface);
+    border-bottom: 1px solid var(--ef-border);
+    flex-shrink: 0;
+}
+
+.pdf-studio-toolbar .btn.active {
+    background: rgba(var(--ef-primary-rgb), 0.12);
+    border-color: var(--ef-primary);
+    color: var(--ef-primary);
+}
+
+.pdf-studio-font-input {
+    width: 4rem;
+}
+
+.pdf-studio-stamp-select {
+    width: 7rem;
+}
+
+.pdf-studio-page-indicator {
+    min-width: 4.5rem;
+    pointer-events: none;
+}
+
+.pdf-studio-viewport {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1.5rem;
+    min-height: 0;
+}
+
+.pdf-studio-viewport.drag-over {
+    outline: 3px dashed var(--ef-primary);
+    outline-offset: -6px;
+}
+
+.pdf-studio-empty {
+    text-align: center;
+    align-self: center;
+    color: #ccc;
+}
+
+.pdf-studio-stage {
+    flex-shrink: 0;
+}
+
+.pdf-studio-canvas-wrap {
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    background: #fff;
+}
+
+.pdf-studio-canvas-wrap canvas {
+    display: block;
+}
+
+#pdfStudioFabric {
+    position: absolute !important;
+    left: 0;
+    top: 0;
+}
+
+.canvas-container {
+    position: absolute !important;
+    left: 0;
+    top: 0;
+}
+
+@media (max-width: 991px) {
+    .pdf-studio-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+    }
+
+    .pdf-studio-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--ef-border);
+        max-height: 7rem;
+    }
+
+    .pdf-studio-thumb-list {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .pdf-studio-thumb {
+        width: 4.5rem;
+        flex-shrink: 0;
+    }
+
+    .pdf-studio-props {
+        border-left: none;
+        border-top: 1px solid var(--ef-border);
+    }
+
+    .pdf-studio-page {
+        height: auto;
+        min-height: 70vh;
+    }
+}

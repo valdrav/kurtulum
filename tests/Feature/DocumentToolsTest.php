@@ -16,6 +16,16 @@ class DocumentToolsTest extends FeatureTestCase
             ->assertSee(__('documents.tools.merge'));
     }
 
+    public function test_admin_can_view_pdf_studio(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->get(route('documents.tools.studio'))
+            ->assertOk()
+            ->assertSee(__('documents.tools.studio.title'))
+            ->assertSee('pdf-studio.js');
+    }
+
     public function test_admin_can_create_excel_from_table_data(): void
     {
         if (! class_exists(\ZipArchive::class)) {

@@ -11,7 +11,7 @@ class DocumentToolsController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:documents.view')->only(['index']);
+        $this->middleware('permission:documents.view')->only(['index', 'studio']);
         $this->middleware('permission:documents.create')->only([
             'mergePdf', 'splitPdf', 'pdfToWord', 'wordToPdf', 'imagesToPdf',
             'pdfExtractText', 'createExcel', 'csvToExcel', 'excelToCsv',
@@ -24,6 +24,11 @@ class DocumentToolsController extends Controller
         return view('documents.tools.index', [
             'officeAvailable' => $office->isAvailable(),
         ]);
+    }
+
+    public function studio()
+    {
+        return view('documents.tools.studio');
     }
 
     public function mergePdf(Request $request, DocumentToolService $tools)

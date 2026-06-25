@@ -147,6 +147,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('documents/tools')->name('documents.tools.')->group(function () {
         Route::get('/', [DocumentToolsController::class, 'index'])->name('index');
+        Route::get('/studio', [DocumentToolsController::class, 'studio'])->name('studio');
         Route::post('/merge', [DocumentToolsController::class, 'mergePdf'])->name('merge');
         Route::post('/split', [DocumentToolsController::class, 'splitPdf'])->name('split');
         Route::post('/pdf-to-word', [DocumentToolsController::class, 'pdfToWord'])->name('pdf-to-word');

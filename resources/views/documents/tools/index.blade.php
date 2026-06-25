@@ -32,7 +32,7 @@
 </ul>
 
 <div class="tab-content">
-    @include('documents.tools._pdf-editor')
+@include('documents.tools._pdf-editor')
 
     {{-- PDF Birleştir --}}
     <div class="tab-pane fade" id="tab-merge">
@@ -244,60 +244,5 @@ document.getElementById('splitMode')?.addEventListener('change', function () {
     document.getElementById('splitRangeWrap').style.display = this.value === 'range' ? '' : 'none';
 });
 
-(function () {
-    const master = document.getElementById('pdfEditorFile');
-    const meta = document.getElementById('pdfEditorMeta');
-    const forms = document.querySelectorAll('.pdf-editor-form');
-    if (!master) return;
-
-    const syncFile = (file) => {
-        forms.forEach(form => {
-            const input = form.querySelector('.pdf-editor-input');
-            const btn = form.querySelector('button[type="submit"]');
-            if (!input) return;
-            if (file) {
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                input.files = dt.files;
-                if (btn) btn.disabled = false;
-            } else {
-                input.value = '';
-                if (btn) btn.disabled = true;
-            }
-        });
-    };
-
-    master.addEventListener('change', async function () {
-        const file = this.files?.[0];
-        syncFile(file || null);
-        if (!file || !meta) return;
-
-        meta.style.display = '';
-        meta.textContent = '{{ __('documents.tools.editor.analyzing') }}';
-
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('_token', @json(csrf_token()));
-
-        try {
-            const res = await fetch(@json(route('documents.tools.pdf-info')), { method: 'POST', body: fd });
-            const data = await res.json();
-            if (data.pages) {
-                meta.textContent = file.name + ' — ' + data.pages + ' {{ __('documents.tools.editor.page_count_label') }}';
-            } else {
-                meta.textContent = data.error || '';
-            }
-        } catch (e) {
-            meta.textContent = file.name;
-        }
-    });
-
-    forms.forEach(form => {
-        form.addEventListener('submit', function () {
-            const masterFile = master.files?.[0];
-            if (masterFile) syncFile(masterFile);
-        });
-    });
-})();
 </script>
 @endpush
