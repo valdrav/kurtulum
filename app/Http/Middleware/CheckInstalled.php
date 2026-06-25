@@ -17,7 +17,7 @@ class CheckInstalled
         }
 
         if ($installed && $request->is('install', 'install/*')) {
-            return redirect()->route('dashboard');
+            return redirect()->route('login');
         }
 
         return $next($request);

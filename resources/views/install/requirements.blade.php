@@ -22,6 +22,14 @@
     <a href="{{ route('install.database') }}" class="btn btn-primary">{{ __('install.continue') }}</a>
     @else
     <span class="text-danger">{{ __('install.requirements_failed') }}</span>
+    @if(empty($requirements['composer_vendor']['passed']))
+    <p class="text-danger small mt-2 mb-0">
+        Vendor eksik: once Plesk Git <strong>Deploy</strong> calistirin.
+        Hala kirmizi ise tarayicida acin:
+        <a href="{{ url('/plesk-composer.php') }}">plesk-composer.php</a>
+        (sonra bu dosyayi silin)
+    </p>
+    @endif
     @endif
 </div>
 @endsection

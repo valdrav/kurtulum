@@ -1,43 +1,40 @@
-# GitHub + Plesk
+# GitHub + Plesk — portal.kurtulum.com
 
-**Akış:** Cursor’dan GitHub’a gönder → Plesk **Git** → **Pull** / **Deploy**
+## Önemli
 
-`vendor` GitHub'a gitmez; Pull sonrası Plesk deploy script `composer install` çalıştırır.
+- **Kurulum = bir kez** (`/install` sihirbazı)
+- **Güncelleme = sürekli** (push → Pull → deploy, veritabanı korunur)
 
----
-
-## Plesk — ilk kurulum (bir kez)
-
-1. **Extensions** → **Git** → Install
-2. `portal.kurtulum.com` → **Git** → **Clone**
-   - URL: `https://github.com/valdrav/kurtulum.git`
-   - Hedef: site kökü (`artisan` burada olacak)
-3. **Hosting Settings** → document root: **`public`**
-4. **Databases** → MariaDB: `kurtulumportal_db` / `kurtulumportal_user`
-5. **File Manager** → `.env.plesk.example` → `.env` kopyala, MariaDB bilgilerini gir
-6. **Git** → **Deploy**
-7. **https://portal.kurtulum.com/install**
-
-> Plesk **MariaDB** — `.env` içinde `DB_CONNECTION=mysql` doğrudur.
+Detay: **[GUNCELLEME.md](GUNCELLEME.md)**
 
 ---
 
-## Plesk — her güncelleme
+## İlk kurulum (bir kez)
 
-1. Cursor’dan değişiklikleri GitHub’a gönder
-2. Plesk → **Git** → **Pull** veya **Deploy**
+1. Plesk **Git** → clone `https://github.com/valdrav/kurtulum.git`
+2. Document root: **`public`**
+3. MariaDB: `kurtulumportal_db` / `kurtulumportal_user`
+4. `.env.plesk.example` → `.env` (File Manager), MariaDB bilgileri
+5. Git → **Deploy** → Additional actions: `bash scripts/plesk-deploy.sh`
+6. Vendor eksikse bir kez: **https://portal.kurtulum.com/plesk-composer.php**
+7. **https://portal.kurtulum.com/install** → admin oluştur → bitti
 
-**Additional deploy actions** (varsa): `bash scripts/plesk-deploy.sh`
+`APP_INSTALLED=true` olduktan sonra `/install` bir daha açılmaz.
+
+---
+
+## Her kod güncellemesi
+
+1. Cursor → GitHub **push**
+2. Plesk → Git **Pull / Deploy**
+
+Veritabanı silinmez. Kurulum tekrarlanmaz. Yeni migration varsa deploy otomatik uygular.
 
 ---
 
 ## GitHub'a gitmez
 
-| Dosya | Neden |
-|-------|--------|
-| `.env` / `.env.plesk` | Şifreler |
-| `.env.plesk.example` | Şablon (GitHub'a gider) |
-| `vendor/` | Sunucuda composer |
+`.env`, `.env.plesk`, `vendor/`, `storage/logs/`
 
 ---
 
@@ -45,12 +42,6 @@
 
 | Hata | Çözüm |
 |------|--------|
-| **unable to unlink Permission denied** | [DEPLOY-PLESK.md](DEPLOY-PLESK.md) → Git izinleri — File Manager sahiplik + Git Remove/Clone |
-| 404 (Plesk sayfası) | Document root = `public` |
-| AH00124 redirect | Kök `.htaccess` sil |
-| 403 ModSecurity | Web Application Firewall → Kapalı |
-| Log Permission denied | File Manager → `storage` → izinler, alt dizinlere uygula |
-| sqlite hatası | `.env` → MariaDB, `APP_INSTALLED=false` |
-| Spatie Permission not found | Plesk Git → **Deploy** (composer install) — Gereksinimler sayfasında vendor satırı OK olmalı |
-
-Detay: [DEPLOY-PLESK.md](DEPLOY-PLESK.md)
+| Spatie eksik (ilk kurulum) | Deploy veya `plesk-composer.php` **bir kez** |
+| Permission denied (Git) | [DEPLOY-PLESK.md](DEPLOY-PLESK.md) |
+| 404 | Document root = `public` |
