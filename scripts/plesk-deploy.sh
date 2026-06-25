@@ -27,9 +27,21 @@ if ! grep -q 'APP_KEY=base64:' .env 2>/dev/null; then
     $PHP artisan key:generate --force --no-interaction
 fi
 
+mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 $PHP artisan storage:link --force 2>/dev/null || true
 $PHP artisan config:clear
 $PHP artisan view:clear
 
-echo "Deploy tamam. /install veya /login deneyin."
+if [ -f scripts/plesk-verify.sh ]; then
+    bash scripts/plesk-verify.sh || true
+fi
+
+if grep -q 'APP_INSTALLED=true' .env 2>/dev/null; then
+    $PHP artisan migrate --force --no-interaction 2>/dev/null || true
+    $PHP artisan config:cache --no-interaction 2>/dev/null || true
+    $PHP artisan route:cache --no-interaction 2>/dev/null || true
+    $PHP artisan view:cache --no-interaction 2>/dev/null || true
+fi
+
+echo "Deploy tamam."

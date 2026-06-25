@@ -1,4 +1,8 @@
-# ExportFlow ERP - Plesk Kurulum Kılavuzu
+# ExportFlow ERP - Kurulum
+
+**Canlı sunucu (Plesk):** [GITHUB-KURULUM.md](GITHUB-KURULUM.md) — `git push` → Plesk Pull → `bash scripts/plesk-deploy.sh`
+
+**Yerel geliştirme:** `baslat.bat` veya `php artisan serve`
 
 ## Gereksinimler
 - PHP 8.3+
@@ -13,10 +17,12 @@
 2. Subdomain adını girin (örn: `erp.sirketiniz.com`)
 3. Document Root: `/httpdocs/public` veya `/subdomain/public`
 
-### 2. Dosyaları Yükleme
-1. Tüm proje dosyalarını FTP/File Manager ile yükleyin
-2. **Document Root** mutlaka `public` klasörüne işaret etmeli (`artisan` ile aynı seviyede `public/index.php` olmalı)
-3. Site kökünde **`.htaccess` olmamalı** — Document root `public` iken kök `.htaccess` Apache redirect döngüsüne (AH00124) neden olur
+### 2. Kod (Git)
+
+Plesk'te Git ile clone/pull yapın. Ayrıntı: [GITHUB-KURULUM.md](GITHUB-KURULUM.md)
+
+1. Document root: **`public`**
+2. Site kökünde **`.htaccess` olmamalı** (AH00124 döngüsü)
 
 ### 3. PHP Ayarları
 Plesk → **PHP Settings**:

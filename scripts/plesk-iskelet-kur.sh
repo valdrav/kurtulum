@@ -84,6 +84,7 @@ if ! grep -q 'APP_KEY=base64:' "$ROOT/.env" 2>/dev/null; then
     $PHP artisan key:generate --force --no-interaction
 fi
 chmod -R 775 "$ROOT/storage" "$ROOT/bootstrap/cache" 2>/dev/null || true
+mkdir -p "$ROOT/storage/framework/cache/data" "$ROOT/storage/framework/sessions" "$ROOT/storage/framework/views" "$ROOT/storage/logs"
 $PHP artisan storage:link --force 2>/dev/null || true
 $PHP artisan config:clear 2>/dev/null || true
 
