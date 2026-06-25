@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Crm\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\DocumentToolsController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\Finance\FinanceController;
@@ -141,6 +142,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
     Route::post('/documents/backup', [DocumentController::class, 'backup'])->name('documents.backup');
+
+    Route::prefix('documents/tools')->name('documents.tools.')->group(function () {
+        Route::get('/', [DocumentToolsController::class, 'index'])->name('index');
+        Route::post('/merge', [DocumentToolsController::class, 'mergePdf'])->name('merge');
+        Route::post('/split', [DocumentToolsController::class, 'splitPdf'])->name('split');
+        Route::post('/pdf-to-word', [DocumentToolsController::class, 'pdfToWord'])->name('pdf-to-word');
+        Route::post('/word-to-pdf', [DocumentToolsController::class, 'wordToPdf'])->name('word-to-pdf');
+        Route::post('/images-to-pdf', [DocumentToolsController::class, 'imagesToPdf'])->name('images-to-pdf');
+        Route::post('/extract-text', [DocumentToolsController::class, 'pdfExtractText'])->name('extract-text');
+        Route::post('/create-excel', [DocumentToolsController::class, 'createExcel'])->name('create-excel');
+        Route::post('/csv-to-excel', [DocumentToolsController::class, 'csvToExcel'])->name('csv-to-excel');
+        Route::post('/excel-to-csv', [DocumentToolsController::class, 'excelToCsv'])->name('excel-to-csv');
+    });
 
     // Tasks & Calendar
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');

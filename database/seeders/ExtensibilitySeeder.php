@@ -39,10 +39,10 @@ class ExtensibilitySeeder extends Seeder
     protected function seedCurrencies(): void
     {
         $currencies = [
-            ['code' => 'TRY', 'name' => 'Türk Lirası', 'symbol' => '₺', 'exchange_rate' => 1, 'is_default' => true, 'sort_order' => 1],
-            ['code' => 'USD', 'name' => 'ABD Doları', 'symbol' => '$', 'exchange_rate' => 1, 'sort_order' => 2],
-            ['code' => 'EUR', 'name' => 'Euro', 'symbol' => '€', 'exchange_rate' => 1, 'sort_order' => 3],
-            ['code' => 'SAR', 'name' => 'Suudi Riyali', 'symbol' => '﷼', 'exchange_rate' => 1, 'sort_order' => 4],
+            ['code' => 'TRY', 'name' => 'Türk Lirası', 'symbol' => '₺', 'exchange_rate' => 1, 'tcmb_rate' => 1, 'is_default' => true, 'sort_order' => 1],
+            ['code' => 'USD', 'name' => 'ABD Doları', 'symbol' => '$', 'exchange_rate' => 34.5, 'tcmb_rate' => 34.5, 'sort_order' => 2],
+            ['code' => 'EUR', 'name' => 'Euro', 'symbol' => '€', 'exchange_rate' => 37.2, 'tcmb_rate' => 37.2, 'sort_order' => 3],
+            ['code' => 'SAR', 'name' => 'Suudi Riyali', 'symbol' => '﷼', 'exchange_rate' => 9.2, 'tcmb_rate' => 9.2, 'sort_order' => 4],
             ['code' => 'GBP', 'name' => 'İngiliz Sterlini', 'symbol' => '£', 'exchange_rate' => 1, 'sort_order' => 10, 'is_active' => false],
             ['code' => 'AED', 'name' => 'BAE Dirhemi', 'symbol' => 'د.إ', 'exchange_rate' => 1, 'sort_order' => 11, 'is_active' => false],
             ['code' => 'CNY', 'name' => 'Çin Yuanı', 'symbol' => '¥', 'exchange_rate' => 1, 'sort_order' => 12, 'is_active' => false],

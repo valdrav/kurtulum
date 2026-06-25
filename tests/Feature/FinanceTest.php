@@ -151,4 +151,24 @@ class FinanceTest extends FeatureTestCase
         $this->assertEquals($before, (float) $treasury->current_balance);
         $this->assertSoftDeleted('income_expenses', ['id' => $entry->id]);
     }
+
+    public function test_usd_income_converts_to_try_treasury(): void
+    {
+        $this->actingAsAdmin();
+
+        $treasury = company_treasury()->defaultAccount();
+        $before = (float) $treasury->current_balance;
+
+        $this->post(route('finance.income-expenses.store'), [
+            'type' => 'income',
+            'item_name' => 'USD tahsilat',
+            'amount' => 50000,
+            'currency' => 'USD',
+            'exchange_rate' => 34.5,
+            'transaction_date' => now()->toDateString(),
+        ])->assertRedirect();
+
+        $treasury->refresh();
+        $this->assertEquals($before + 1725000, (float) $treasury->current_balance);
+    }
 }

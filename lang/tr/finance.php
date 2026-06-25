@@ -9,6 +9,10 @@ return [
     'optional_details' => 'Ek detaylar (satıcı, fiş no, not…)',
     'open_full_report' => 'Finans modülünde tam rapor',
     'treasury_hint' => 'Genel kasa şirketin nakit ve banka hesaplarını takip eder. Gelir/gider kayıtları buradan yıllık olarak izlenir — sipariş cari hesaplarından bağımsızdır.',
+    'exchange_rate' => 'Döviz kuru',
+    'exchange_rate_hint' => 'Boş bırakılırsa güncel MB kuru kullanılır. TRY kasaya döviz tahsilatı TL karşılığı ile yansır.',
+    'currency_rate_missing' => ':code için geçerli kur bulunamadı. Ayarlar → Kurlar bölümünden güncelleyin veya kur alanına manuel değer girin.',
+    'currency_convert_failed' => ':from → :to dönüşümü yapılamadı.',
 
     'wallet' => 'Avans Bakiye',
     'wallet_subtitle' => 'Her kullanıcının kendi avans hesabı — size aktarılan paralar ve şirket giderleri ayrı takip edilir.',

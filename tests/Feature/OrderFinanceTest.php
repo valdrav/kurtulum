@@ -160,6 +160,51 @@ class OrderFinanceTest extends FeatureTestCase
         $this->assertEquals('settled', app(OrderFinanceService::class)->financeSummary($order)['finance_status']);
     }
 
+    public function test_usd_collection_converts_to_try_treasury_balance(): void
+    {
+        $this->actingAsAdmin();
+        company_treasury()->ensureDefaults();
+
+        $customer = Customer::create([
+            'company_name' => 'USD Müşteri',
+            'type' => 'buyer',
+            'status' => 'active',
+            'currency' => 'USD',
+        ]);
+
+        $order = Order::create([
+            'order_number' => 'ORD-USD-001',
+            'customer_id' => $customer->id,
+            'status' => 'confirmed',
+            'order_date' => now(),
+            'currency' => 'USD',
+            'sale_total' => 50000,
+            'purchase_total' => 0,
+            'margin_total' => 50000,
+            'total_amount' => 50000,
+        ]);
+
+        app(OrderFinanceService::class)->postOrderLedger($order->fresh());
+        $customerAccount = Account::where('customer_id', $customer->id)->firstOrFail();
+        $treasury = company_treasury()->defaultAccount();
+        $treasuryBefore = (float) $treasury->current_balance;
+        $method = PaymentMethod::where('code', 'cash')->first();
+
+        $this->post(route('finance.collections.store'), [
+            'order_id' => $order->id,
+            'account_id' => $customerAccount->id,
+            'treasury_account_id' => $treasury->id,
+            'payment_method_id' => $method->id,
+            'amount' => 50000,
+            'currency' => 'USD',
+            'exchange_rate' => 34.5,
+            'collection_date' => now()->toDateString(),
+        ])->assertRedirect(route('orders.show', $order));
+
+        $treasury->refresh();
+        $this->assertEquals($treasuryBefore + 1725000, (float) $treasury->current_balance);
+    }
+
     public function test_order_show_displays_finance_panel(): void
     {
         $this->actingAsAdmin();

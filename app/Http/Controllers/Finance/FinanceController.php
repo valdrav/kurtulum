@@ -13,6 +13,7 @@ use App\Models\Supplier;
 use App\Models\SystemCurrency;
 use App\Services\AccountLedgerService;
 use App\Services\CompanyTreasuryService;
+use App\Services\ExchangeRateService;
 use App\Services\IncomeExpenseReportService;
 use App\Services\OrderFinanceService;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class FinanceController extends Controller
     public function __construct(
         protected OrderFinanceService $orderFinance,
         protected AccountLedgerService $ledger,
+        protected ExchangeRateService $rates,
     ) {
         $this->middleware('permission:finance.view')->only([
             'index', 'accounts', 'showAccount', 'payments', 'collections',
@@ -265,6 +267,7 @@ class FinanceController extends Controller
             [
                 'order_id' => 'nullable|exists:orders,id',
                 'treasury_account_id' => 'nullable|exists:accounts,id',
+                'exchange_rate' => 'nullable|numeric|min:0.000001',
             ]
         ));
         $validated = hook()->filter('payment.before_create', $validated, $method);
@@ -339,6 +342,7 @@ class FinanceController extends Controller
         $validated = $request->validate(array_merge($rules, [
             'order_id' => 'nullable|exists:orders,id',
             'treasury_account_id' => 'nullable|exists:accounts,id',
+            'exchange_rate' => 'nullable|numeric|min:0.000001',
         ]));
         $validated = hook()->filter('collection.before_create', $validated, $method);
 
@@ -506,8 +510,8 @@ class FinanceController extends Controller
             $validated['description'] .= ' · ' . $validated['vendor'];
         }
 
-        $currency = SystemCurrency::where('code', $validated['currency'])->first();
-        $validated['exchange_rate'] = $validated['exchange_rate'] ?? ($currency?->tcmb_rate ?? $currency?->exchange_rate ?? 1);
+        $providedRate = isset($validated['exchange_rate']) ? (float) $validated['exchange_rate'] : null;
+        $validated['exchange_rate'] = $this->rates->rateToDefaultCurrency($validated['currency'], $providedRate);
         $validated['amount_base'] = round($validated['amount'] * $validated['exchange_rate'], 2);
 
         $validated['account_id'] = $this->resolveTreasuryAccountId($validated['account_id'] ?? null);
@@ -584,10 +588,11 @@ class FinanceController extends Controller
 
     protected function treasuryEntryAmount(IncomeExpense $entry, Account $account): float
     {
-        if ($account->currency === $entry->currency) {
-            return (float) $entry->amount;
-        }
-
-        return (float) ($entry->amount_base ?? $entry->amount);
+        return $this->rates->amountForAccount(
+            (float) $entry->amount,
+            $entry->currency,
+            $account,
+            (float) $entry->exchange_rate
+        );
     }
 }

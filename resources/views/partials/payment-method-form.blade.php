@@ -17,6 +17,13 @@
         <small class="text-muted d-block mt-1" x-show="feePreview" x-text="feePreview"></small>
     </div>
 
+    <div class="mb-3" x-show="selectedCurrency && selectedCurrency !== baseCurrency" x-cloak>
+        <label class="form-label fw-semibold">{{ __('finance.exchange_rate') }}</label>
+        <input type="number" step="0.000001" name="exchange_rate" class="form-control" min="0.000001"
+               :placeholder="'1 ' + selectedCurrency + ' = ? ' + baseCurrency">
+        <small class="text-muted">{{ __('finance.exchange_rate_hint') }}</small>
+    </div>
+
     <div class="mb-2">
         <label class="form-label">{{ __('extensions.payment_method') }}</label>
         <select name="payment_method_id" class="form-select" x-model="methodId" @change="loadFields()" required>
@@ -63,6 +70,7 @@ function paymentForm() {
         fields: [],
         currencies: @json(registry()->currencyCodes()),
         selectedCurrency: @json(registry()->currencyCodes()[0] ?? 'TRY'),
+        baseCurrency: @json(registry()->defaultCurrency()?->code ?? 'TRY'),
         requiresReference: false,
         feePreview: '',
         init() {

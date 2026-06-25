@@ -9,13 +9,13 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Supplier;
-use App\Models\SystemCurrency;
 use Illuminate\Support\Facades\DB;
 
 class OrderFinanceService
 {
     public function __construct(
         protected AccountLedgerService $ledger,
+        protected ExchangeRateService $rates,
     ) {}
 
     public function ensureCustomerAccount(Customer $customer): Account
@@ -93,12 +93,13 @@ class OrderFinanceService
     public function recordCollection(array $validated, PaymentMethod $method, float $fee, ?Order $order = null): Collection
     {
         return DB::transaction(function () use ($validated, $method, $fee, $order) {
-            $currency = SystemCurrency::where('code', $validated['currency'])->first();
             $cariAccount = Account::query()->cari()->findOrFail($validated['account_id']);
             $treasury = $this->resolveTreasury($validated['treasury_account_id'] ?? null);
             $gross = (float) $validated['amount'];
             $net = round($gross - $fee, 2);
             $date = $validated['collection_date'];
+            $currency = $validated['currency'];
+            $exchangeRate = $this->resolveTransactionRate($currency, isset($validated['exchange_rate']) ? (float) $validated['exchange_rate'] : null);
 
             $collection = Collection::create([
                 'collection_number' => $this->nextNumber('COL'),
@@ -107,8 +108,8 @@ class OrderFinanceService
                 'order_id' => $order?->id,
                 'treasury_account_id' => $treasury->id,
                 'amount' => $gross,
-                'currency' => $validated['currency'],
-                'exchange_rate' => $currency?->tcmb_rate ?? $currency?->exchange_rate ?? 1,
+                'currency' => $currency,
+                'exchange_rate' => $exchangeRate,
                 'fee_amount' => $fee,
                 'payment_method_id' => $method->id,
                 'collection_method' => $method->code,
@@ -120,9 +121,11 @@ class OrderFinanceService
             ]);
 
             $label = 'Tahsilat: ' . $collection->collection_number . ($order ? ' (' . $order->order_number . ')' : '');
+            $cariAmount = $this->rates->amountForAccount($net, $currency, $cariAccount, $exchangeRate);
+            $treasuryAmount = $this->rates->amountForAccount($net, $currency, $treasury, $exchangeRate);
 
-            $this->ledger->adjustBalance($cariAccount, -$net, $collection, $label, $date);
-            $this->ledger->adjustBalance($treasury, $net, $collection, $label, $date);
+            $this->ledger->adjustBalance($cariAccount, -$cariAmount, $collection, $label, $date);
+            $this->ledger->adjustBalance($treasury, $treasuryAmount, $collection, $label, $date);
 
             if ($order) {
                 $this->incrementOrderCollected($order, $net);
@@ -135,12 +138,13 @@ class OrderFinanceService
     public function recordPayment(array $validated, PaymentMethod $method, float $fee, ?Order $order = null): Payment
     {
         return DB::transaction(function () use ($validated, $method, $fee, $order) {
-            $currency = SystemCurrency::where('code', $validated['currency'])->first();
             $cariAccount = Account::query()->cari()->findOrFail($validated['account_id']);
             $treasury = $this->resolveTreasury($validated['treasury_account_id'] ?? null);
             $gross = (float) $validated['amount'];
             $total = round($gross + $fee, 2);
             $date = $validated['payment_date'];
+            $currency = $validated['currency'];
+            $exchangeRate = $this->resolveTransactionRate($currency, isset($validated['exchange_rate']) ? (float) $validated['exchange_rate'] : null);
 
             $payment = Payment::create([
                 'payment_number' => $this->nextNumber('PAY'),
@@ -149,8 +153,8 @@ class OrderFinanceService
                 'order_id' => $order?->id,
                 'treasury_account_id' => $treasury->id,
                 'amount' => $gross,
-                'currency' => $validated['currency'],
-                'exchange_rate' => $currency?->tcmb_rate ?? $currency?->exchange_rate ?? 1,
+                'currency' => $currency,
+                'exchange_rate' => $exchangeRate,
                 'fee_amount' => $fee,
                 'payment_method_id' => $method->id,
                 'payment_method' => $method->code,
@@ -162,9 +166,11 @@ class OrderFinanceService
             ]);
 
             $label = 'Ödeme: ' . $payment->payment_number . ($order ? ' (' . $order->order_number . ')' : '');
+            $cariAmount = $this->rates->amountForAccount($total, $currency, $cariAccount, $exchangeRate);
+            $treasuryAmount = $this->rates->amountForAccount($total, $currency, $treasury, $exchangeRate);
 
-            $this->ledger->adjustBalance($cariAccount, -$total, $payment, $label, $date);
-            $this->ledger->adjustBalance($treasury, -$total, $payment, $label, $date);
+            $this->ledger->adjustBalance($cariAccount, -$cariAmount, $payment, $label, $date);
+            $this->ledger->adjustBalance($treasury, -$treasuryAmount, $payment, $label, $date);
 
             if ($order) {
                 $this->incrementOrderPaid($order, $gross);
@@ -181,11 +187,14 @@ class OrderFinanceService
             $cari = $collection->account;
             $treasury = $collection->treasuryAccount ?? company_treasury()->defaultAccount();
             $date = now()->toDateString();
+            $rate = (float) $collection->exchange_rate;
+            $cariAmount = $cari ? $this->rates->amountForAccount($net, $collection->currency, $cari, $rate) : 0;
+            $treasuryAmount = $this->rates->amountForAccount($net, $collection->currency, $treasury, $rate);
 
             if ($cari) {
-                $this->ledger->adjustBalance($cari, $net, $collection, 'İptal tahsilat: ' . $collection->collection_number, $date);
+                $this->ledger->adjustBalance($cari, $cariAmount, $collection, 'İptal tahsilat: ' . $collection->collection_number, $date);
             }
-            $this->ledger->adjustBalance($treasury, -$net, $collection, 'İptal tahsilat: ' . $collection->collection_number, $date);
+            $this->ledger->adjustBalance($treasury, -$treasuryAmount, $collection, 'İptal tahsilat: ' . $collection->collection_number, $date);
 
             if ($collection->order_id) {
                 $order = Order::find($collection->order_id);
@@ -205,11 +214,14 @@ class OrderFinanceService
             $cari = $payment->account;
             $treasury = $payment->treasuryAccount ?? company_treasury()->defaultAccount();
             $date = now()->toDateString();
+            $rate = (float) $payment->exchange_rate;
+            $cariAmount = $cari ? $this->rates->amountForAccount($total, $payment->currency, $cari, $rate) : 0;
+            $treasuryAmount = $this->rates->amountForAccount($total, $payment->currency, $treasury, $rate);
 
             if ($cari) {
-                $this->ledger->adjustBalance($cari, $total, $payment, 'İptal ödeme: ' . $payment->payment_number, $date);
+                $this->ledger->adjustBalance($cari, $cariAmount, $payment, 'İptal ödeme: ' . $payment->payment_number, $date);
             }
-            $this->ledger->adjustBalance($treasury, $total, $payment, 'İptal ödeme: ' . $payment->payment_number, $date);
+            $this->ledger->adjustBalance($treasury, $treasuryAmount, $payment, 'İptal ödeme: ' . $payment->payment_number, $date);
 
             if ($payment->order_id) {
                 $order = Order::find($payment->order_id);
@@ -288,5 +300,10 @@ class OrderFinanceService
         $last = $model::withTrashed()->where('created_at', '>=', now()->startOfYear())->count() + 1;
 
         return sprintf('%s-%s-%04d', $prefix, now()->format('Y'), $last);
+    }
+
+    protected function resolveTransactionRate(string $currency, ?float $provided = null): float
+    {
+        return $this->rates->rateToDefaultCurrency($currency, $provided);
     }
 }

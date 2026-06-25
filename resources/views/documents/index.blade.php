@@ -3,6 +3,14 @@
 @section('content')
 @include('partials.page-header', ['title' => __('documents.depot')])
 
+<div class="d-flex flex-wrap gap-2 mb-3">
+    @if(can_access('documents.view'))
+    <a href="{{ route('documents.tools.index') }}" class="btn btn-outline-primary">
+        <i class="ti ti-file-settings me-1"></i>{{ __('documents.tools.title') }}
+    </a>
+    @endif
+</div>
+
 <div class="card mb-3">
     <div class="card-body">
         <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data">

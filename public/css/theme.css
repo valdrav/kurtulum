@@ -588,6 +588,30 @@ body.ef-app {
     overflow: hidden;
 }
 
+.doc-tools-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.doc-tools-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--ef-border);
+    background: var(--ef-surface);
+    font-size: 0.75rem;
+    color: var(--ef-muted);
+}
+
+.doc-tools-item i {
+    font-size: 1rem;
+    color: var(--ef-primary);
+}
+
 .kanban-board {
     display: flex;
     gap: 0.75rem;

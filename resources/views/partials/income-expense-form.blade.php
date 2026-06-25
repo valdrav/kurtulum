@@ -39,12 +39,20 @@
         </div>
         <div class="col-5">
             <label class="form-label">{{ __('app.currency') }}</label>
-            <select name="currency" class="form-select">
+            <select name="currency" class="form-select" id="ie-currency">
                 @foreach(registry()->currencyCodes() as $c)
                 <option value="{{ $c }}" @selected(old('currency', $record?->currency ?? 'TRY') === $c)>{{ $c }}</option>
                 @endforeach
             </select>
         </div>
+    </div>
+
+    <div class="mb-2" id="ie-exchange-wrap" style="display:none">
+        <label class="form-label">{{ __('finance.exchange_rate') }}</label>
+        <input type="number" step="0.000001" name="exchange_rate" class="form-control form-control-sm"
+               value="{{ old('exchange_rate', $record?->exchange_rate) }}" min="0.000001"
+               placeholder="1 USD = ? TRY">
+        <small class="text-muted">{{ __('finance.exchange_rate_hint') }}</small>
     </div>
 
     @unless($singleTreasury)
@@ -113,3 +121,21 @@
     </div>
     @endif
 </div>
+
+@once
+@push('scripts')
+<script>
+(function () {
+    const baseCurrency = @json(registry()->defaultCurrency()?->code ?? 'TRY');
+    const toggleExchange = () => {
+        const sel = document.getElementById('ie-currency');
+        const wrap = document.getElementById('ie-exchange-wrap');
+        if (!sel || !wrap) return;
+        wrap.style.display = sel.value !== baseCurrency ? '' : 'none';
+    };
+    document.getElementById('ie-currency')?.addEventListener('change', toggleExchange);
+    toggleExchange();
+})();
+</script>
+@endpush
+@endonce

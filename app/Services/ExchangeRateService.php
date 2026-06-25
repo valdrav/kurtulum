@@ -278,6 +278,10 @@ class ExchangeRateService
 
     public function convert(float $amount, string $from, string $to, string $rateType = 'tcmb'): ?float
     {
+        if ($from === $to) {
+            return round($amount, 4);
+        }
+
         $column = $rateType === 'market' ? 'market_rate' : 'tcmb_rate';
         $currencies = SystemCurrency::whereIn('code', [$from, $to])->get()->keyBy('code');
 
@@ -285,8 +289,8 @@ class ExchangeRateService
             return null;
         }
 
-        $fromRate = (float) ($currencies[$from]->{$column} ?: $currencies[$from]->exchange_rate);
-        $toRate = (float) ($currencies[$to]->{$column} ?: $currencies[$to]->exchange_rate);
+        $fromRate = $this->currencyRateValue($currencies[$from], $column);
+        $toRate = $this->currencyRateValue($currencies[$to], $column);
 
         if ($fromRate <= 0 || $toRate <= 0) {
             return null;
@@ -295,6 +299,81 @@ class ExchangeRateService
         $tryAmount = $amount * $fromRate;
 
         return round($tryAmount / $toRate, 4);
+    }
+
+    /** TRY (veya varsayılan para birimi) karşılığında 1 birim döviz kuru */
+    public function rateToDefaultCurrency(string $code, ?float $override = null, string $rateType = 'tcmb'): float
+    {
+        $default = registry()->defaultCurrency()?->code ?? 'TRY';
+
+        if ($code === $default) {
+            return 1.0;
+        }
+
+        if ($override !== null && $override > 0) {
+            return $override;
+        }
+
+        $currency = SystemCurrency::where('code', $code)->where('is_active', true)->first();
+
+        if (! $currency) {
+            throw new \RuntimeException(__('finance.currency_rate_missing', ['code' => $code]));
+        }
+
+        $column = $rateType === 'market' ? 'market_rate' : 'tcmb_rate';
+        $rate = $this->currencyRateValue($currency, $column);
+
+        if ($rate <= 1) {
+            throw new \RuntimeException(__('finance.currency_rate_missing', ['code' => $code]));
+        }
+
+        return $rate;
+    }
+
+    public function amountForAccount(float $amount, string $fromCurrency, \App\Models\Account $account, ?float $rateToDefault = null): float
+    {
+        if ($fromCurrency === $account->currency) {
+            return round($amount, 2);
+        }
+
+        $default = registry()->defaultCurrency()?->code ?? 'TRY';
+
+        if ($account->currency === $default) {
+            $rate = $this->rateToDefaultCurrency($fromCurrency, $rateToDefault);
+
+            return round($amount * $rate, 2);
+        }
+
+        if ($fromCurrency === $default) {
+            $rate = $this->rateToDefaultCurrency($account->currency);
+
+            return round($amount / $rate, 2);
+        }
+
+        $converted = $this->convert($amount, $fromCurrency, $account->currency);
+
+        if ($converted === null) {
+            throw new \RuntimeException(__('finance.currency_convert_failed', [
+                'from' => $fromCurrency,
+                'to' => $account->currency,
+            ]));
+        }
+
+        return round($converted, 2);
+    }
+
+    protected function currencyRateValue(SystemCurrency $currency, string $column): float
+    {
+        $default = registry()->defaultCurrency()?->code ?? 'TRY';
+        $rate = (float) ($currency->{$column} ?: 0);
+
+        if ($rate > 1 || $currency->code === $default) {
+            return $rate > 0 ? $rate : 1.0;
+        }
+
+        $fallback = (float) $currency->exchange_rate;
+
+        return $fallback > 1 ? $fallback : 0.0;
     }
 
     public function ratesForBar(bool $force = false): array
