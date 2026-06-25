@@ -13,6 +13,7 @@ trait LogsActivity
     {
         return LogOptions::defaults()
             ->logFillable()
+            ->logExcept(['password', 'credentials', 'remember_token', 'body_html', 'body_text'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => activity_event_label($eventName));

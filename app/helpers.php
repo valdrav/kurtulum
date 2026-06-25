@@ -213,13 +213,34 @@ if (!function_exists('activity_subject_label')) {
     }
 }
 
+if (!function_exists('activity_format_change_value')) {
+    function activity_format_change_value(mixed $value): string
+    {
+        if (is_array($value) || is_object($value)) {
+            $encoded = json_encode($value, JSON_UNESCAPED_UNICODE) ?: '…';
+
+            return mb_strlen($encoded) > 120 ? mb_substr($encoded, 0, 117) . '…' : $encoded;
+        }
+
+        $string = (string) $value;
+
+        return mb_strlen($string) > 120 ? mb_substr($string, 0, 117) . '…' : $string;
+    }
+}
+
 if (!function_exists('activity_changes_html')) {
     function activity_changes_html($log): string
     {
-        $props = $log->properties ?? collect();
+        $props = $log->properties ?? [];
 
         if ($props instanceof \Illuminate\Support\Collection) {
             $props = $props->toArray();
+        } elseif (is_string($props)) {
+            $props = json_decode($props, true) ?? [];
+        }
+
+        if (! is_array($props)) {
+            return '<span class="text-muted">' . e(__('audit.no_changes')) . '</span>';
         }
 
         $old = $props['old'] ?? [];
@@ -229,11 +250,16 @@ if (!function_exists('activity_changes_html')) {
             return '<span class="text-muted">' . e(__('audit.no_changes')) . '</span>';
         }
 
+        $skipKeys = [
+            'updated_at', 'created_at', 'password', 'credentials', 'remember_token',
+            'body_html', 'body_text', 'to', 'cc', 'bcc',
+        ];
+
         $keys = array_unique(array_merge(array_keys($old), array_keys($new)));
         $lines = [];
 
         foreach ($keys as $key) {
-            if (in_array($key, ['updated_at', 'created_at', 'password', 'credentials', 'remember_token'], true)) {
+            if (in_array($key, $skipKeys, true)) {
                 continue;
             }
 
@@ -244,11 +270,15 @@ if (!function_exists('activity_changes_html')) {
                 continue;
             }
 
-            $lines[] = '<div class="small"><strong>' . e($key) . ':</strong> '
-                . e(is_scalar($from) ? (string) $from : json_encode($from, JSON_UNESCAPED_UNICODE))
+            $lines[] = '<div class="small text-break"><strong>' . e($key) . ':</strong> '
+                . e(activity_format_change_value($from))
                 . ' → '
-                . e(is_scalar($to) ? (string) $to : json_encode($to, JSON_UNESCAPED_UNICODE))
+                . e(activity_format_change_value($to))
                 . '</div>';
+        }
+
+        if ($lines === [] && (! empty($old) || ! empty($new))) {
+            return '<span class="text-muted">' . e(__('audit.summary_only')) . '</span>';
         }
 
         return $lines ? implode('', $lines) : '<span class="text-muted">' . e(__('audit.no_changes')) . '</span>';

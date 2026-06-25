@@ -264,7 +264,24 @@ class SettingsController extends Controller
 
     public function auditLog()
     {
-        $logs = Activity::with('causer')->latest()->paginate(30);
+        $table = (new Activity)->getTable();
+
+        $logs = Activity::query()
+            ->with(['causer' => fn ($q) => $q->select('id', 'name')])
+            ->select([
+                "{$table}.id",
+                "{$table}.description",
+                "{$table}.event",
+                "{$table}.subject_type",
+                "{$table}.subject_id",
+                "{$table}.causer_type",
+                "{$table}.causer_id",
+                "{$table}.created_at",
+            ])
+            ->selectRaw("LEFT(CAST({$table}.properties AS CHAR), 2048) AS properties")
+            ->latest("{$table}.created_at")
+            ->paginate(25);
+
         return view('settings.audit-log', compact('logs'));
     }
 

@@ -24,6 +24,7 @@ return [
         'Collection' => 'Tahsilat',
         'Account' => 'Hesap',
         'User' => 'Kullanıcı',
+        'Email' => 'E-posta',
         'EmailAccount' => 'E-posta Hesabı',
         'Vessel' => 'Gemi',
         'Setting' => 'Ayar',
@@ -32,4 +33,5 @@ return [
     'old_value' => 'Eski',
     'new_value' => 'Yeni',
     'no_changes' => 'Detay kaydı yok',
+    'summary_only' => 'Büyük kayıt (mail içeriği vb. gizlendi)',
 ];
