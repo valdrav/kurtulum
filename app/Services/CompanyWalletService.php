@@ -3,67 +3,96 @@
 namespace App\Services;
 
 use App\Models\CompanyWallet;
+use App\Models\User;
 use App\Models\WalletTransaction;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class CompanyWalletService
 {
-    public function ensureDefault(): CompanyWallet
+    public function ensureDefault(?int $userId = null): CompanyWallet
     {
-        $wallet = CompanyWallet::query()->where('is_active', true)->orderBy('id')->first();
+        $userId = $userId ?? (int) auth()->id();
+        $user = User::findOrFail($userId);
+
+        $wallet = CompanyWallet::query()
+            ->where('user_id', $userId)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->first();
 
         if ($wallet) {
             return $wallet;
         }
 
         return CompanyWallet::create([
-            'name' => 'Şirket Avans Hesabı',
-            'holder_name' => null,
+            'user_id' => $userId,
+            'name' => __('finance.wallet_default_name', ['name' => $user->name]),
+            'holder_name' => $user->name,
             'currency' => 'TRY',
             'opening_balance' => 0,
             'current_balance' => 0,
             'is_active' => true,
-            'notes' => 'Şirket adına kişisel hesaba aktarılan avans bakiyesi',
+            'notes' => __('finance.wallet_default_note'),
         ]);
     }
 
     /** @return Collection<int, CompanyWallet> */
-    public function wallets(): Collection
+    public function wallets(?int $userId = null): Collection
     {
-        $this->ensureDefault();
+        $userId = $userId ?? (int) auth()->id();
+        $this->ensureDefault($userId);
 
         return CompanyWallet::query()
+            ->with('user')
+            ->where('user_id', $userId)
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
     }
 
-    public function totalBalance(): float
+    public function totalBalance(?int $userId = null): float
     {
+        $userId = $userId ?? (int) auth()->id();
+
         return (float) CompanyWallet::query()
+            ->where('user_id', $userId)
             ->where('is_active', true)
             ->sum('current_balance');
     }
 
-    /** @return array{deposit: float, expense: float, net: float} */
-    public function annualSummary(?int $walletId, int $year): array
+    /** @return array<int> */
+    public function walletIdsForUser(?int $userId = null): array
     {
-        $depositQuery = WalletTransaction::query()
-            ->whereYear('transaction_date', $year)
-            ->where('type', 'deposit');
+        $userId = $userId ?? (int) auth()->id();
 
-        $expenseQuery = WalletTransaction::query()
-            ->whereYear('transaction_date', $year)
-            ->where('type', 'expense');
+        return CompanyWallet::query()
+            ->where('user_id', $userId)
+            ->where('is_active', true)
+            ->pluck('id')
+            ->all();
+    }
 
-        if ($walletId) {
-            $depositQuery->where('company_wallet_id', $walletId);
-            $expenseQuery->where('company_wallet_id', $walletId);
+    /** @return array{deposit: float, expense: float, net: float} */
+    public function annualSummary(?int $walletId, int $year, ?int $userId = null): array
+    {
+        $walletIds = $walletId ? [$walletId] : $this->walletIdsForUser($userId);
+
+        if ($walletIds === []) {
+            return ['deposit' => 0.0, 'expense' => 0.0, 'net' => 0.0];
         }
 
-        $deposit = (float) $depositQuery->sum('amount');
-        $expense = (float) $expenseQuery->sum('amount');
+        $deposit = (float) WalletTransaction::query()
+            ->whereIn('company_wallet_id', $walletIds)
+            ->whereYear('transaction_date', $year)
+            ->where('type', 'deposit')
+            ->sum('amount');
+
+        $expense = (float) WalletTransaction::query()
+            ->whereIn('company_wallet_id', $walletIds)
+            ->whereYear('transaction_date', $year)
+            ->where('type', 'expense')
+            ->sum('amount');
 
         return [
             'deposit' => $deposit,
@@ -118,27 +147,6 @@ class CompanyWalletService
             }
 
             $entry->delete();
-        });
-    }
-
-    public function replaceTransaction(WalletTransaction $entry, array $data): WalletTransaction
-    {
-        return DB::transaction(function () use ($entry, $data) {
-            $this->reverseTransaction($entry);
-
-            $wallet = CompanyWallet::findOrFail($data['company_wallet_id']);
-
-            return $this->recordTransaction(
-                $wallet,
-                $data['type'],
-                (float) $data['amount'],
-                $data['description'],
-                $data['transaction_date'],
-                $data['counterparty'] ?? null,
-                $data['receipt_no'] ?? null,
-                $data['notes'] ?? null,
-                $entry->user_id,
-            );
         });
     }
 }

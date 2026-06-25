@@ -10,7 +10,25 @@
 
 <div class="alert alert-info py-2 small mb-3">{{ __('finance.wallet_hint') }}</div>
 
+@if($walletUser->id !== auth()->id())
+<div class="alert alert-warning py-2 small mb-3">
+    <i class="ti ti-user me-1"></i>{{ __('finance.wallet_view_user') }}: <strong>{{ $walletUser->name }}</strong>
+</div>
+@else
+<div class="text-muted small mb-3"><i class="ti ti-user me-1"></i>{{ __('finance.wallet_my_account') }}: <strong>{{ $walletUser->name }}</strong></div>
+@endif
+
 <form method="GET" class="row g-2 align-items-end mb-3">
+    @if($selectableUsers->isNotEmpty())
+    <div class="col-md-3">
+        <label class="form-label small mb-0">{{ __('finance.wallet_owner') }}</label>
+        <select name="user" class="form-select form-select-sm" onchange="this.form.submit()">
+            @foreach($selectableUsers as $u)
+            <option value="{{ $u->uuid }}" @selected($walletUser->id === $u->id)>{{ $u->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    @endif
     <div class="col-md-3">
         <label class="form-label small mb-0">{{ __('finance.wallet_account') }}</label>
         <select name="wallet" class="form-select form-select-sm" onchange="this.form.submit()">
@@ -96,6 +114,9 @@
             <div class="card-body">
                 <form method="POST" action="{{ route('finance.wallet.transactions.store') }}">
                     @csrf
+                    @if($selectableUsers->isNotEmpty())
+                    <input type="hidden" name="user" value="{{ $walletUser->uuid }}">
+                    @endif
                     <div class="mb-2">
                         <label class="form-label">{{ __('finance.wallet_account') }} *</label>
                         <select name="company_wallet_id" class="form-select" required>
@@ -162,6 +183,9 @@
                 <div class="card-body border-bottom bg-light py-3">
                     <form method="POST" action="{{ route('finance.wallet.accounts.store') }}" class="row g-2">
                         @csrf
+                        @if($selectableUsers->isNotEmpty())
+                        <input type="hidden" name="user" value="{{ $walletUser->uuid }}">
+                        @endif
                         <div class="col-md-4">
                             <input type="text" name="name" class="form-control form-control-sm" placeholder="Hesap adı (örn. Kişisel IBAN)" required>
                         </div>
@@ -191,7 +215,7 @@
             @endif
             <div class="list-group list-group-flush">
                 @forelse($walletList as $w)
-                <a href="{{ route('finance.wallet', ['wallet' => $w->uuid, 'year' => $year]) }}"
+                <a href="{{ route('finance.wallet', array_filter(['wallet' => $w->uuid, 'user' => $selectableUsers->isNotEmpty() ? $walletUser->uuid : null, 'year' => $year])) }}"
                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ $selectedWallet?->id === $w->id ? 'active' : '' }}">
                     <div>
                         <strong>{{ $w->name }}</strong>

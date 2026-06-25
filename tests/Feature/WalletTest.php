@@ -3,26 +3,27 @@
 namespace Tests\Feature;
 
 use App\Models\CompanyWallet;
-use App\Models\WalletTransaction;
+use App\Models\User;
 use Tests\FeatureTestCase;
 
 class WalletTest extends FeatureTestCase
 {
     public function test_admin_can_view_wallet_page(): void
     {
-        $this->actingAsAdmin();
+        $admin = $this->actingAsAdmin();
 
         $response = $this->get(route('finance.wallet'));
 
         $response->assertOk();
         $response->assertSee(__('finance.wallet'));
+        $response->assertSee($admin->name);
     }
 
     public function test_deposit_increases_wallet_balance(): void
     {
-        $this->actingAsAdmin();
+        $admin = $this->actingAsAdmin();
 
-        $wallet = company_wallet()->ensureDefault();
+        $wallet = company_wallet()->ensureDefault($admin->id);
         $before = (float) $wallet->current_balance;
 
         $response = $this->post(route('finance.wallet.transactions.store'), [
@@ -48,9 +49,10 @@ class WalletTest extends FeatureTestCase
 
     public function test_expense_decreases_wallet_balance(): void
     {
-        $this->actingAsAdmin();
+        $admin = $this->actingAsAdmin();
 
         $wallet = CompanyWallet::create([
+            'user_id' => $admin->id,
             'name' => 'Test IBAN',
             'currency' => 'TRY',
             'opening_balance' => 1000,
@@ -73,9 +75,10 @@ class WalletTest extends FeatureTestCase
 
     public function test_delete_transaction_reverses_balance(): void
     {
-        $this->actingAsAdmin();
+        $admin = $this->actingAsAdmin();
 
         $wallet = CompanyWallet::create([
+            'user_id' => $admin->id,
             'name' => 'Test',
             'currency' => 'TRY',
             'opening_balance' => 0,
@@ -99,5 +102,42 @@ class WalletTest extends FeatureTestCase
         $wallet->refresh();
         $this->assertEquals(0, (float) $wallet->current_balance);
         $this->assertSoftDeleted('wallet_transactions', ['id' => $entry->id]);
+    }
+
+    public function test_each_user_has_separate_wallet(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $walletAdmin = company_wallet()->ensureDefault($admin->id);
+
+        $manager = User::factory()->create(['is_active' => true]);
+        $manager->assignRole('manager');
+
+        $this->actingAs($manager);
+        $walletManager = company_wallet()->ensureDefault($manager->id);
+
+        $this->assertNotEquals($walletAdmin->id, $walletManager->id);
+        $this->assertEquals($admin->id, $walletAdmin->user_id);
+        $this->assertEquals($manager->id, $walletManager->user_id);
+    }
+
+    public function test_user_cannot_post_to_another_users_wallet(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $adminWallet = company_wallet()->ensureDefault($admin->id);
+
+        $manager = User::factory()->create(['is_active' => true]);
+        $manager->assignRole('manager');
+
+        $this->actingAs($manager);
+
+        $response = $this->post(route('finance.wallet.transactions.store'), [
+            'company_wallet_id' => $adminWallet->id,
+            'type' => 'deposit',
+            'description' => 'Yetkisiz giriş',
+            'amount' => 100,
+            'transaction_date' => now()->toDateString(),
+        ]);
+
+        $response->assertSessionHasErrors('company_wallet_id');
     }
 }
