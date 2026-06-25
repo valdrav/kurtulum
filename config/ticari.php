@@ -4,6 +4,7 @@ return [
     'name' => env('APP_NAME', 'Kurtulum İç ve Dış Ticaret'),
     'version' => '1.0.0',
     'installed' => env('APP_INSTALLED', false),
+    'portal_url' => env('APP_URL', 'https://portal.kurtulum.com'),
 
     'locales' => [
         'tr' => ['name' => 'Türkçe', 'dir' => 'ltr', 'flag' => 'tr'],

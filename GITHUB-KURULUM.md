@@ -1,32 +1,8 @@
 # GitHub + Plesk
 
-**Akış:** bilgisayardan `git push` → Plesk'te **Pull** → `bash scripts/plesk-deploy.sh`
+**Akış:** Cursor’dan GitHub’a gönder → Plesk **Git** → **Pull** / **Deploy**
 
-`vendor` GitHub'a gitmez; sunucuda `composer install` çalışır.
-
----
-
-## Bilgisayar — ilk gönderim
-
-```powershell
-cd c:\xampp\htdocs\ticari
-git init
-git add .
-git commit -m "Ilk surum"
-git branch -M main
-git remote add origin https://github.com/valdrav/kurtulum.git
-git push -u origin main
-```
-
-`.env` commit edilmez. GitHub şifre yerine **Personal Access Token** kullanın.
-
-## Bilgisayar — güncelleme
-
-```powershell
-git add .
-git commit -m "Ne degisti"
-git push
-```
+`vendor` GitHub'a gitmez; Pull sonrası Plesk deploy script `composer install` çalıştırır.
 
 ---
 
@@ -37,42 +13,21 @@ git push
    - URL: `https://github.com/valdrav/kurtulum.git`
    - Hedef: site kökü (`artisan` burada olacak)
 3. **Hosting Settings** → document root: **`public`**
-4. **Databases** → MariaDB veritabanı oluşturun (boş, tablo gerekmez)
-5. **File Manager** → `.env.plesk.example` dosyasını `.env` olarak kopyalayın, MariaDB bilgilerini doldurun:
-
-```env
-APP_URL=https://portal.kurtulum.com
-APP_INSTALLED=false
-SESSION_DRIVER=file
-CACHE_STORE=file
-QUEUE_CONNECTION=sync
-DB_CONNECTION=mysql
-DB_HOST=localhost
-DB_DATABASE=...    # Plesk Databases
-DB_USERNAME=...
-DB_PASSWORD=...
-```
-
-> Plesk **MariaDB** kullanır. `.env` içinde `DB_CONNECTION=mysql` doğrudur (Laravel MariaDB’yi bu sürücüyle bağlar).
-
-6. Plesk **Git** → **Pull** / Deploy
+4. **Databases** → MariaDB: `kurtulumportal_db` / `kurtulumportal_user`
+5. **File Manager** → `.env.plesk.example` → `.env` kopyala, MariaDB bilgilerini gir
+6. **Git** → **Deploy**
 7. **https://portal.kurtulum.com/install**
+
+> Plesk **MariaDB** — `.env` içinde `DB_CONNECTION=mysql` doğrudur.
 
 ---
 
-## Plesk — her push sonrası
+## Plesk — her güncelleme
 
-**Git** → **Pull**, ardından:
+1. Cursor’dan değişiklikleri GitHub’a gönder
+2. Plesk → **Git** → **Pull** veya **Deploy**
 
-```bash
-bash scripts/plesk-deploy.sh
-```
-
-Otomatik deploy için Plesk Git → **Additional deploy actions**:
-
-```bash
-bash scripts/plesk-deploy.sh
-```
+**Additional deploy actions** (varsa): `bash scripts/plesk-deploy.sh`
 
 ---
 
@@ -80,11 +35,9 @@ bash scripts/plesk-deploy.sh
 
 | Dosya | Neden |
 |-------|--------|
-| `.env` / `.env.plesk` | Şifreler — GitHub'a gitmez |
-| `.env.plesk.example` | Şablon (şifresiz) — GitHub'a gider |
+| `.env` / `.env.plesk` | Şifreler |
+| `.env.plesk.example` | Şablon (GitHub'a gider) |
 | `vendor/` | Sunucuda composer |
-| `storage/logs/` | Log |
-| `node_modules/` | Gerek yok |
 
 ---
 
@@ -92,13 +45,11 @@ bash scripts/plesk-deploy.sh
 
 | Hata | Çözüm |
 |------|--------|
-| 404 (Plesk sayfası) | Document root = `public`, `/ping.php` test |
+| **unable to unlink Permission denied** | [DEPLOY-PLESK.md](DEPLOY-PLESK.md) → Git izinleri — File Manager sahiplik + Git Remove/Clone |
+| 404 (Plesk sayfası) | Document root = `public` |
 | AH00124 redirect | Kök `.htaccess` sil |
-| valid cache path | Plesk Pull sonrası deploy script çalışsın |
-| **403 ModSecurity** | Plesk → site → Web Application Firewall → Kapalı |
-| Log Permission denied | File Manager → `storage` ve `bootstrap/cache` → izinler 775 |
-| sqlite / database.sqlite | `.env` → `DB_CONNECTION=mysql` (MariaDB), Plesk Databases bilgileri |
-| vendor hatası | `rm -rf vendor && composer install --no-dev` |
-| `/install` 500 | `.env` → `SESSION_DRIVER=file`, izinler 775 |
+| 403 ModSecurity | Web Application Firewall → Kapalı |
+| Log Permission denied | File Manager → `storage` → izinler, alt dizinlere uygula |
+| sqlite hatası | `.env` → MariaDB, `APP_INSTALLED=false` |
 
-Detaylı sorun giderme: [DEPLOY-PLESK.md](DEPLOY-PLESK.md)
+Detay: [DEPLOY-PLESK.md](DEPLOY-PLESK.md)

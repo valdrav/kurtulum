@@ -84,6 +84,11 @@ class InstallController extends Controller
 
     public function adminStore(Request $request)
     {
+        if (! session('install.db')) {
+            return redirect()->route('install.database')
+                ->withErrors(['install' => 'Veritabanı adımı oturumu kayboldu. Lütfen tekrar deneyin.']);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
@@ -92,12 +97,17 @@ class InstallController extends Controller
         ]);
 
         try {
+            Artisan::call('config:clear');
             $this->installer->runMigrations();
             $this->installer->seedRolesAndPermissions();
             $this->installer->createAdmin($validated);
             $this->installer->markAsInstalled();
-        } catch (\Exception $e) {
-            return back()->withInput()->withErrors(['install' => __('install.install_failed') . ': ' . $e->getMessage()]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()->withErrors([
+                'install' => __('install.install_failed') . ': ' . $e->getMessage(),
+            ]);
         }
 
         session()->forget('install');

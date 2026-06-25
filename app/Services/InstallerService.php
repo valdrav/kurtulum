@@ -143,6 +143,10 @@ class InstallerService
             'APP_URL' => $data['app_url'] ?? url('/'),
             'DB_CONNECTION' => $driver,
             'APP_INSTALLED' => 'false',
+            'SESSION_DRIVER' => 'file',
+            'CACHE_STORE' => 'file',
+            'QUEUE_CONNECTION' => 'sync',
+            'SESSION_DOMAIN' => '',
         ];
 
         if ($driver === 'sqlite') {
@@ -156,7 +160,7 @@ class InstallerService
         }
 
         foreach ($replacements as $key => $value) {
-            $escaped = str_contains($value, ' ') ? '"' . $value . '"' : $value;
+            $escaped = ($value !== '' && str_contains((string) $value, ' ')) ? '"' . $value . '"' : $value;
             if (preg_match("/^{$key}=.*/m", $env)) {
                 $env = preg_replace("/^{$key}=.*/m", "{$key}={$escaped}", $env);
             } else {
@@ -219,6 +223,12 @@ class InstallerService
         $this->updateEnvValue('CACHE_STORE', 'database');
         $this->updateEnvValue('QUEUE_CONNECTION', 'database');
         Artisan::call('config:clear');
+        $this->optimizeProduction();
+    }
+
+    public function optimizeProduction(): void
+    {
+        Artisan::call('optimize', ['--no-interaction' => true]);
     }
 
     public function updateEnvValue(string $key, string $value): void

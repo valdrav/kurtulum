@@ -45,6 +45,43 @@ Plesk Git → **Additional deploy actions** alanına doğrudan `bash scripts/ple
 
 ## Sorun giderme
 
+### Git Deploy — "unable to unlink" / Permission denied
+
+Git dosyaları güncelleyemiyor çünkü sunucudaki dosyalar **başka bir kullanıcıya** (Apache, root, eski ZIP yükleme) ait.
+
+**Bu kod hatası değil; Plesk dosya sahipliği sorunu.**
+
+#### Adım 1 — `.env` yedeği
+
+**File Manager** → `.env` → **Download** (bilgisayara kaydet)
+
+#### Adım 2 — Tüm site izinlerini düzelt
+
+**File Manager** → site kök klasörü (`artisan` burada) → **Change Permissions** / **İzinleri değiştir**
+
+- **Owner / Sahip:** abonelik kullanıcınız (Plesk’te domain altında yazar)
+- Kullanıcı: okuma + yazma + çalıştırma
+- Grup: okuma + yazma
+- **Apply to directories and files** / **Alt dizinlere uygula** — **işaretli**
+- Kaydet
+
+Panelde **Repair** / **İzinleri onar** / **Fix permissions** varsa onu da çalıştırın.
+
+#### Adım 3 — Git’i yeniden kur
+
+1. **Git** → mevcut repoyu **Remove** / kaldır
+2. Tekrar **Clone** → `https://github.com/valdrav/kurtulum.git`
+3. **Deploy** / **Pull**
+4. **File Manager** → `.env` yedeğini geri yükle (veya `.env.plesk.example` → `.env`, MariaDB bilgilerini girin)
+
+#### Adım 4 — Kontrol
+
+`https://portal.kurtulum.com/install`
+
+> **Not:** Deploy script’i artık `database/` ve `bootstrap/cache` içindeki Git dosyalarına `chmod` uygulamaz; izin sorununu tekrar tetiklemez.
+
+---
+
 ### Document root
 
 Document root **`public`** olmalı. Kök `.htaccess` **olmamalı** (`public/.htaccess` kalır).

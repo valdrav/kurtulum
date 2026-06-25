@@ -16,7 +16,7 @@
     </div>
     <div class="mb-4">
         <label class="form-label">{{ __('install.app_url') }}</label>
-        <input type="url" name="app_url" class="form-control" value="{{ old('app_url', url('/')) }}" required>
+        <input type="url" name="app_url" class="form-control" value="{{ old('app_url', config('ticari.portal_url', url('/'))) }}" required>
     </div>
 
     <label class="form-label">{{ __('install.db_driver') }}</label>
