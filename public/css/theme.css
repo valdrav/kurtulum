@@ -813,6 +813,83 @@ body.ef-app {
     }
 }
 
+.email-compose-editor {
+    min-height: 12rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--ef-border);
+    border-radius: var(--ef-radius-sm);
+    background: var(--ef-surface, #fff);
+    line-height: 1.6;
+    overflow-x: auto;
+    word-break: break-word;
+}
+
+.email-compose-editor:focus {
+    outline: none;
+    border-color: var(--ef-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--ef-primary-rgb), 0.15);
+}
+
+.email-compose-editor-sm { min-height: 8rem; }
+
+.email-compose-preview {
+    min-height: 4rem;
+    max-height: 14rem;
+    overflow: auto;
+}
+
+.email-signature-preview img { max-width: 100%; height: auto; }
+
+.ef-email-signature img { max-width: 100%; height: auto; }
+
+.audit-log-card { overflow: hidden; max-width: 100%; }
+
+.audit-log-table td,
+.audit-log-table th { vertical-align: top; }
+
+.audit-log-details {
+    min-width: 12rem;
+    max-width: 28rem;
+    word-break: break-word;
+}
+
+.audit-change-line {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    padding: 0.15rem 0;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.06);
+}
+
+.audit-change-line:last-child { border-bottom: none; }
+
+.audit-change-field {
+    font-weight: 600;
+    color: var(--tblr-secondary, #64748b);
+}
+
+.audit-change-old { color: #b45309; }
+.audit-change-new { color: #15803d; font-weight: 500; }
+.audit-change-arrow { color: var(--tblr-secondary, #94a3b8); }
+
+@media (max-width: 767.98px) {
+    .audit-log-table thead { display: none; }
+
+    .audit-log-table tbody tr {
+        display: block;
+        border-bottom: 1px solid var(--ef-border);
+        padding: 0.75rem 0;
+    }
+
+    .audit-log-table tbody td {
+        display: block;
+        border: none;
+        padding: 0.15rem 1rem;
+        max-width: 100%;
+    }
+
+    .audit-log-details { max-width: 100%; }
+}
+
 .trade-row {
     background: var(--ef-bg);
     border-radius: var(--ef-radius-sm);

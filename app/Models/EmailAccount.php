@@ -27,6 +27,8 @@ class EmailAccount extends Model
         'smtp_port',
         'smtp_encryption',
         'credentials',
+        'signature_html',
+        'signature_auto',
         'is_default',
         'is_active',
     ];
@@ -38,6 +40,7 @@ class EmailAccount extends Model
             'smtp_port' => 'integer',
             'is_default' => 'boolean',
             'is_active' => 'boolean',
+            'signature_auto' => 'boolean',
         ];
     }
 

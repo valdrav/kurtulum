@@ -4,8 +4,8 @@
 @include('partials.page-header', ['title' => __('finance.hub')])
 @include('partials.finance-nav')
 
-<div class="row row-cards mb-4">
-    <div class="col-md-3">
+<div class="row row-cards row-cols-1 row-cols-md-2 row-cols-xl-5 mb-4">
+    <div class="col">
         <a href="{{ route('finance.treasury') }}" class="card stat-card text-decoration-none h-100">
             <div class="card-body">
                 <div class="subheader">{{ __('finance.treasury') }}</div>
@@ -14,20 +14,29 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card"><div class="card-body">
+    <div class="col">
+        <a href="{{ route('finance.wallet') }}" class="card stat-card text-decoration-none h-100">
+            <div class="card-body">
+                <div class="subheader">{{ __('finance.wallet') }}</div>
+                <div class="h3 mb-0 text-azure"><i class="ti ti-wallet"></i></div>
+                <div class="text-muted small">{{ __('finance.wallet_hint') }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col">
+        <div class="card stat-card h-100"><div class="card-body">
             <div class="subheader">{{ __('finance.receivables') }}</div>
             <div class="h1 text-green mb-0">{{ number_format($totalReceivable, 2, ',', '.') }} ₺</div>
         </div></div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card"><div class="card-body">
+    <div class="col">
+        <div class="card stat-card h-100"><div class="card-body">
             <div class="subheader">{{ __('finance.payables') }}</div>
             <div class="h1 text-red mb-0">{{ number_format($totalPayable, 2, ',', '.') }} ₺</div>
         </div></div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card"><div class="card-body">
+    <div class="col">
+        <div class="card stat-card h-100"><div class="card-body">
             <div class="subheader">{{ __('finance.cari_accounts') }}</div>
             <div class="h1 mb-0">{{ $accounts->total() }}</div>
         </div></div>

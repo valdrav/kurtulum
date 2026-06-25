@@ -106,6 +106,25 @@
                 <span class="form-check-label">{{ __('emails.is_default') }}</span>
             </label>
         </div>
+
+        <div class="col-12">
+            <hr class="my-1">
+            <h4 class="h5 mb-2"><i class="ti ti-writing-sign me-1"></i>{{ __('emails.signature') }}</h4>
+        </div>
+        <div class="col-12">
+            <label class="form-label">{{ __('emails.signature_html') }}</label>
+            <textarea name="signature_html" class="form-control" rows="6"
+                      placeholder="{{ __('emails.signature_placeholder') }}">{{ old('signature_html', $isEdit ? $account->signature_html : '') }}</textarea>
+            <div class="form-hint">{{ __('emails.signature_html_hint') }}</div>
+        </div>
+        <div class="col-12">
+            <label class="form-check">
+                <input type="checkbox" name="signature_auto" value="1" class="form-check-input"
+                       @checked(old('signature_auto', $isEdit ? $account->signature_auto : true))>
+                <span class="form-check-label">{{ __('emails.signature_auto') }}</span>
+            </label>
+        </div>
+
         <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
             <button type="submit" class="btn btn-primary">{{ $submitLabel ?? __('app.save') }}</button>
             <a href="{{ route('emails.accounts') }}" class="btn btn-link">{{ __('emails.back_to_accounts') }}</a>

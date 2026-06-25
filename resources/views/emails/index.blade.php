@@ -7,6 +7,7 @@
     @if(can_access('emails.create'))
     <a href="{{ route('emails.compose') }}" class="btn btn-primary btn-sm"><i class="ti ti-pencil me-1"></i> {{ __('emails.compose') }}</a>
     <a href="{{ route('emails.accounts') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-settings me-1"></i> {{ __('emails.accounts') }}</a>
+    <a href="{{ route('emails.signatures') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-writing-sign me-1"></i> {{ __('emails.signatures') }}</a>
     @if($imapAvailable)
     <form method="POST" action="{{ route('emails.sync') }}" class="d-inline">@csrf
         <button type="submit" class="btn btn-outline-primary btn-sm"><i class="ti ti-refresh me-1"></i> {{ __('emails.sync') }}</button>

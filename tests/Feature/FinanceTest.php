@@ -125,4 +125,30 @@ class FinanceTest extends FeatureTestCase
             ->assertOk()
             ->assertSee(__('finance.by_category'));
     }
+
+    public function test_income_expense_delete_reverses_treasury_balance(): void
+    {
+        $this->actingAsAdmin();
+
+        $treasury = company_treasury()->defaultAccount();
+        $before = (float) $treasury->current_balance;
+
+        $this->post(route('finance.income-expenses.store'), [
+            'type' => 'expense',
+            'item_name' => 'Test silinecek',
+            'amount' => 75,
+            'currency' => 'TRY',
+            'transaction_date' => now()->toDateString(),
+        ])->assertRedirect();
+
+        $entry = IncomeExpense::where('item_name', 'Test silinecek')->firstOrFail();
+        $treasury->refresh();
+        $this->assertEquals($before - 75, (float) $treasury->current_balance);
+
+        $this->delete(route('finance.income-expenses.destroy', $entry))->assertRedirect();
+
+        $treasury->refresh();
+        $this->assertEquals($before, (float) $treasury->current_balance);
+        $this->assertSoftDeleted('income_expenses', ['id' => $entry->id]);
+    }
 }

@@ -83,6 +83,7 @@
                     <th>{{ __('finance.category') }}</th>
                     <th>{{ __('finance.treasury_account') }}</th>
                     <th class="text-end">{{ __('app.amount') }}</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -94,9 +95,10 @@
                     <td class="small">{{ $item->categoryLabel() }}</td>
                     <td class="small">{{ $item->account?->name ?? '—' }}</td>
                     <td class="text-end">{{ number_format($item->amount_base ?? $item->amount, 2, ',', '.') }} ₺</td>
+                    <td>@include('partials.income-expense-actions', ['item' => $item])</td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="text-muted text-center py-4">{{ __('app.no_records') }}</td></tr>
+                <tr><td colspan="7" class="text-muted text-center py-4">{{ __('app.no_records') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

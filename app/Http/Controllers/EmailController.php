@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Email;
 use App\Models\EmailAccount;
+use App\Services\EmailSignatureService;
 use App\Services\ImapMailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -12,9 +13,9 @@ class EmailController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:emails.view')->only(['index', 'show', 'accounts']);
+        $this->middleware('permission:emails.view')->only(['index', 'show', 'accounts', 'signatures']);
         $this->middleware('permission:emails.create')->only(['storeAccount', 'compose', 'send', 'sync']);
-        $this->middleware('permission:emails.edit|emails.create')->only(['editAccount', 'updateAccount']);
+        $this->middleware('permission:emails.edit|emails.create')->only(['editAccount', 'updateAccount', 'updateSignature']);
         $this->middleware('permission:emails.delete|emails.create')->only(['destroyAccount']);
     }
 
@@ -47,6 +48,8 @@ class EmailController extends Controller
             'imap_encryption' => 'nullable|string|in:ssl,tls,none',
             'smtp_username' => 'nullable|string',
             'smtp_password' => $updating ? 'nullable|string' : 'required|string|min:1',
+            'signature_html' => 'nullable|string|max:15000',
+            'signature_auto' => 'boolean',
             'is_default' => 'boolean',
         ]);
 
@@ -58,6 +61,8 @@ class EmailController extends Controller
                 'smtp_host' => 'required|string',
             ]);
         }
+
+        $validated['signature_auto'] = $request->boolean('signature_auto', true);
 
         return $validated;
     }
@@ -223,26 +228,67 @@ class EmailController extends Controller
         return back()->with('success', "{$total} yeni mesaj alındı.");
     }
 
-    public function compose()
+    public function signatures()
     {
-        $accounts = $this->userAccounts()->get();
+        $accounts = EmailAccount::where('user_id', auth()->id())->orderBy('email')->get();
 
-        return view('emails.compose', compact('accounts'));
+        return view('emails.signatures', compact('accounts'));
     }
 
-    public function send(Request $request)
+    public function updateSignature(Request $request, EmailAccount $account)
+    {
+        $this->authorizeAccount($account);
+
+        $validated = $request->validate([
+            'signature_html' => 'nullable|string|max:15000',
+            'signature_auto' => 'boolean',
+        ]);
+
+        $account->update([
+            'signature_html' => $validated['signature_html'] ?? '',
+            'signature_auto' => $request->boolean('signature_auto'),
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => __('messages.saved')]);
+        }
+
+        return back()->with('success', __('messages.saved'));
+    }
+
+    public function compose(EmailSignatureService $signatures)
+    {
+        $accounts = $this->userAccounts()->get();
+        $signatureMap = $signatures->signatureMapForAccounts($accounts);
+        $defaultAccountId = $accounts->firstWhere('is_default', true)?->id ?? $accounts->first()?->id;
+
+        return view('emails.compose', compact('accounts', 'signatureMap', 'defaultAccountId'));
+    }
+
+    public function send(Request $request, EmailSignatureService $signatures)
     {
         $validated = $request->validate([
             'email_account_id' => 'required|exists:email_accounts,id',
             'to_emails' => 'required|string',
             'subject' => 'required|string|max:500',
-            'body' => 'required|string',
+            'body_html' => 'required|string',
+            'include_signature' => 'boolean',
             'emailable_type' => 'nullable|string',
             'emailable_id' => 'nullable|integer',
         ]);
 
         $account = EmailAccount::where('user_id', auth()->id())
             ->findOrFail($validated['email_account_id']);
+
+        $composed = $signatures->buildOutgoingBody(
+            $validated['body_html'],
+            $account,
+            $request->boolean('include_signature', true)
+        );
+
+        if (trim(strip_tags($composed['html'])) === '') {
+            return back()->withInput()->withErrors(['body_html' => __('emails.body_required')]);
+        }
 
         config([
             'mail.default' => 'smtp',
@@ -254,10 +300,12 @@ class EmailController extends Controller
         ]);
 
         try {
-            Mail::raw($validated['body'], function ($message) use ($validated, $account) {
+            Mail::html($composed['html'], function ($message) use ($validated, $account, $composed) {
                 $message->from($account->email, $account->name)
                     ->to(array_map('trim', explode(',', $validated['to_emails'])))
                     ->subject($validated['subject']);
+
+                $message->text($composed['text']);
             });
 
             Email::create([
@@ -267,15 +315,16 @@ class EmailController extends Controller
                 'from_name' => $account->name,
                 'to' => array_map('trim', explode(',', $validated['to_emails'])),
                 'subject' => $validated['subject'],
-                'body_text' => $validated['body'],
+                'body_html' => $composed['html'],
+                'body_text' => $composed['text'],
                 'sent_at' => now(),
                 'emailable_type' => $validated['emailable_type'] ?? null,
                 'emailable_id' => $validated['emailable_id'] ?? null,
             ]);
 
-            return redirect()->route('emails.index')->with('success', 'E-posta gönderildi.');
+            return redirect()->route('emails.index')->with('success', __('emails.sent'));
         } catch (\Exception $e) {
-            return back()->withErrors(['send' => $e->getMessage()]);
+            return back()->withInput()->withErrors(['send' => $e->getMessage()]);
         }
     }
 }

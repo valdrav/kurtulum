@@ -8,6 +8,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Finance\WalletController;
 use App\Http\Controllers\Install\InstallController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Logistics\PortController;
@@ -120,6 +121,11 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/income-expenses/{incomeExpense}', [FinanceController::class, 'updateIncomeExpense'])->name('income-expenses.update');
         Route::delete('/income-expenses/{incomeExpense}', [FinanceController::class, 'destroyIncomeExpense'])->name('income-expenses.destroy');
         Route::get('/profit-loss', [FinanceController::class, 'profitLoss'])->name('profit-loss');
+        Route::get('/wallet', [WalletController::class, 'index'])->name('wallet');
+        Route::post('/wallet/accounts', [WalletController::class, 'storeWallet'])->name('wallet.accounts.store');
+        Route::post('/wallet/transactions', [WalletController::class, 'storeTransaction'])->name('wallet.transactions.store');
+        Route::put('/wallet/transactions/{transaction}', [WalletController::class, 'updateTransaction'])->name('wallet.transactions.update');
+        Route::delete('/wallet/transactions/{transaction}', [WalletController::class, 'destroyTransaction'])->name('wallet.transactions.destroy');
     });
 
     // Documents
@@ -157,6 +163,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/accounts/{account}/edit', [EmailController::class, 'editAccount'])->name('accounts.edit');
         Route::put('/accounts/{account}', [EmailController::class, 'updateAccount'])->name('accounts.update');
         Route::delete('/accounts/{account}', [EmailController::class, 'destroyAccount'])->name('accounts.destroy');
+        Route::put('/accounts/{account}/signature', [EmailController::class, 'updateSignature'])->name('accounts.signature.update');
+        Route::get('/signatures', [EmailController::class, 'signatures'])->name('signatures');
         Route::post('/sync', [EmailController::class, 'sync'])->name('sync');
         Route::get('/compose', [EmailController::class, 'compose'])->name('compose');
         Route::post('/send', [EmailController::class, 'send'])->name('send');

@@ -3,6 +3,13 @@
 @section('content')
 @include('partials.page-header', ['title' => __('emails.accounts')])
 
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a href="{{ route('emails.index') }}" class="btn btn-ghost-secondary btn-sm"><i class="ti ti-arrow-left"></i> {{ __('emails.back_to_inbox') }}</a>
+    @if(can_access('emails.view'))
+    <a href="{{ route('emails.signatures') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-writing-sign me-1"></i> {{ __('emails.signatures') }}</a>
+    @endif
+</div>
+
 @if(session('success'))
 <div class="alert alert-success">{{ session('success') }}</div>
 @endif

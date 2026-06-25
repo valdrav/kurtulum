@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\ActivityLogService;
 use App\Services\SiteBrandingService;
 use App\Services\UpdateService;
 use Illuminate\Http\Request;
-use Spatie\Activitylog\Models\Activity;
 
 class SettingsController extends Controller
 {
@@ -262,25 +262,9 @@ class SettingsController extends Controller
         return back()->with('success', __('messages.saved'));
     }
 
-    public function auditLog()
+    public function auditLog(ActivityLogService $activityLog)
     {
-        $table = (new Activity)->getTable();
-
-        $logs = Activity::query()
-            ->with(['causer' => fn ($q) => $q->select('id', 'name')])
-            ->select([
-                "{$table}.id",
-                "{$table}.description",
-                "{$table}.event",
-                "{$table}.subject_type",
-                "{$table}.subject_id",
-                "{$table}.causer_type",
-                "{$table}.causer_id",
-                "{$table}.created_at",
-            ])
-            ->selectRaw("LEFT(CAST({$table}.properties AS CHAR), 2048) AS properties")
-            ->latest("{$table}.created_at")
-            ->paginate(25);
+        $logs = $activityLog->paginated(25);
 
         return view('settings.audit-log', compact('logs'));
     }

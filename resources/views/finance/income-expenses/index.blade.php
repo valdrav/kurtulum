@@ -82,14 +82,7 @@
                                 @if($item->account)<div class="text-muted small">{{ $item->account->name }}</div>@endif
                             </td>
                             <td class="text-end {{ $item->type==='income'?'text-green':'text-red' }}">{{ number_format($item->amount_base ?? $item->amount, 2, ',', '.') }} ₺</td>
-                            <td class="text-nowrap">
-                                @if(can_access('finance.edit'))<a href="{{ route('finance.income-expenses.edit', $item) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>@endif
-                                @if(can_access('finance.delete'))
-                                <form method="POST" action="{{ route('finance.income-expenses.destroy', $item) }}" class="d-inline" onsubmit="return confirm('Silinsin mi?')">@csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-ghost-danger"><i class="ti ti-trash"></i></button>
-                                </form>
-                                @endif
-                            </td>
+                            <td>@include('partials.income-expense-actions', ['item' => $item])</td>
                         </tr>
                         @empty
                         <tr><td colspan="5" class="text-muted text-center py-4">{{ __('app.no_records') }}</td></tr>

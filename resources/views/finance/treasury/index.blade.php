@@ -153,7 +153,7 @@
             </div>
             <div class="table-responsive">
                 <table class="table table-vcenter table-sm card-table mb-0">
-                    <thead><tr><th>Tarih</th><th>Tip</th><th>Açıklama</th><th class="text-end">Tutar</th></tr></thead>
+                    <thead><tr><th>Tarih</th><th>Tip</th><th>Açıklama</th><th class="text-end">Tutar</th><th></th></tr></thead>
                     <tbody>
                         @forelse($recentEntries as $item)
                         <tr>
@@ -161,9 +161,10 @@
                             <td><span class="badge bg-{{ $item->type==='income'?'success':'danger' }}-lt">{{ $item->type === 'income' ? __('finance.type_income') : __('finance.type_expense') }}</span></td>
                             <td>{{ $item->displayTitle() }}</td>
                             <td class="text-end {{ $item->type==='income'?'text-green':'text-red' }}">{{ number_format($item->amount_base ?? $item->amount, 2, ',', '.') }} ₺</td>
+                            <td>@include('partials.income-expense-actions', ['item' => $item])</td>
                         </tr>
                         @empty
-                        <tr><td colspan="4" class="text-muted text-center py-3">{{ __('app.no_records') }}</td></tr>
+                        <tr><td colspan="5" class="text-muted text-center py-3">{{ __('app.no_records') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>

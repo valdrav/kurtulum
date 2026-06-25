@@ -2,6 +2,7 @@
     $currentRoute = request()->route()?->getName() ?? '';
     $links = [
         ['route' => 'finance.treasury', 'icon' => 'ti-cash', 'label' => 'finance.treasury', 'routes' => ['finance.treasury', 'finance.index']],
+        ['route' => 'finance.wallet', 'icon' => 'ti-wallet', 'label' => 'finance.wallet', 'routes' => ['finance.wallet']],
         ['route' => 'finance.income-expenses', 'icon' => 'ti-list', 'label' => 'finance.movements', 'routes' => ['finance.income-expenses', 'finance.income-expenses.edit']],
         ['route' => 'finance.accounts', 'icon' => 'ti-address-book', 'label' => 'finance.cari_accounts', 'routes' => ['finance.accounts', 'finance.accounts.create', 'finance.accounts.edit', 'finance.accounts.show', 'finance.payments', 'finance.payments.show', 'finance.payments.edit', 'finance.collections', 'finance.collections.show', 'finance.collections.edit']],
         ['route' => 'finance.profit-loss', 'icon' => 'ti-chart-bar', 'label' => 'finance.profit_loss', 'routes' => ['finance.profit-loss']],

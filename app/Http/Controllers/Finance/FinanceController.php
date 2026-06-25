@@ -36,7 +36,7 @@ class FinanceController extends Controller
             'editAccount', 'updateAccount', 'editPayment', 'updatePayment',
             'editCollection', 'updateCollection', 'editIncomeExpense', 'updateIncomeExpense',
         ]);
-        $this->middleware('permission:finance.delete')->only([
+        $this->middleware('permission:finance.delete|finance.create')->only([
             'destroyPayment', 'destroyCollection', 'destroyIncomeExpense',
         ]);
     }

@@ -68,6 +68,13 @@ if (!function_exists('company_treasury')) {
     }
 }
 
+if (!function_exists('company_wallet')) {
+    function company_wallet(): \App\Services\CompanyWalletService
+    {
+        return app(\App\Services\CompanyWalletService::class);
+    }
+}
+
 if (!function_exists('finance_reports')) {
     function finance_reports(): \App\Services\IncomeExpenseReportService
     {
@@ -213,18 +220,68 @@ if (!function_exists('activity_subject_label')) {
     }
 }
 
+if (!function_exists('activity_field_label')) {
+    function activity_field_label(string $key): string
+    {
+        $label = __("audit.fields.{$key}");
+
+        return str_starts_with($label, 'audit.fields.') ? str_replace('_', ' ', $key) : $label;
+    }
+}
+
 if (!function_exists('activity_format_change_value')) {
     function activity_format_change_value(mixed $value): string
     {
+        if ($value === null || $value === '') {
+            return '—';
+        }
+
+        if (is_bool($value)) {
+            return $value ? __('audit.yes') : __('audit.no');
+        }
+
         if (is_array($value) || is_object($value)) {
             $encoded = json_encode($value, JSON_UNESCAPED_UNICODE) ?: '…';
 
-            return mb_strlen($encoded) > 120 ? mb_substr($encoded, 0, 117) . '…' : $encoded;
+            return mb_strlen($encoded) > 160 ? mb_substr($encoded, 0, 157) . '…' : $encoded;
         }
 
-        $string = (string) $value;
+        $string = trim((string) $value);
 
-        return mb_strlen($string) > 120 ? mb_substr($string, 0, 117) . '…' : $string;
+        if ($string === '') {
+            return '—';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $string)) {
+            try {
+                return \Illuminate\Support\Carbon::parse($string)->format('d.m.Y H:i');
+            } catch (\Throwable) {
+                // fall through
+            }
+        }
+
+        return mb_strlen($string) > 160 ? mb_substr($string, 0, 157) . '…' : $string;
+    }
+}
+
+if (!function_exists('activity_hidden_change_lines')) {
+    function activity_hidden_change_lines($log): array
+    {
+        $lines = [];
+
+        if ((int) ($log->changed_body_html ?? 0) === 1) {
+            $lines[] = __('audit.hidden_changes.body_html');
+        }
+
+        if ((int) ($log->changed_body_text ?? 0) === 1) {
+            $lines[] = __('audit.hidden_changes.body_text');
+        }
+
+        if ((int) ($log->changed_credentials ?? 0) === 1) {
+            $lines[] = __('audit.hidden_changes.credentials');
+        }
+
+        return $lines;
     }
 }
 
@@ -240,15 +297,11 @@ if (!function_exists('activity_changes_html')) {
         }
 
         if (! is_array($props)) {
-            return '<span class="text-muted">' . e(__('audit.no_changes')) . '</span>';
+            $props = [];
         }
 
-        $old = $props['old'] ?? [];
-        $new = $props['attributes'] ?? [];
-
-        if (empty($old) && empty($new)) {
-            return '<span class="text-muted">' . e(__('audit.no_changes')) . '</span>';
-        }
+        $old = is_array($props['old'] ?? null) ? $props['old'] : [];
+        $new = is_array($props['attributes'] ?? null) ? $props['attributes'] : [];
 
         $skipKeys = [
             'updated_at', 'created_at', 'password', 'credentials', 'remember_token',
@@ -263,25 +316,30 @@ if (!function_exists('activity_changes_html')) {
                 continue;
             }
 
-            $from = $old[$key] ?? '—';
-            $to = $new[$key] ?? '—';
+            $from = array_key_exists($key, $old) ? $old[$key] : null;
+            $to = array_key_exists($key, $new) ? $new[$key] : null;
 
             if ($from == $to) {
                 continue;
             }
 
-            $lines[] = '<div class="small text-break"><strong>' . e($key) . ':</strong> '
-                . e(activity_format_change_value($from))
-                . ' → '
-                . e(activity_format_change_value($to))
+            $lines[] = '<div class="audit-change-line"><span class="audit-change-field">'
+                . e(activity_field_label($key)) . ':</span> '
+                . '<span class="audit-change-old">' . e(activity_format_change_value($from)) . '</span>'
+                . ' <span class="audit-change-arrow">→</span> '
+                . '<span class="audit-change-new">' . e(activity_format_change_value($to)) . '</span>'
                 . '</div>';
         }
 
-        if ($lines === [] && (! empty($old) || ! empty($new))) {
-            return '<span class="text-muted">' . e(__('audit.summary_only')) . '</span>';
+        foreach (activity_hidden_change_lines($log) as $hiddenLine) {
+            $lines[] = '<div class="audit-change-line text-muted"><em>' . e($hiddenLine) . '</em></div>';
         }
 
-        return $lines ? implode('', $lines) : '<span class="text-muted">' . e(__('audit.no_changes')) . '</span>';
+        if ($lines === []) {
+            return '<span class="text-muted">' . e(__('audit.no_changes')) . '</span>';
+        }
+
+        return implode('', $lines);
     }
 }
 
