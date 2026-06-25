@@ -14,6 +14,7 @@
                 <th>{{ __('logistics.cost_payee') }}</th>
                 <th>{{ __('logistics.cost_country') }}</th>
                 <th class="text-end">{{ __('app.amount') }}</th>
+                <th class="text-end">{{ __('finance.try_equivalent') }}</th>
                 <th>{{ __('logistics.cost_notes') }}</th>
                 <th>{{ __('logistics.cost_status_label') }}</th>
                 <th></th>
@@ -36,8 +37,14 @@
                 <td>{{ $item->country ?: '—' }}</td>
                 <td class="text-end text-nowrap">
                     {{ number_format($item->amount, 2, ',', '.') }} {{ $item->currency }}
+                </td>
+                <td class="text-end text-nowrap">
                     @if($item->amount_try)
-                    <div class="text-muted small">{{ number_format($item->amount_try, 2, ',', '.') }} ₺</div>
+                    <strong>{{ number_format($item->amount_try, 2, ',', '.') }} ₺</strong>
+                    @elseif($try = format_try_equivalent((float)$item->amount, $item->currency, (float)$item->exchange_rate))
+                    <span class="text-muted">{{ $try }}</span>
+                    @else
+                    —
                     @endif
                 </td>
                 <td class="small text-muted" style="max-width:220px">{{ Str::limit($item->notes, 80) ?: '—' }}</td>
@@ -64,7 +71,7 @@
             </tr>
             @if(can_access('shipments.edit'))
             <tr class="collapse" id="edit-cost-{{ $item->uuid }}">
-                <td colspan="{{ $showShipmentColumn ? 10 : 9 }}">
+                <td colspan="{{ $showShipmentColumn ? 11 : 10 }}">
                     <form method="POST" action="{{ route('shipments.costs.update', $item) }}" class="p-3 bg-light rounded">
                         @csrf @method('PUT')
                         @include('logistics.shipments.costs._form', [
@@ -79,7 +86,7 @@
             </tr>
             @endif
             @empty
-            <tr><td colspan="{{ $showShipmentColumn ? 10 : 9 }}" class="text-muted text-center py-4">{{ __('app.no_records') }}</td></tr>
+            <tr><td colspan="{{ $showShipmentColumn ? 11 : 10 }}" class="text-muted text-center py-4">{{ __('app.no_records') }}</td></tr>
             @endforelse
         </tbody>
     </table>

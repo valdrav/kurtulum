@@ -25,6 +25,14 @@
 <div class="card"><div class="card-body">
 <form method="POST" action="{{ $shipment->exists ? route('shipments.update', $shipment) : route('shipments.store') }}">@csrf @if($shipment->exists)@method('PUT')@endif
 <div class="row">
+    <div class="col-md-4 mb-3">
+        <label class="form-label">{{ __('logistics.shipment_number') }} *</label>
+        <input type="text" name="shipment_number" class="form-control" maxlength="50"
+               value="{{ old('shipment_number', $shipment->shipment_number) }}"
+               placeholder="{{ $shipment->exists ? '' : 'SHP-2026-00001' }}"
+               @if($shipment->exists) required @endif>
+        @unless($shipment->exists)<div class="form-hint">{{ __('logistics.shipment_number_hint') }}</div>@endunless
+    </div>
     <div class="col-md-4 mb-3"><label class="form-label">{{ __('logistics.transport_mode') }} *</label>
         <select name="transport_mode" class="form-select" required id="transport_mode">
             @foreach(['road','sea','air','rail','multimodal'] as $m)<option value="{{ $m }}" @selected($mode===$m)>{{ __('logistics.'.$m) }}</option>@endforeach

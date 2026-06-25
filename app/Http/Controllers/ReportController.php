@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\IncomeExpense;
 use App\Models\Order;
 use App\Models\Shipment;
+use App\Models\Supplier;
 use App\Services\IncomeExpenseReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ class ReportController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:reports.view')->only(['index', 'sales', 'logistics', 'finance', 'customers']);
+        $this->middleware('permission:reports.view')->only(['index', 'sales', 'logistics', 'finance', 'customers', 'suppliers']);
     }
 
     public function index()
@@ -98,6 +99,37 @@ class ReportController extends Controller
             ->get();
 
         return view('reports.customers', compact('topCustomers'));
+    }
+
+    public function suppliers()
+    {
+        $topSuppliers = Supplier::query()
+            ->withCount('orders')
+            ->withSum('orders', 'purchase_total')
+            ->withSum('orders', 'total_amount')
+            ->orderByDesc('orders_count')
+            ->limit(20)
+            ->get();
+
+        $byType = Supplier::query()
+            ->select('type', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->groupBy('type')
+            ->orderByDesc('count')
+            ->get();
+
+        $byCountry = Supplier::query()
+            ->select('country', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->whereNotNull('country')
+            ->where('country', '!=', '')
+            ->groupBy('country')
+            ->orderByDesc('count')
+            ->limit(15)
+            ->get();
+
+        $activeCount = Supplier::where('status', 'active')->count();
+        $totalCount = Supplier::count();
+
+        return view('reports.suppliers', compact('topSuppliers', 'byType', 'byCountry', 'activeCount', 'totalCount'));
     }
 
     protected function monthExpression(string $column): string

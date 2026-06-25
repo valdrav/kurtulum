@@ -13,6 +13,8 @@ return [
     'atd' => 'ATD (Gerçek Kalkış)',
     'ata' => 'ATA (Gerçek Varış)',
     'bl_number' => 'Konşimento No (B/L)',
+    'shipment_number' => 'Sevkiyat Numarası',
+    'shipment_number_hint' => 'Boş bırakılırsa otomatik numara üretilir',
     'awb_number' => 'Hava Yolu Konşimentosu (AWB)',
     'cmr_number' => 'CMR No',
     'vessel' => 'Gemi',

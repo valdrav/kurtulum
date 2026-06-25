@@ -147,8 +147,18 @@
                     <input type="hidden" name="currency" value="{{ $order->currency }}">
                     <div class="mb-2">
                         <label class="form-label">{{ __('app.amount') }}</label>
-                        <input type="number" step="0.01" name="amount" class="form-control" value="{{ number_format($finance['remaining_receivable'], 2, '.', '') }}" required>
+                        <input type="number" step="0.01" name="amount" class="form-control" id="collection-amount" value="{{ number_format($finance['remaining_receivable'], 2, '.', '') }}" required>
+                        @if($order->currency !== 'TRY')
+                        <div class="text-muted small mt-1" id="collection-try-preview"></div>
+                        @endif
                     </div>
+                    @if($order->currency !== 'TRY')
+                    <div class="mb-2">
+                        <label class="form-label">{{ __('finance.exchange_rate') }}</label>
+                        <input type="number" step="0.000001" name="exchange_rate" class="form-control" id="collection-rate" min="0.000001" placeholder="1 {{ $order->currency }} = ? TRY">
+                        <div class="form-hint">{{ __('finance.exchange_rate_hint') }}</div>
+                    </div>
+                    @endif
                     <div class="mb-2">
                         <label class="form-label">{{ __('finance.treasury_account') }}</label>
                         <select name="treasury_account_id" class="form-select" required>
@@ -186,8 +196,18 @@
                     <input type="hidden" name="currency" value="{{ $order->currency }}">
                     <div class="mb-2">
                         <label class="form-label">{{ __('app.amount') }}</label>
-                        <input type="number" step="0.01" name="amount" class="form-control" value="{{ number_format($finance['remaining_payable'], 2, '.', '') }}" required>
+                        <input type="number" step="0.01" name="amount" class="form-control" id="payment-amount" value="{{ number_format($finance['remaining_payable'], 2, '.', '') }}" required>
+                        @if($order->currency !== 'TRY')
+                        <div class="text-muted small mt-1" id="payment-try-preview"></div>
+                        @endif
                     </div>
+                    @if($order->currency !== 'TRY')
+                    <div class="mb-2">
+                        <label class="form-label">{{ __('finance.exchange_rate') }}</label>
+                        <input type="number" step="0.000001" name="exchange_rate" class="form-control" id="payment-rate" min="0.000001" placeholder="1 {{ $order->currency }} = ? TRY">
+                        <div class="form-hint">{{ __('finance.exchange_rate_hint') }}</div>
+                    </div>
+                    @endif
                     <div class="mb-2">
                         <label class="form-label">{{ __('finance.treasury_account') }}</label>
                         <select name="treasury_account_id" class="form-select" required>
@@ -221,13 +241,23 @@
                 @foreach($order->collections as $c)
                 <a href="{{ route('finance.collections.show', $c) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
                     <span class="text-green"><i class="ti ti-arrow-down-left"></i> {{ $c->collection_number }}</span>
-                    <strong>+{{ number_format($c->amount, 2) }}</strong>
+                    <span class="text-end">
+                        <strong>+{{ number_format($c->amount, 2) }} {{ $c->currency }}</strong>
+                        @if($try = format_try_equivalent((float)$c->amount, $c->currency, (float)$c->exchange_rate))
+                        <div class="text-muted small">{{ $try }}</div>
+                        @endif
+                    </span>
                 </a>
                 @endforeach
                 @foreach($order->payments as $p)
                 <a href="{{ route('finance.payments.show', $p) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
                     <span class="text-red"><i class="ti ti-arrow-up-right"></i> {{ $p->payment_number }}</span>
-                    <strong>-{{ number_format($p->amount, 2) }}</strong>
+                    <span class="text-end">
+                        <strong>-{{ number_format($p->amount, 2) }} {{ $p->currency }}</strong>
+                        @if($try = format_try_equivalent((float)$p->amount, $p->currency, (float)$p->exchange_rate))
+                        <div class="text-muted small">{{ $try }}</div>
+                        @endif
+                    </span>
                 </a>
                 @endforeach
             </div>
@@ -236,3 +266,29 @@
     </div>
 </div>
 @endsection
+
+@if($order->currency !== 'TRY')
+@push('scripts')
+<script>
+(function () {
+    function bindTryPreview(amountId, rateId, previewId) {
+        const amountEl = document.getElementById(amountId);
+        const rateEl = document.getElementById(rateId);
+        const previewEl = document.getElementById(previewId);
+        if (!amountEl || !rateEl || !previewEl) return;
+        const update = () => {
+            const amount = parseFloat(amountEl.value) || 0;
+            const rate = parseFloat(rateEl.value) || 0;
+            previewEl.textContent = rate > 0
+                ? '≈ ' + (amount * rate).toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ₺'
+                : '';
+        };
+        amountEl.addEventListener('input', update);
+        rateEl.addEventListener('input', update);
+    }
+    bindTryPreview('collection-amount', 'collection-rate', 'collection-try-preview');
+    bindTryPreview('payment-amount', 'payment-rate', 'payment-try-preview');
+})();
+</script>
+@endpush
+@endif

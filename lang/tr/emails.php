@@ -42,6 +42,7 @@ return [
     'inbox' => 'Gelen Kutum',
     'compose' => 'Yaz',
     'sync' => 'Senkronize',
+    'sync_success' => ':count yeni mesaj alındı.',
     'no_subject' => '(Konu yok)',
     'no_body' => 'Bu e-postanın içeriği görüntülenemiyor.',
     'no_body_hint' => 'Senkronize butonuna basın — eksik içerikler ve gömülü resimler otomatik tamamlanır.',

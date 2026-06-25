@@ -39,5 +39,14 @@
             </div>
         </a>
     </div>
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ route('reports.suppliers') }}" class="card card-link h-100">
+            <div class="card-body text-center">
+                <i class="ti ti-building-factory fs-1 text-cyan"></i>
+                <h3 class="mt-2 h4">{{ __('reports.suppliers_title') }}</h3>
+                <p class="text-muted small mb-0">{{ __('reports.suppliers_desc') }}</p>
+            </div>
+        </a>
+    </div>
 </div>
 @endsection

@@ -612,6 +612,55 @@ body.ef-app {
     color: var(--ef-primary);
 }
 
+.doc-folder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 0.75rem;
+}
+
+.doc-folder-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1.25rem 0.75rem;
+    border-radius: var(--ef-radius-sm);
+    border: 1px solid var(--ef-border);
+    background: var(--ef-surface);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.doc-folder-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ef-shadow-md);
+    color: inherit;
+}
+
+.doc-folder-icon {
+    font-size: 2.5rem;
+    color: #f59e0b;
+    margin-bottom: 0.5rem;
+}
+
+.doc-folder-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.3;
+}
+
+.doc-tile-wrap {
+    position: relative;
+}
+
+.doc-tile-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-top: 0.35rem;
+}
+
 .kanban-board {
     display: flex;
     gap: 0.75rem;

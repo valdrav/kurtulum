@@ -98,9 +98,25 @@ class EmailController extends Controller
         $account->save();
     }
 
-    public function index(Request $request)
+    public function index(Request $request, ImapMailService $imap)
     {
         $accountIds = $this->userAccountIds();
+        $imapAvailable = $imap->isAvailable();
+        $syncMessage = null;
+
+        if ($imapAvailable && ! $request->filled('page') && ! $request->boolean('no_sync')) {
+            try {
+                $total = 0;
+                foreach ($this->userAccounts()->get() as $account) {
+                    $total += $imap->syncAccount($account);
+                }
+                if ($total > 0) {
+                    $syncMessage = __('emails.sync_success', ['count' => $total]);
+                }
+            } catch (\Throwable $e) {
+                $syncMessage = null;
+            }
+        }
 
         $emails = Email::with('emailAccount')
             ->whereIn('email_account_id', $accountIds)
@@ -126,9 +142,8 @@ class EmailController extends Controller
             ->withQueryString();
 
         $accounts = $this->userAccounts()->get();
-        $imapAvailable = app(ImapMailService::class)->isAvailable();
 
-        return view('emails.index', compact('emails', 'accounts', 'imapAvailable'));
+        return view('emails.index', compact('emails', 'accounts', 'imapAvailable', 'syncMessage'));
     }
 
     public function show(Email $email)
@@ -225,7 +240,7 @@ class EmailController extends Controller
             return back()->withErrors(['sync' => implode(' | ', $errors)]);
         }
 
-        return back()->with('success', "{$total} yeni mesaj alındı.");
+        return back()->with('success', __('emails.sync_success', ['count' => $total]));
     }
 
     public function signatures()

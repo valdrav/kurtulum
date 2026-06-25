@@ -40,7 +40,7 @@
         <div class="card">
             <div class="table-responsive">
                 <table class="table table-vcenter card-table">
-                    <thead><tr><th>No</th><th>{{ __('app.date') }}</th><th>Hesap</th><th>Yöntem</th><th>{{ __('app.amount') }}</th><th></th></tr></thead>
+                    <thead><tr><th>No</th><th>{{ __('app.date') }}</th><th>Hesap</th><th>Yöntem</th><th>{{ __('app.amount') }}</th><th>{{ __('finance.try_equivalent') }}</th><th></th></tr></thead>
                     <tbody>
                         @forelse($collections as $c)
                         <tr>
@@ -49,6 +49,7 @@
                             <td>{{ $c->account?->name }}</td>
                             <td>{{ $c->paymentMethod?->name ?? $c->collection_method }}</td>
                             <td>{{ number_format($c->amount, 2, ',', '.') }} {{ $c->currency }}</td>
+                            <td class="text-muted small">{{ format_try_equivalent((float)$c->amount, $c->currency, (float)$c->exchange_rate) ?: '—' }}</td>
                             <td>@if(can_access('finance.edit'))<a href="{{ route('finance.collections.edit', $c) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>@endif</td>
                         </tr>
                         @empty

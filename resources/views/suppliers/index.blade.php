@@ -9,7 +9,7 @@
         'url' => route('suppliers.show', $s),
         'title' => $s->company_name,
         'subtitle' => type_label($s->type, 'suppliers'),
-        'meta' => $s->country,
+        'meta' => country_label($s->country) ?: $s->country,
         'badge' => type_label($s->status, 'suppliers'),
         'editUrl' => route('suppliers.edit', $s),
         'editPermission' => 'suppliers.edit',
@@ -28,7 +28,7 @@
                 <tr>
                     <td><a href="{{ route('suppliers.show', $s) }}">{{ $s->company_name }}</a></td>
                     <td>{{ type_label($s->type, 'suppliers') }}</td>
-                    <td>{{ $s->country }}</td>
+                    <td>{{ country_label($s->country) ?: '-' }}</td>
                     <td>{{ type_label($s->status, 'suppliers') }}</td>
                     <td>
                         @if(can_access('suppliers.edit'))

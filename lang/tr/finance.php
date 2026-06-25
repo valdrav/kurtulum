@@ -11,6 +11,7 @@ return [
     'treasury_hint' => 'Genel kasa şirketin nakit ve banka hesaplarını takip eder. Gelir/gider kayıtları buradan yıllık olarak izlenir — sipariş cari hesaplarından bağımsızdır.',
     'exchange_rate' => 'Döviz kuru',
     'exchange_rate_hint' => 'Boş bırakılırsa güncel MB kuru kullanılır. TRY kasaya döviz tahsilatı TL karşılığı ile yansır.',
+    'try_equivalent' => 'TL Karşılığı',
     'currency_rate_missing' => ':code için geçerli kur bulunamadı. Ayarlar → Kurlar bölümünden güncelleyin veya kur alanına manuel değer girin.',
     'currency_convert_failed' => ':from → :to dönüşümü yapılamadı.',
 

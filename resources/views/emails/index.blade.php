@@ -3,11 +3,18 @@
 @section('content')
 @include('partials.page-header', ['title' => __('emails.inbox')])
 
+@if(!empty($syncMessage))
+<div class="alert alert-success py-2 small">{{ $syncMessage }}</div>
+@endif
+
 <div class="d-flex flex-wrap gap-2 mb-3">
     @if(can_access('emails.create'))
     <a href="{{ route('emails.compose') }}" class="btn btn-primary btn-sm"><i class="ti ti-pencil me-1"></i> {{ __('emails.compose') }}</a>
     <a href="{{ route('emails.accounts') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-settings me-1"></i> {{ __('emails.accounts') }}</a>
     <a href="{{ route('emails.signatures') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-writing-sign me-1"></i> {{ __('emails.signatures') }}</a>
+    @if(can_access('documents.view'))
+    <a href="{{ route('documents.tools.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-file-settings me-1"></i> {{ __('documents.tools.title') }}</a>
+    @endif
     @if($imapAvailable)
     <form method="POST" action="{{ route('emails.sync') }}" class="d-inline">@csrf
         <button type="submit" class="btn btn-outline-primary btn-sm"><i class="ti ti-refresh me-1"></i> {{ __('emails.sync') }}</button>

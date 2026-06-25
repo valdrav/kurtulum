@@ -69,7 +69,8 @@ class ShipmentController extends Controller
 
         $shipment = DB::transaction(function () use ($validated, $request) {
             $data = collect($validated)->except(['legs', 'milestones'])->toArray();
-            $data['shipment_number'] = $this->generateNumber('SHP');
+            $data['shipment_number'] = trim($request->input('shipment_number', ''))
+                ?: $this->generateNumber('SHP');
             $data['created_by'] = auth()->id();
             $shipment = Shipment::create($data);
             $this->syncLegs($shipment, $request->input('legs', []));
@@ -175,7 +176,7 @@ class ShipmentController extends Controller
 
     public function update(Request $request, Shipment $shipment)
     {
-        $validated = $this->validateShipment($request);
+        $validated = $this->validateShipment($request, $shipment);
 
         DB::transaction(function () use ($shipment, $validated, $request) {
             $shipment->update(collect($validated)->except(['legs', 'milestones'])->toArray());
@@ -224,9 +225,15 @@ class ShipmentController extends Controller
         ];
     }
 
-    protected function validateShipment(Request $request): array
+    protected function validateShipment(Request $request, ?Shipment $shipment = null): array
     {
+        $uniqueRule = 'unique:shipments,shipment_number';
+        if ($shipment) {
+            $uniqueRule .= ',' . $shipment->id;
+        }
+
         $validated = $request->validate([
+            'shipment_number' => 'nullable|string|max:50|' . $uniqueRule,
             'order_id' => 'nullable|exists:orders,id',
             'customer_id' => 'nullable|exists:customers,id',
             'transport_mode' => 'required|in:road,sea,air,rail,multimodal',

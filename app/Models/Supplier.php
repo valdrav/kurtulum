@@ -16,23 +16,19 @@ class Supplier extends Model
     use HasUuid, LogsActivity, SoftDeletes;
 
     protected $fillable = [
-        'code',
-        'name',
         'company_name',
-        'tax_number',
-        'tax_office',
+        'contact_person',
         'email',
         'phone',
-        'website',
-        'address',
-        'city',
         'country',
-        'postal_code',
-        'currency',
-        'payment_terms_days',
+        'city',
+        'address',
+        'tax_number',
+        'type',
         'status',
+        'currency',
         'notes',
-        'assigned_user_id',
+        'created_by',
     ];
 
     protected function casts(): array

@@ -18,7 +18,7 @@
         'url' => route('customers.show', $c),
         'title' => $c->company_name,
         'subtitle' => $c->email ?? $c->phone,
-        'meta' => $c->country,
+        'meta' => country_label($c->country) ?: $c->country,
         'badge' => type_label($c->status, 'customers'),
         'badgeClass' => 'bg-'.($c->status === 'active' ? 'success' : 'secondary').'-lt',
         'editUrl' => route('customers.edit', $c),
@@ -38,7 +38,7 @@
                 <tr>
                     <td><a href="{{ route('customers.show', $c) }}">{{ $c->company_name }}</a></td>
                     <td>{{ $c->email ?? $c->phone }}</td>
-                    <td>{{ $c->country }}</td>
+                    <td>{{ country_label($c->country) ?: '-' }}</td>
                     <td><span class="badge bg-{{ $c->status === 'active' ? 'success' : 'secondary' }}-lt">{{ type_label($c->status, 'customers') }}</span></td>
                     <td>
                         @if(can_access('customers.edit'))

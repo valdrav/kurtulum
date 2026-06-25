@@ -91,6 +91,10 @@ class CustomerController extends Controller
         $validated['status'] = $validated['status'] ?? 'active';
         $validated['currency'] = $validated['currency'] ?? 'TRY';
 
+        if (! empty($validated['country'])) {
+            $validated['country'] = country_iso2($validated['country']);
+        }
+
         return $validated;
     }
 }

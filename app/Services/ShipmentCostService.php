@@ -31,6 +31,19 @@ class ShipmentCostService
         $data['status'] = $data['status'] ?? 'pending';
         $data['description'] = trim($data['item_name'] ?? $data['description'] ?? '');
 
+        if (empty($data['amount_try']) && ! empty($data['amount']) && (float) $data['amount'] > 0 && $data['currency'] !== 'TRY') {
+            try {
+                $rate = app(ExchangeRateService::class)->rateToDefaultCurrency(
+                    $data['currency'],
+                    isset($data['exchange_rate']) ? (float) $data['exchange_rate'] : null
+                );
+                $data['amount_try'] = round((float) $data['amount'] * $rate, 2);
+                $data['exchange_rate'] = $data['exchange_rate'] ?? $rate;
+            } catch (\Throwable) {
+                // manual amount_try may still be provided
+            }
+        }
+
         if (! empty($data['amount_try']) && ! empty($data['amount']) && (float) $data['amount'] > 0) {
             $data['exchange_rate'] = $data['exchange_rate']
                 ?? round((float) $data['amount_try'] / (float) $data['amount'], 6);

@@ -138,7 +138,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Documents
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents/folder/{folder}', [DocumentController::class, 'folder'])->name('documents.folder')->where('folder', '[^/]+');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+    Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
     Route::post('/documents/backup', [DocumentController::class, 'backup'])->name('documents.backup');
@@ -174,6 +176,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/logistics', [ReportController::class, 'logistics'])->name('logistics');
         Route::get('/finance', [ReportController::class, 'finance'])->name('finance');
         Route::get('/customers', [ReportController::class, 'customers'])->name('customers');
+        Route::get('/suppliers', [ReportController::class, 'suppliers'])->name('suppliers');
     });
 
     // Emails

@@ -343,6 +343,32 @@ if (!function_exists('activity_changes_html')) {
     }
 }
 
+if (!function_exists('country_iso2')) {
+    function country_iso2(?string $code): string
+    {
+        if (! $code || strlen(trim($code)) < 2) {
+            return '';
+        }
+
+        $code = strtoupper(trim($code));
+
+        static $alpha3 = [
+            'TUR' => 'TR', 'DEU' => 'DE', 'USA' => 'US', 'GBR' => 'GB', 'ARE' => 'AE',
+            'SAU' => 'SA', 'ITA' => 'IT', 'FRA' => 'FR', 'ESP' => 'ES', 'NLD' => 'NL',
+            'CHN' => 'CN', 'RUS' => 'RU', 'UKR' => 'UA', 'EGY' => 'EG', 'LBY' => 'LY',
+            'IRQ' => 'IQ', 'SYR' => 'SY', 'SWE' => 'SE', 'POL' => 'PL', 'ROU' => 'RO',
+            'BGR' => 'BG', 'GRC' => 'GR', 'JOR' => 'JO', 'MAR' => 'MA', 'TUN' => 'TN',
+            'DZA' => 'DZ', 'ISR' => 'IL',
+        ];
+
+        if (strlen($code) === 3 && isset($alpha3[$code])) {
+            return $alpha3[$code];
+        }
+
+        return substr($code, 0, 2);
+    }
+}
+
 if (!function_exists('country_label')) {
     function country_label(?string $code, ?string $locale = null): string
     {
@@ -350,20 +376,56 @@ if (!function_exists('country_label')) {
             return '';
         }
 
-        $code = strtoupper(substr(trim($code), 0, 2));
+        $iso2 = country_iso2($code);
         $locale = $locale ?? str_replace('_', '-', app()->getLocale());
 
         if (extension_loaded('intl')) {
-            $name = \Locale::getDisplayRegion('und_' . $code, $locale);
+            $name = \Locale::getDisplayRegion('und_' . $iso2, $locale);
 
-            if ($name && $name !== 'und' && strtoupper($name) !== $code) {
+            if ($name && $name !== 'und' && strtoupper($name) !== $iso2) {
                 return $name;
             }
         }
 
-        $fallback = __("countries.{$code}");
+        $fallback = __("countries.{$iso2}");
 
         return str_starts_with($fallback, 'countries.') ? $code : $fallback;
+    }
+}
+
+if (!function_exists('country_options')) {
+    /** @return array<string, string> ISO2 => localized name */
+    function country_options(?string $locale = null): array
+    {
+        $options = trans('countries', [], $locale);
+        if (! is_array($options)) {
+            return [];
+        }
+        asort($options);
+
+        return $options;
+    }
+}
+
+if (!function_exists('format_try_equivalent')) {
+    function format_try_equivalent(float $amount, string $currency, ?float $exchangeRate = null): ?string
+    {
+        $currency = strtoupper($currency);
+        $default = registry()->defaultCurrency()?->code ?? 'TRY';
+
+        if ($currency === $default) {
+            return null;
+        }
+
+        try {
+            $rate = app(\App\Services\ExchangeRateService::class)
+                ->rateToDefaultCurrency($currency, $exchangeRate);
+            $try = round($amount * $rate, 2);
+
+            return number_format($try, 2, ',', '.') . ' ₺';
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }
 

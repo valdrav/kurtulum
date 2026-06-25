@@ -40,7 +40,7 @@
         <div class="card">
             <div class="table-responsive">
                 <table class="table table-vcenter card-table">
-                    <thead><tr><th>No</th><th>{{ __('app.date') }}</th><th>Hesap</th><th>Yöntem</th><th>{{ __('app.amount') }}</th><th></th></tr></thead>
+                    <thead><tr><th>No</th><th>{{ __('app.date') }}</th><th>Hesap</th><th>Yöntem</th><th>{{ __('app.amount') }}</th><th>{{ __('finance.try_equivalent') }}</th><th></th></tr></thead>
                     <tbody>
                         @forelse($payments as $p)
                         <tr>
@@ -49,6 +49,7 @@
                             <td>{{ $p->account?->name }}</td>
                             <td>{{ $p->paymentMethod?->name ?? $p->payment_method }}</td>
                             <td>{{ number_format($p->amount, 2, ',', '.') }} {{ $p->currency }}</td>
+                            <td class="text-muted small">{{ format_try_equivalent((float)$p->amount, $p->currency, (float)$p->exchange_rate) ?: '—' }}</td>
                             <td class="text-end">
                                 @if(can_access('finance.edit'))<a href="{{ route('finance.payments.edit', $p) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>@endif
                             </td>

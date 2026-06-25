@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const map = L.map('vesselMap').setView([lat, lng], zoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
-        attribution: '&copy; OpenStreetMap'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıda bulunanlar'
     }).addTo(map);
 
     if (hasPosition) {

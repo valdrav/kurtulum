@@ -11,7 +11,15 @@
                 <div class="col-md-6 mb-3"><label class="form-label">{{ __('customers.contact_person') }}</label><input type="text" name="contact_person" class="form-control" value="{{ old('contact_person', $customer->contact_person) }}"></div>
                 <div class="col-md-4 mb-3"><label class="form-label">{{ __('settings.profile_email') }}</label><input type="email" name="email" class="form-control" value="{{ old('email', $customer->email) }}"></div>
                 <div class="col-md-4 mb-3"><label class="form-label">{{ __('settings.company_phone') }}</label><input type="text" name="phone" class="form-control" value="{{ old('phone', $customer->phone) }}"></div>
-                <div class="col-md-4 mb-3"><label class="form-label">{{ __('customers.country') }}</label><input type="text" name="country" class="form-control" value="{{ old('country', $customer->country) }}" maxlength="3"></div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">{{ __('customers.country') }}</label>
+                    <select name="country" class="form-select">
+                        <option value="">—</option>
+                        @foreach(country_options() as $code => $name)
+                        <option value="{{ $code }}" @selected(country_iso2(old('country', $customer->country)) === $code)>{{ $name }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="col-md-4 mb-3"><label class="form-label">{{ __('customers.type') }}</label><select name="type" class="form-select">@foreach(['buyer','agent','distributor','partner'] as $t)<option value="{{ $t }}" @selected(old('type',$customer->type ?? 'buyer')===$t)>{{ type_label($t, 'customers') }}</option>@endforeach</select></div>
                 <div class="col-md-4 mb-3"><label class="form-label">{{ __('app.status') }}</label><select name="status" class="form-select">@foreach(['active','inactive','prospect'] as $s)<option value="{{ $s }}" @selected(old('status',$customer->status ?? 'active')===$s)>{{ type_label($s, 'customers') }}</option>@endforeach</select></div>
                 <div class="col-md-4 mb-3"><label class="form-label">{{ __('app.currency') }}</label><select name="currency" class="form-select">@foreach(config('ticari.currencies') as $cur)<option value="{{ $cur }}" @selected(old('currency',$customer->currency ?? 'TRY')===$cur)>{{ currency_name($cur) }} ({{ $cur }})</option>@endforeach</select></div>

@@ -9,11 +9,11 @@ $nav = [
     ['route' => 'vessels.track.index', 'icon' => 'ti-ship', 'label' => 'logistics.vessel_tracking', 'perm' => 'shipments.view'],
     ['route' => 'finance.index', 'icon' => 'ti-currency-lira', 'label' => 'app.finance', 'perm' => 'finance.view'],
     ['route' => 'documents.index', 'icon' => 'ti-files', 'label' => 'app.documents', 'perm' => 'documents.view'],
-    ['route' => 'documents.tools.index', 'icon' => 'ti-file-settings', 'label' => 'documents.tools.title', 'perm' => 'documents.view'],
     ['route' => 'tasks.index', 'icon' => 'ti-checklist', 'label' => 'app.tasks', 'perm' => 'tasks.view'],
     ['route' => 'employees.index', 'icon' => 'ti-id-badge', 'label' => 'app.employees', 'perm' => 'employees.view'],
     ['route' => 'reports.index', 'icon' => 'ti-chart-bar', 'label' => 'app.reports', 'perm' => 'reports.view'],
     ['route' => 'emails.index', 'icon' => 'ti-mail', 'label' => 'app.emails', 'perm' => 'emails.view'],
+    ['route' => 'documents.tools.index', 'icon' => 'ti-file-settings', 'label' => 'documents.tools.title', 'perm' => 'documents.view'],
     ['route' => 'ai.index', 'icon' => 'ti-sparkles', 'label' => 'app.ai_assistant', 'perm' => 'ai.view'],
     ['route' => 'settings.index', 'icon' => 'ti-settings', 'label' => 'app.settings', 'perm' => 'settings.view'],
 ];

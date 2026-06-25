@@ -10,7 +10,7 @@
             <dl class="row">
                 <dt class="col-5">E-posta</dt><dd class="col-7">{{ $customer->email ?? '-' }}</dd>
                 <dt class="col-5">Telefon</dt><dd class="col-7">{{ $customer->phone ?? '-' }}</dd>
-                <dt class="col-5">Ülke</dt><dd class="col-7">{{ $customer->country ?? '-' }}</dd>
+                <dt class="col-5">Ülke</dt><dd class="col-7">{{ country_label($customer->country) ?: '-' }}</dd>
                 <dt class="col-5">{{ __('app.status') }}</dt><dd class="col-7"><span class="badge">{{ type_label($customer->status, 'customers') }}</span></dd>
                 <dt class="col-5">{{ __('customers.type') }}</dt><dd class="col-7">{{ type_label($customer->type, 'customers') }}</dd>
             </dl>
