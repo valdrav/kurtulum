@@ -4,9 +4,14 @@ namespace App\Services;
 
 use App\Models\Email;
 use App\Models\EmailAccount;
+use App\Services\EmailInlineImageService;
 
 class ImapMailService
 {
+    public function __construct(
+        protected EmailInlineImageService $inlineImages
+    ) {}
+
     public function isAvailable(): bool
     {
         return function_exists('imap_open');
@@ -34,6 +39,14 @@ class ImapMailService
             $structure = imap_fetchstructure($connection, $msgNo);
             $bodyText = $this->fetchBody($connection, $msgNo, $structure, 'plain');
             $bodyHtml = $this->fetchBody($connection, $msgNo, $structure, 'html');
+            $bodyHtml = $this->inlineImages->embedInlineImages(
+                $connection,
+                $msgNo,
+                $structure,
+                $bodyHtml,
+                $account->id,
+                $messageId
+            );
 
             $existing = Email::where('message_id', $messageId)->first();
 
@@ -89,6 +102,10 @@ class ImapMailService
         }
 
         if ($currentHtml === '' && $bodyHtml) {
+            return true;
+        }
+
+        if ($bodyHtml && str_contains((string) $email->body_html, 'cid:') && ! str_contains($bodyHtml, 'cid:')) {
             return true;
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\EmailHtmlRenderer;
 use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
@@ -75,22 +76,7 @@ class Email extends Model
 
     public function sanitizedHtml(): ?string
     {
-        $html = trim((string) $this->body_html);
-
-        if ($html === '') {
-            return null;
-        }
-
-        $textOnly = trim(strip_tags($html));
-
-        if ($textOnly === '') {
-            return null;
-        }
-
-        $html = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $html) ?? $html;
-        $html = preg_replace('/<style\b[^>]*>.*?<\/style>/is', '', $html) ?? $html;
-
-        return $html;
+        return app(EmailHtmlRenderer::class)->prepareForDisplay($this->body_html);
     }
 
     public function hasRenderableBody(): bool

@@ -10,13 +10,13 @@
     @endif
 </div>
 
-<div class="card">
+<div class="card email-show-card">
     <div class="card-header">
         <h3 class="card-title mb-1">{{ $email->subject ?: __('emails.no_subject') }}</h3>
         <div class="text-muted small">
             <strong>{{ $email->from_name ?? $email->from_email }}</strong>
             @if($email->from_name && $email->from_email)
-            <span class="text-muted">&lt;{{ $email->from_email }}&gt;</span>
+            <span class="d-block d-sm-inline text-muted">&lt;{{ $email->from_email }}&gt;</span>
             @endif
         </div>
         <div class="text-muted small mt-1">
@@ -26,7 +26,7 @@
             @endif
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-2 p-sm-3">
         @php $html = $email->sanitizedHtml(); @endphp
         @if($html)
         <div class="email-body-frame">
@@ -34,7 +34,7 @@
         </div>
         @elseif(trim((string) $email->body_text) !== '')
         <div class="email-body-frame">
-            <pre class="email-body-text mb-0">{{ $email->body_text }}</pre>
+            <pre class="email-body-text">{{ $email->body_text }}</pre>
         </div>
         @else
         <div class="alert alert-secondary mb-0">

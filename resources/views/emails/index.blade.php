@@ -22,24 +22,24 @@
     {{ __('emails.inbox_empty') }} <a href="{{ route('emails.accounts') }}">{{ __('emails.inbox_empty_link') }}</a>
 </div>
 @else
-<div class="card mb-3">
+<div class="card mb-3 email-filters-card">
     <div class="card-body py-3">
         <form method="GET" action="{{ route('emails.index') }}" class="row g-2 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-4 col-12">
                 <label class="form-label small mb-1">{{ __('app.search') }}</label>
                 <input type="search" name="q" class="form-control form-control-sm" value="{{ request('q') }}"
                        placeholder="{{ __('emails.search_placeholder') }}">
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2 col-6">
                 <label class="form-label small mb-1">{{ __('emails.filter_account') }}</label>
                 <select name="account" class="form-select form-select-sm">
                     <option value="">{{ __('emails.filter_all_accounts') }}</option>
                     @foreach($accounts as $acc)
-                    <option value="{{ $acc->id }}" @selected(request('account') == $acc->id)>{{ $acc->email }}</option>
+                    <option value="{{ $acc->id }}" @selected(request('account') == $acc->id)>{{ \Illuminate\Support\Str::limit($acc->email, 28) }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2 col-6">
                 <label class="form-label small mb-1">{{ __('emails.filter_type') }}</label>
                 <select name="direction" class="form-select form-select-sm">
                     <option value="">{{ __('emails.filter_all_types') }}</option>
@@ -47,11 +47,11 @@
                     <option value="outbound" @selected(request('direction') === 'outbound')>{{ __('emails.direction_outbound') }}</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2 col-6">
                 <label class="form-label small mb-1">{{ __('emails.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request('date_from') }}">
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2 col-6">
                 <label class="form-label small mb-1">{{ __('emails.date_to') }}</label>
                 <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}">
             </div>
@@ -63,40 +63,38 @@
     </div>
 </div>
 
-<div class="btn-group btn-group-sm mb-3 flex-wrap" role="group">
-    <a href="{{ route('emails.index', request()->except('folder')) }}" class="btn @if(!request('folder')) btn-primary @else btn-outline-secondary @endif">{{ __('emails.folder_all') }}</a>
-    <a href="{{ route('emails.index', array_merge(request()->except('folder'), ['folder' => 'unread'])) }}" class="btn @if(request('folder')==='unread') btn-primary @else btn-outline-secondary @endif">{{ __('emails.folder_unread') }}</a>
-    <a href="{{ route('emails.index', array_merge(request()->except('folder'), ['folder' => 'starred'])) }}" class="btn @if(request('folder')==='starred') btn-primary @else btn-outline-secondary @endif">{{ __('emails.folder_starred') }}</a>
+<div class="email-folder-tabs mb-3">
+    <a href="{{ route('emails.index', request()->except('folder')) }}" class="btn btn-sm @if(!request('folder')) btn-primary @else btn-outline-secondary @endif">{{ __('emails.folder_all') }}</a>
+    <a href="{{ route('emails.index', array_merge(request()->except('folder'), ['folder' => 'unread'])) }}" class="btn btn-sm @if(request('folder')==='unread') btn-primary @else btn-outline-secondary @endif">{{ __('emails.folder_unread') }}</a>
+    <a href="{{ route('emails.index', array_merge(request()->except('folder'), ['folder' => 'starred'])) }}" class="btn btn-sm @if(request('folder')==='starred') btn-primary @else btn-outline-secondary @endif">{{ __('emails.folder_starred') }}</a>
 </div>
 @endif
 
-<div class="card">
+<div class="card email-inbox-card">
     <div class="list-group list-group-flush">
         @forelse($emails as $email)
-        <a href="{{ route('emails.show', $email) }}" class="email-list-item @if(!$email->is_read) unread @endif">
-            <div class="d-flex justify-content-between gap-3 align-items-start">
-                <div class="min-w-0 flex-grow-1">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        @if($email->is_starred)<i class="ti ti-star-filled text-yellow"></i>@endif
-                        @if($email->direction === 'outbound')
-                        <span class="badge bg-azure-lt badge-sm">{{ __('emails.direction_outbound') }}</span>
-                        @endif
-                        <span class="small text-muted text-truncate">{{ $email->from_name ?? $email->from_email }}</span>
-                    </div>
-                    <div class="email-list-subject text-truncate">{{ $email->subject ?: __('emails.no_subject') }}</div>
-                    @if($preview = $email->previewText(100))
-                    <div class="email-list-preview text-muted small text-truncate mt-1">{{ $preview }}</div>
+        <a href="{{ route('emails.show', $email) }}" class="email-list-item list-group-item list-group-item-action @if(!$email->is_read) unread @endif">
+            <div class="email-list-top">
+                <div class="d-flex align-items-center gap-1 min-w-0 flex-grow-1">
+                    @if($email->is_starred)
+                    <span class="email-list-badges"><i class="ti ti-star-filled text-yellow"></i></span>
                     @endif
+                    @if($email->direction === 'outbound')
+                    <span class="badge bg-azure-lt badge-sm flex-shrink-0">{{ __('emails.direction_outbound') }}</span>
+                    @endif
+                    <span class="email-list-from">{{ $email->from_name ?? $email->from_email }}</span>
                 </div>
-                <div class="text-muted small text-nowrap flex-shrink-0">
-                    {{ ($email->received_at ?? $email->sent_at)?->format('d.m H:i') }}
-                </div>
+                <time class="email-list-date">{{ ($email->received_at ?? $email->sent_at)?->format('d.m H:i') }}</time>
             </div>
+            <div class="email-list-subject">{{ $email->subject ?: __('emails.no_subject') }}</div>
+            @if($preview = $email->previewText(90))
+            <div class="email-list-preview text-muted small">{{ $preview }}</div>
+            @endif
         </a>
         @empty
         <div class="list-group-item text-muted py-4 text-center">{{ __('app.no_records') }}</div>
         @endforelse
     </div>
 </div>
-<div class="mt-3">{{ $emails->links() }}</div>
+<div class="mt-3 overflow-auto">{{ $emails->links() }}</div>
 @endsection

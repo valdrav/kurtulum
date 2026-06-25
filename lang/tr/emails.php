@@ -44,7 +44,7 @@ return [
     'sync' => 'Senkronize',
     'no_subject' => '(Konu yok)',
     'no_body' => 'Bu e-postanın içeriği görüntülenemiyor.',
-    'no_body_hint' => 'Senkronize butonuna basın — eksik içerikler otomatik tamamlanır.',
+    'no_body_hint' => 'Senkronize butonuna basın — eksik içerikler ve gömülü resimler otomatik tamamlanır.',
     'direction_inbound' => 'Gelen',
     'direction_outbound' => 'Giden',
     'folder_all' => 'Tümü',
