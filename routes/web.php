@@ -150,6 +150,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [EmailController::class, 'index'])->name('index');
         Route::get('/accounts', [EmailController::class, 'accounts'])->name('accounts');
         Route::post('/accounts', [EmailController::class, 'storeAccount'])->name('accounts.store');
+        Route::get('/accounts/{account}/edit', [EmailController::class, 'editAccount'])->name('accounts.edit');
+        Route::put('/accounts/{account}', [EmailController::class, 'updateAccount'])->name('accounts.update');
         Route::post('/sync', [EmailController::class, 'sync'])->name('sync');
         Route::get('/compose', [EmailController::class, 'compose'])->name('compose');
         Route::post('/send', [EmailController::class, 'send'])->name('send');

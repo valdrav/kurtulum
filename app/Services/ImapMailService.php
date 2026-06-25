@@ -12,26 +12,15 @@ class ImapMailService
         return function_exists('imap_open');
     }
 
+    public function testConnection(EmailAccount $account): void
+    {
+        $connection = $this->openConnection($account);
+        imap_close($connection);
+    }
+
     public function syncAccount(EmailAccount $account, int $limit = 30): int
     {
-        if (! $this->isAvailable()) {
-            throw new \RuntimeException('PHP IMAP eklentisi sunucuda aktif değil. Plesk/cPanel üzerinden php-imap etkinleştirin.');
-        }
-
-        $creds = $account->getCredentials();
-        $username = $creds['username'] ?? $account->email;
-        $password = $creds['password'] ?? '';
-
-        if ($password === '') {
-            throw new \RuntimeException('E-posta hesabı için şifre tanımlı değil.');
-        }
-
-        $mailbox = $this->buildMailboxString($account);
-        $connection = @imap_open($mailbox, $username, $password, 0, 1);
-
-        if (! $connection) {
-            throw new \RuntimeException('IMAP bağlantısı kurulamadı: ' . imap_last_error());
-        }
+        $connection = $this->openConnection($account);
 
         $synced = 0;
         $emails = imap_search($connection, 'ALL') ?: [];
@@ -128,5 +117,57 @@ class ImapMailService
         }
 
         return $result;
+    }
+
+    protected function openConnection(EmailAccount $account)
+    {
+        if (! $this->isAvailable()) {
+            throw new \RuntimeException('PHP IMAP eklentisi sunucuda aktif değil. Plesk/cPanel üzerinden php-imap etkinleştirin.');
+        }
+
+        if (! $account->imap_host) {
+            throw new \RuntimeException('IMAP sunucusu tanımlı değil. Plesk Mail veya Özel sunucu seçin.');
+        }
+
+        $creds = $account->getCredentials();
+        $username = $creds['username'] ?? $account->email;
+        $password = $creds['password'] ?? '';
+
+        if ($password === '') {
+            throw new \RuntimeException('E-posta hesabı için şifre tanımlı değil.');
+        }
+
+        $mailbox = $this->buildMailboxString($account);
+        $connection = @imap_open($mailbox, $username, $password, 0, 1);
+
+        if (! $connection) {
+            throw new \RuntimeException($this->formatConnectionError($account, imap_last_error() ?: 'Bilinmeyen hata'));
+        }
+
+        return $connection;
+    }
+
+    protected function formatConnectionError(EmailAccount $account, string $error): string
+    {
+        $base = 'IMAP bağlantısı kurulamadı: ' . $error;
+
+        if (! str_contains(strtoupper($error), 'AUTHENTICATIONFAILED')) {
+            return $base;
+        }
+
+        $hints = [
+            'Kullanıcı adı genelde tam e-posta adresidir (örn. omer@kurtulum.com).',
+            'Şifre: Plesk → Posta → ilgili posta kutusunun şifresi (portal giriş şifresi değil).',
+        ];
+
+        if ($account->provider === 'plesk') {
+            $hints[] = 'Sunucu: mail.' . substr(strrchr($account->email, '@'), 1) . ' — Plesk posta ayarlarında farklıysa Özel sunucu ile düzeltin.';
+        } elseif ($account->provider === 'microsoft365') {
+            $hints[] = '@kurtulum.com gibi domain mailleri Microsoft 365 değil; sağlayıcı olarak Plesk Mail seçin.';
+        } elseif ($account->provider === 'google') {
+            $hints[] = 'Gmail için Google hesabında 2 adımlı doğrulama + uygulama şifresi gerekir.';
+        }
+
+        return $base . ' — ' . implode(' ', $hints);
     }
 }

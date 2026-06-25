@@ -14,6 +14,7 @@ class EmailController extends Controller
     {
         $this->middleware('permission:emails.view')->only(['index', 'show', 'accounts']);
         $this->middleware('permission:emails.create')->only(['storeAccount', 'compose', 'send', 'sync']);
+        $this->middleware('permission:emails.edit|emails.create')->only(['editAccount', 'updateAccount']);
     }
 
     protected function userAccounts()
@@ -24,6 +25,75 @@ class EmailController extends Controller
     protected function userAccountIds(): array
     {
         return $this->userAccounts()->pluck('id')->all();
+    }
+
+    protected function authorizeAccount(EmailAccount $account): void
+    {
+        abort_unless($account->user_id === auth()->id(), 403);
+    }
+
+    protected function validatedAccountData(Request $request, bool $updating = false): array
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'provider' => 'required|in:plesk,microsoft365,google,yandex,custom',
+            'smtp_host' => 'nullable|string',
+            'smtp_port' => 'nullable|integer',
+            'smtp_encryption' => 'nullable|string|in:ssl,tls,none',
+            'imap_host' => 'nullable|string',
+            'imap_port' => 'nullable|integer',
+            'imap_encryption' => 'nullable|string|in:ssl,tls,none',
+            'smtp_username' => 'nullable|string',
+            'smtp_password' => $updating ? 'nullable|string' : 'required|string|min:1',
+            'is_default' => 'boolean',
+        ]);
+
+        if ($validated['provider'] === 'plesk') {
+            $validated = array_merge(EmailAccount::pleskPresetForEmail($validated['email']), $validated);
+        } elseif (in_array($validated['provider'], ['microsoft365', 'google', 'yandex'], true)) {
+            $validated = array_merge(EmailAccount::providerPresets()[$validated['provider']], $validated);
+        }
+
+        if ($validated['provider'] === 'custom') {
+            $request->validate([
+                'imap_host' => 'required|string',
+                'smtp_host' => 'required|string',
+            ]);
+        }
+
+        return $validated;
+    }
+
+    protected function persistAccount(EmailAccount $account, array $validated, Request $request, bool $updating = false): void
+    {
+        if ($request->boolean('is_default')) {
+            EmailAccount::where('user_id', auth()->id())
+                ->when($updating, fn ($q) => $q->where('id', '!=', $account->id))
+                ->update(['is_default' => false]);
+        }
+
+        $account->fill(collect($validated)->except(['smtp_username', 'smtp_password'])->toArray());
+
+        if ($updating) {
+            $account->syncCredentials(
+                $validated['smtp_username'] ?? $validated['email'],
+                $validated['smtp_password'] ?? null
+            );
+        } else {
+            $account->user_id = auth()->id();
+            $account->setCredentialsFromRequest(
+                $validated['smtp_username'] ?? $validated['email'],
+                $validated['smtp_password']
+            );
+        }
+
+        $imap = app(ImapMailService::class);
+        if ($imap->isAvailable() && $account->imap_host) {
+            $imap->testConnection($account);
+        }
+
+        $account->save();
     }
 
     public function index(Request $request)
@@ -67,40 +137,43 @@ class EmailController extends Controller
         return view('emails.accounts', compact('accounts', 'presets', 'imapAvailable'));
     }
 
+    public function editAccount(EmailAccount $account)
+    {
+        $this->authorizeAccount($account);
+
+        $imapAvailable = app(ImapMailService::class)->isAvailable();
+
+        return view('emails.account-edit', compact('account', 'imapAvailable'));
+    }
+
     public function storeAccount(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'provider' => 'required|in:smtp,microsoft365,google,yandex,custom',
-            'smtp_host' => 'nullable|string',
-            'smtp_port' => 'nullable|integer',
-            'smtp_encryption' => 'nullable|string|in:ssl,tls,none',
-            'imap_host' => 'nullable|string',
-            'imap_port' => 'nullable|integer',
-            'imap_encryption' => 'nullable|string|in:ssl,tls,none',
-            'smtp_username' => 'nullable|string',
-            'smtp_password' => 'nullable|string',
-            'is_default' => 'boolean',
-        ]);
+        $validated = $this->validatedAccountData($request);
 
-        if (in_array($validated['provider'], ['microsoft365', 'google', 'yandex'], true)) {
-            $validated = array_merge(EmailAccount::providerPresets()[$validated['provider']], $validated);
+        $account = new EmailAccount;
+
+        try {
+            $this->persistAccount($account, $validated, $request);
+        } catch (\Throwable $e) {
+            return back()->withInput()->withErrors(['imap' => $e->getMessage()]);
         }
 
-        if ($request->boolean('is_default')) {
-            EmailAccount::where('user_id', auth()->id())->update(['is_default' => false]);
+        return redirect()->route('emails.accounts')->with('success', __('messages.created'));
+    }
+
+    public function updateAccount(Request $request, EmailAccount $account)
+    {
+        $this->authorizeAccount($account);
+
+        $validated = $this->validatedAccountData($request, updating: true);
+
+        try {
+            $this->persistAccount($account, $validated, $request, updating: true);
+        } catch (\Throwable $e) {
+            return back()->withInput()->withErrors(['imap' => $e->getMessage()]);
         }
 
-        $account = new EmailAccount(collect($validated)->except(['smtp_username', 'smtp_password'])->toArray());
-        $account->user_id = auth()->id();
-        $account->setCredentialsFromRequest(
-            $validated['smtp_username'] ?? $validated['email'],
-            $validated['smtp_password'] ?? null
-        );
-        $account->save();
-
-        return back()->with('success', __('messages.created'));
+        return redirect()->route('emails.accounts')->with('success', __('messages.updated'));
     }
 
     public function sync(Request $request, ImapMailService $imap)

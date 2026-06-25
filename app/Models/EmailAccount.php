@@ -45,9 +45,28 @@ class EmailAccount extends Model
         'credentials',
     ];
 
+    public static function pleskPresetForEmail(string $email): array
+    {
+        $domain = strtolower(trim((string) substr(strrchr($email, '@') ?: '', 1)));
+
+        if ($domain === '') {
+            $domain = 'localhost';
+        }
+
+        return [
+            'imap_host' => 'mail.' . $domain,
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'smtp_host' => 'mail.' . $domain,
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+        ];
+    }
+
     public static function providerPresets(): array
     {
         return [
+            'plesk' => self::pleskPresetForEmail('user@example.com'),
             'microsoft365' => [
                 'imap_host' => 'outlook.office365.com',
                 'imap_port' => 993,
@@ -84,6 +103,22 @@ class EmailAccount extends Model
         $this->credentials = Crypt::encryptString(json_encode([
             'username' => $username ?: $this->email,
             'password' => $password,
+        ]));
+    }
+
+    public function syncCredentials(?string $username, ?string $password): void
+    {
+        $current = $this->getCredentials();
+        $newUsername = $username ?: ($current['username'] ?? $this->email);
+        $newPassword = ($password !== null && $password !== '') ? $password : ($current['password'] ?? '');
+
+        if ($newPassword === '') {
+            return;
+        }
+
+        $this->credentials = Crypt::encryptString(json_encode([
+            'username' => $newUsername,
+            'password' => $newPassword,
         ]));
     }
 
