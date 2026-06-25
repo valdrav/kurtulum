@@ -7,6 +7,7 @@ use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -55,6 +56,24 @@ class Email extends Model
     public function emailable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(EmailAttachment::class);
+    }
+
+    public function hasAttachments(): bool
+    {
+        if ($this->relationLoaded('attachments')) {
+            return $this->attachments->isNotEmpty();
+        }
+
+        if ($this->relationLoaded('attachments_count')) {
+            return ($this->attachments_count ?? 0) > 0;
+        }
+
+        return $this->attachments()->exists();
     }
 
     public function previewText(int $length = 120): ?string

@@ -4,16 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Email;
 use App\Models\EmailAccount;
+use App\Models\EmailAttachment;
 use App\Services\EmailSignatureService;
 use App\Services\ImapMailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class EmailController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:emails.view')->only(['index', 'show', 'accounts', 'signatures']);
+        $this->middleware('permission:emails.view')->only(['index', 'show', 'accounts', 'signatures', 'downloadAttachment']);
         $this->middleware('permission:emails.create')->only(['storeAccount', 'compose', 'send', 'sync']);
         $this->middleware('permission:emails.edit|emails.create')->only(['editAccount', 'updateAccount', 'updateSignature']);
         $this->middleware('permission:emails.delete|emails.create')->only(['destroyAccount']);
@@ -119,6 +121,7 @@ class EmailController extends Controller
         }
 
         $emails = Email::with('emailAccount')
+            ->withCount('attachments')
             ->whereIn('email_account_id', $accountIds)
             ->when($request->account, fn ($q, $id) => $q->where('email_account_id', $id))
             ->when($request->folder === 'starred', fn ($q) => $q->where('is_starred', true))
@@ -154,9 +157,24 @@ class EmailController extends Controller
             $email->update(['is_read' => true]);
         }
 
-        $email->load('emailAccount');
+        $email->load(['emailAccount', 'attachments']);
 
         return view('emails.show', compact('email'));
+    }
+
+    public function downloadAttachment(EmailAttachment $attachment)
+    {
+        $attachment->load('email');
+        abort_unless(in_array($attachment->email->email_account_id, $this->userAccountIds()), 403);
+
+        if (! Storage::disk('local')->exists($attachment->storage_path)) {
+            abort(404);
+        }
+
+        return Storage::disk('local')->download(
+            $attachment->storage_path,
+            $attachment->filename
+        );
     }
 
     public function accounts()

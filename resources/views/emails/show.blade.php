@@ -26,6 +26,22 @@
             @endif
         </div>
     </div>
+    @if($email->attachments->isNotEmpty())
+    <div class="card-body border-top border-bottom py-3 bg-light-lt">
+        <div class="small text-muted mb-2 fw-semibold">
+            <i class="ti ti-paperclip me-1"></i>{{ __('emails.attachments') }} ({{ $email->attachments->count() }})
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach($email->attachments as $attachment)
+            <a href="{{ route('emails.attachments.download', $attachment) }}" class="email-attachment-chip">
+                <i class="ti {{ $attachment->iconClass() }}"></i>
+                <span class="email-attachment-name">{{ $attachment->filename }}</span>
+                <span class="email-attachment-size">{{ $attachment->humanSize() }}</span>
+            </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
     <div class="card-body p-2 p-sm-3">
         @php $html = $email->sanitizedHtml(); @endphp
         @if($html)

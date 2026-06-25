@@ -792,6 +792,39 @@ body.ef-app {
     word-break: break-word;
 }
 
+.email-attachment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--ef-border);
+    border-radius: var(--ef-radius-sm);
+    background: var(--ef-surface);
+    color: inherit;
+    text-decoration: none;
+    font-size: 0.8125rem;
+    max-width: 100%;
+}
+
+.email-attachment-chip:hover {
+    border-color: var(--ef-primary);
+    background: rgba(var(--ef-primary-rgb), 0.06);
+    color: inherit;
+}
+
+.email-attachment-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 14rem;
+}
+
+.email-attachment-size {
+    color: var(--ef-muted);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
 .email-body-frame {
     background: #ffffff;
     color: #1e293b;

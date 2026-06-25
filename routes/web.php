@@ -193,6 +193,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/accounts/{account}/signature', [EmailController::class, 'updateSignature'])->name('accounts.signature.update');
         Route::get('/signatures', [EmailController::class, 'signatures'])->name('signatures');
         Route::post('/sync', [EmailController::class, 'sync'])->name('sync');
+        Route::get('/attachments/{attachment}/download', [EmailController::class, 'downloadAttachment'])->name('attachments.download');
         Route::get('/compose', [EmailController::class, 'compose'])->name('compose');
         Route::post('/send', [EmailController::class, 'send'])->name('send');
         Route::get('/{email}', [EmailController::class, 'show'])->name('show');

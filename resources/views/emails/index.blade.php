@@ -94,7 +94,12 @@
                 </div>
                 <time class="email-list-date">{{ ($email->received_at ?? $email->sent_at)?->format('d.m H:i') }}</time>
             </div>
-            <div class="email-list-subject">{{ $email->subject ?: __('emails.no_subject') }}</div>
+            <div class="email-list-subject">
+                @if($email->attachments_count > 0)
+                <i class="ti ti-paperclip text-muted me-1" title="{{ __('emails.has_attachments') }}"></i>
+                @endif
+                {{ $email->subject ?: __('emails.no_subject') }}
+            </div>
             @if($preview = $email->previewText(90))
             <div class="email-list-preview text-muted small">{{ $preview }}</div>
             @endif

@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Models\Email;
 use App\Models\EmailAccount;
+use App\Services\EmailAttachmentService;
 use App\Services\EmailInlineImageService;
 
 class ImapMailService
 {
     public function __construct(
-        protected EmailInlineImageService $inlineImages
+        protected EmailInlineImageService $inlineImages,
+        protected EmailAttachmentService $attachments,
     ) {}
 
     public function isAvailable(): bool
@@ -51,18 +53,28 @@ class ImapMailService
             $existing = Email::where('message_id', $messageId)->first();
 
             if ($existing) {
+                $repaired = false;
+
                 if ($this->shouldRepairBody($existing, $bodyText, $bodyHtml)) {
                     $existing->update([
                         'body_text' => $bodyText ?: $existing->body_text,
                         'body_html' => $bodyHtml ?: $existing->body_html,
                     ]);
+                    $repaired = true;
+                }
+
+                if ($this->attachments->syncAttachments($connection, $msgNo, $structure, $existing) > 0) {
+                    $repaired = true;
+                }
+
+                if ($repaired) {
                     $synced++;
                 }
 
                 continue;
             }
 
-            Email::create([
+            $email = Email::create([
                 'email_account_id' => $account->id,
                 'message_id' => $messageId,
                 'subject' => isset($header->subject) ? imap_utf8($header->subject) : '(Konu yok)',
@@ -75,6 +87,8 @@ class ImapMailService
                 'direction' => 'inbound',
                 'is_read' => ($header->Unseen ?? 'U') !== 'U',
             ]);
+
+            $this->attachments->syncAttachments($connection, $msgNo, $structure, $email);
 
             $synced++;
         }
