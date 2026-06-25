@@ -16,8 +16,9 @@ Detay: **[GUNCELLEME.md](GUNCELLEME.md)**
 3. MariaDB: `kurtulumportal_db` / `kurtulumportal_user`
 4. `.env.plesk.example` → `.env` (File Manager), MariaDB bilgileri
 5. Git → **Deploy** → Additional actions: `bash scripts/plesk-deploy.sh`
-6. Vendor eksikse bir kez: **https://portal.kurtulum.com/plesk-composer.php**
-7. **https://portal.kurtulum.com/install** → admin oluştur → bitti
+6. **https://portal.kurtulum.com/install** → admin oluştur → bitti
+
+> `vendor/` artık GitHub'a gider — sunucuda composer gerekmez. Pull sonrası gereksinimlerde Spatie **OK** olmalı.
 
 `APP_INSTALLED=true` olduktan sonra `/install` bir daha açılmaz.
 
@@ -34,7 +35,11 @@ Veritabanı silinmez. Kurulum tekrarlanmaz. Yeni migration varsa deploy otomatik
 
 ## GitHub'a gitmez
 
-`.env`, `.env.plesk`, `vendor/`, `storage/logs/`
+`.env`, `.env.plesk`, `storage/logs/`
+
+## GitHub'a gider
+
+`vendor/` — sunucuda composer olmadan kurulum için. Paket güncellemesinde bilgisayarda `composer update` sonra vendor ile birlikte push.
 
 ---
 
@@ -42,6 +47,6 @@ Veritabanı silinmez. Kurulum tekrarlanmaz. Yeni migration varsa deploy otomatik
 
 | Hata | Çözüm |
 |------|--------|
-| Spatie eksik (ilk kurulum) | Deploy veya `plesk-composer.php` **bir kez** |
+| Spatie eksik | Cursor'dan **vendor dahil** push → Plesk **Git Pull** |
 | Permission denied (Git) | [DEPLOY-PLESK.md](DEPLOY-PLESK.md) |
 | 404 | Document root = `public` |

@@ -24,10 +24,8 @@
     <span class="text-danger">{{ __('install.requirements_failed') }}</span>
     @if(empty($requirements['composer_vendor']['passed']))
     <p class="text-danger small mt-2 mb-0">
-        Vendor eksik: once Plesk Git <strong>Deploy</strong> calistirin.
-        Hala kirmizi ise tarayicida acin:
-        <a href="{{ url('/plesk-composer.php') }}">plesk-composer.php</a>
-        (sonra bu dosyayi silin)
+        <strong>vendor/</strong> GitHub'dan gelmeli. Cursor'dan son değişiklikleri push edin, Plesk'te <strong>Git Pull</strong> yapın.
+        Pull sonrası File Manager'da <code>vendor/spatie</code> klasörü var mı kontrol edin.
     </p>
     @endif
     @endif

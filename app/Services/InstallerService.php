@@ -15,13 +15,13 @@ class InstallerService
     {
         if (! is_file(base_path('vendor/autoload.php'))) {
             throw new \RuntimeException(
-                'vendor/ klasörü yok. Plesk → Git → Deploy çalıştırın (composer install otomatik olmalı).'
+                'vendor/ klasörü yok. Cursor\'dan son commit\'i push edip Plesk Git Pull yapın (vendor artık repoda).'
             );
         }
 
-        if (! class_exists(\Spatie\Permission\Models\Permission::class)) {
+        if (! is_file(base_path('vendor/spatie/laravel-permission/src/Models/Permission.php'))) {
             throw new \RuntimeException(
-                'Spatie Permission paketi yüklü değil. Plesk Git Deploy tekrar çalıştırın veya hosting desteğinden composer install isteyin.'
+                'Spatie paketleri eksik. Bilgisayardan push edin — vendor klasörü GitHub\'a dahil edildi.'
             );
         }
     }
@@ -87,10 +87,10 @@ class InstallerService
             'composer_vendor' => [
                 'label' => 'Composer vendor (Spatie paketleri)',
                 'passed' => is_file(base_path('vendor/autoload.php'))
-                    && class_exists(\Spatie\Permission\Models\Permission::class),
-                'current' => is_file(base_path('vendor/autoload.php'))
-                    ? (class_exists(\Spatie\Permission\Models\Permission::class) ? 'OK' : 'Spatie eksik')
-                    : 'vendor/ yok — Plesk Git Deploy',
+                    && is_file(base_path('vendor/spatie/laravel-permission/src/Models/Permission.php')),
+                'current' => is_file(base_path('vendor/spatie/laravel-permission/src/Models/Permission.php'))
+                    ? 'OK'
+                    : (is_file(base_path('vendor/autoload.php')) ? 'Spatie eksik — Git pull (vendor repoda)' : 'vendor/ yok — Git pull yapin'),
             ],
         ];
     }

@@ -9,7 +9,7 @@
 /storage/framework/cache/data/
 /storage/framework/sessions/
 /storage/framework/views/
-/vendor
+# vendor GitHub'a gider (Plesk composer gerekmez)
 .env
 .env.plesk
 .env.backup

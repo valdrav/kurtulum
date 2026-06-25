@@ -1,35 +1,19 @@
 #!/bin/bash
-# Plesk Git -> Additional deployment actions (Pull SONRASI calisir)
+# Plesk Git -> Pull sonrasi (composer sunucuda calismasa da vendor repodan gelir)
 set -e
 cd "$(dirname "$0")/.."
 
 PHP="${PHP_BIN:-php}"
 
-if [ -z "${COMPOSER_BIN:-}" ]; then
-    if command -v composer >/dev/null 2>&1; then
-        COMPOSER="composer"
-    elif [ -f /usr/local/bin/composer ]; then
-        COMPOSER="$PHP /usr/local/bin/composer"
-    elif [ -f /opt/psa/var/modules/composer/composer.phar ]; then
-        COMPOSER="$PHP /opt/psa/var/modules/composer/composer.phar"
-    else
-        COMPOSER="composer"
-    fi
-else
-    COMPOSER="$COMPOSER_BIN"
-fi
-
-echo "=== Kurtulum ERP deploy ==="
-echo "Composer: $COMPOSER"
-
 INSTALLED=false
 if [ -f .env ] && grep -q 'APP_INSTALLED=true' .env 2>/dev/null; then
     INSTALLED=true
-    echo "Mod: GUNCELLEME (veritabani ve .env korunur)"
+    echo "Mod: GUNCELLEME"
 else
-    echo "Mod: ILK KURULUM (.env yoksa olusturulur, /install acik)"
+    echo "Mod: ILK KURULUM"
 fi
 
+echo "=== Kurtulum ERP deploy ==="
 rm -f .htaccess
 
 if [ ! -f artisan ]; then
@@ -37,11 +21,18 @@ if [ ! -f artisan ]; then
     exit 1
 fi
 
-$COMPOSER install --no-dev --optimize-autoloader --no-interaction
-
 if [ ! -f vendor/spatie/laravel-permission/src/Models/Permission.php ]; then
-    echo "HATA: spatie/laravel-permission yuklenmedi. composer install basarisiz."
+    echo "HATA: vendor/ repoda yok veya pull eksik. Bilgisayardan push + Plesk Pull yapin."
     exit 1
+fi
+
+echo "vendor/spatie OK (Git ile geldi)"
+
+# Sunucuda composer varsa paketleri senkronize et (yoksa atla)
+if command -v composer >/dev/null 2>&1; then
+    composer install --no-dev --optimize-autoloader --no-interaction 2>/dev/null || true
+elif [ -f /opt/psa/var/modules/composer/composer.phar ]; then
+    $PHP /opt/psa/var/modules/composer/composer.phar install --no-dev --optimize-autoloader --no-interaction 2>/dev/null || true
 fi
 
 if [ ! -f .env ]; then

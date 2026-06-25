@@ -51,7 +51,7 @@ Bundan sonra her Pull’da composer ve migration otomatik çalışır.
 - `.env` — şifreler, `APP_INSTALLED=true`, MariaDB
 - `storage/` — log, oturum, yüklenen dosyalar
 - MariaDB — tüm iş verisi
-- `vendor/` — Pull sonrası deploy script günceller (silinmez, yeniden kurulmaz)
+- `vendor/` — Pull ile gelir; sunucuda composer zorunlu değil
 
 ---
 
