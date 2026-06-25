@@ -15,6 +15,7 @@ class DocumentToolsController extends Controller
         $this->middleware('permission:documents.create')->only([
             'mergePdf', 'splitPdf', 'pdfToWord', 'wordToPdf', 'imagesToPdf',
             'pdfExtractText', 'createExcel', 'csvToExcel', 'excelToCsv',
+            'pdfEdit', 'pdfInfo',
         ]);
     }
 
@@ -138,6 +139,41 @@ class DocumentToolsController extends Controller
             return $tools->excelToCsv($request->file('file'));
         } catch (RuntimeException $e) {
             return back()->withErrors(['tool' => $e->getMessage()]);
+        }
+    }
+
+    public function pdfEdit(Request $request, DocumentToolService $tools)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:pdf|max:20480',
+            'operation' => 'required|in:rotate,watermark,remove_pages,reorder,page_numbers,header_footer,compress,fit_a4',
+            'angle' => 'nullable|integer|in:90,180,270',
+            'pages' => 'nullable|string|max:120',
+            'text' => 'nullable|string|max:200',
+            'style' => 'nullable|in:diagonal,center,footer',
+            'remove_pages' => 'nullable|string|max:120',
+            'order' => 'nullable|string|max:200',
+            'position' => 'nullable|string|max:40',
+            'format' => 'nullable|string|max:40',
+            'header' => 'nullable|string|max:200',
+            'footer' => 'nullable|string|max:200',
+        ]);
+
+        try {
+            return $tools->pdfEdit($request->file('file'), $request->operation, $request->all());
+        } catch (RuntimeException $e) {
+            return back()->withErrors(['tool' => $e->getMessage()]);
+        }
+    }
+
+    public function pdfInfo(Request $request, DocumentToolService $tools)
+    {
+        $request->validate(['file' => 'required|file|mimes:pdf|max:20480']);
+
+        try {
+            return response()->json($tools->pdfInfo($request->file('file')));
+        } catch (RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
     }
 }

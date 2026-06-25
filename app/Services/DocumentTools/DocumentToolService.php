@@ -16,6 +16,7 @@ class DocumentToolService
         protected SimpleXlsxWriter $xlsx,
         protected SimpleDocxWriter $docx,
         protected OfficeBridgeService $office,
+        protected PdfEditorService $editor,
     ) {}
 
     public function tempDir(): string
@@ -160,6 +161,49 @@ class DocumentToolService
         }
 
         throw new RuntimeException(__('documents.tools.excel_csv_office'));
+    }
+
+    /** @param array<string, mixed> $options */
+    public function pdfEdit(UploadedFile $file, string $operation, array $options): BinaryFileResponse
+    {
+        $dir = $this->tempDir();
+        $stored = $file->storeAs('temp/document-tools', Str::uuid() . '.pdf', 'local');
+        $path = storage_path('app/' . $stored);
+        $output = $dir . '/edited.pdf';
+        $options['operation'] = $operation;
+
+        $this->editor->process($path, $output, $options);
+
+        $base = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $suffix = match ($operation) {
+            'rotate' => 'dondurulmus',
+            'watermark' => 'filigran',
+            'remove_pages' => 'temizlenmis',
+            'reorder' => 'sirali',
+            'page_numbers' => 'numarali',
+            'header_footer' => 'duzenlenmis',
+            'compress' => 'sikistirilmis',
+            'fit_a4' => 'a4',
+            default => 'duzenlenmis',
+        };
+
+        return $this->downloadAndCleanup($output, Str::slug($base . '-' . $suffix) . '.pdf', $dir);
+    }
+
+    /** @return array{pages: int, filename: string} */
+    public function pdfInfo(UploadedFile $file): array
+    {
+        $stored = $file->storeAs('temp/document-tools', Str::uuid() . '.pdf', 'local');
+        $path = storage_path('app/' . $stored);
+
+        try {
+            return [
+                'pages' => $this->editor->pageCount($path),
+                'filename' => $file->getClientOriginalName(),
+            ];
+        } finally {
+            @unlink($path);
+        }
     }
 
     /** @return list<list<string>> */

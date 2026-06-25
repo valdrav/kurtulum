@@ -111,6 +111,37 @@ class PdfToolService
         return $count;
     }
 
+    /** @return list<int> */
+    public function parsePageList(string $spec, int $maxPages): array
+    {
+        $pages = [];
+
+        foreach (explode(',', $spec) as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                continue;
+            }
+
+            if (preg_match('/^(\d+)\s*-\s*(\d+)$/', $part, $m)) {
+                $from = max(1, (int) $m[1]);
+                $to = min($maxPages, (int) $m[2]);
+                for ($i = $from; $i <= $to; $i++) {
+                    $pages[] = $i;
+                }
+                continue;
+            }
+
+            if (ctype_digit($part)) {
+                $page = (int) $part;
+                if ($page >= 1 && $page <= $maxPages) {
+                    $pages[] = $page;
+                }
+            }
+        }
+
+        return array_values(array_unique($pages));
+    }
+
     protected function extractPages(string $sourcePath, string $outputPath, int $from, int $to): void
     {
         $pdf = new Fpdi();

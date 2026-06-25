@@ -21,7 +21,8 @@
 @endif
 
 <ul class="nav nav-tabs mb-3 flex-nowrap overflow-auto" role="tablist">
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-merge" type="button"><i class="ti ti-files me-1"></i>{{ __('documents.tools.merge') }}</button></li>
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-pdf-editor" type="button"><i class="ti ti-edit me-1"></i>{{ __('documents.tools.editor.title') }}</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-merge" type="button"><i class="ti ti-files me-1"></i>{{ __('documents.tools.merge') }}</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-split" type="button"><i class="ti ti-scissors me-1"></i>{{ __('documents.tools.split') }}</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-pdf-word" type="button"><i class="ti ti-file-type-doc me-1"></i>{{ __('documents.tools.pdf_to_word') }}</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-word-pdf" type="button"><i class="ti ti-file-type-pdf me-1"></i>{{ __('documents.tools.word_to_pdf') }}</button></li>
@@ -31,8 +32,10 @@
 </ul>
 
 <div class="tab-content">
+    @include('documents.tools._pdf-editor')
+
     {{-- PDF Birleştir --}}
-    <div class="tab-pane fade show active" id="tab-merge">
+    <div class="tab-pane fade" id="tab-merge">
         <div class="card">
             <div class="card-body">
                 <p class="text-muted">{{ __('documents.tools.merge_help') }}</p>
@@ -240,5 +243,61 @@
 document.getElementById('splitMode')?.addEventListener('change', function () {
     document.getElementById('splitRangeWrap').style.display = this.value === 'range' ? '' : 'none';
 });
+
+(function () {
+    const master = document.getElementById('pdfEditorFile');
+    const meta = document.getElementById('pdfEditorMeta');
+    const forms = document.querySelectorAll('.pdf-editor-form');
+    if (!master) return;
+
+    const syncFile = (file) => {
+        forms.forEach(form => {
+            const input = form.querySelector('.pdf-editor-input');
+            const btn = form.querySelector('button[type="submit"]');
+            if (!input) return;
+            if (file) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                input.files = dt.files;
+                if (btn) btn.disabled = false;
+            } else {
+                input.value = '';
+                if (btn) btn.disabled = true;
+            }
+        });
+    };
+
+    master.addEventListener('change', async function () {
+        const file = this.files?.[0];
+        syncFile(file || null);
+        if (!file || !meta) return;
+
+        meta.style.display = '';
+        meta.textContent = '{{ __('documents.tools.editor.analyzing') }}';
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('_token', @json(csrf_token()));
+
+        try {
+            const res = await fetch(@json(route('documents.tools.pdf-info')), { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.pages) {
+                meta.textContent = file.name + ' — ' + data.pages + ' {{ __('documents.tools.editor.page_count_label') }}';
+            } else {
+                meta.textContent = data.error || '';
+            }
+        } catch (e) {
+            meta.textContent = file.name;
+        }
+    });
+
+    forms.forEach(form => {
+        form.addEventListener('submit', function () {
+            const masterFile = master.files?.[0];
+            if (masterFile) syncFile(masterFile);
+        });
+    });
+})();
 </script>
 @endpush

@@ -661,6 +661,19 @@ body.ef-app {
     margin-top: 0.35rem;
 }
 
+.pdf-editor-card {
+    border: 1px solid var(--ef-border);
+}
+
+.pdf-editor-card .card-header {
+    background: rgba(var(--ef-primary-rgb), 0.06);
+}
+
+.pdf-editor-upload {
+    border: 2px dashed var(--ef-border);
+    background: rgba(var(--ef-primary-rgb), 0.03);
+}
+
 .kanban-board {
     display: flex;
     gap: 0.75rem;

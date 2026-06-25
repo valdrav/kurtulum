@@ -156,6 +156,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/create-excel', [DocumentToolsController::class, 'createExcel'])->name('create-excel');
         Route::post('/csv-to-excel', [DocumentToolsController::class, 'csvToExcel'])->name('csv-to-excel');
         Route::post('/excel-to-csv', [DocumentToolsController::class, 'excelToCsv'])->name('excel-to-csv');
+        Route::post('/pdf-edit', [DocumentToolsController::class, 'pdfEdit'])->name('pdf-edit');
+        Route::post('/pdf-info', [DocumentToolsController::class, 'pdfInfo'])->name('pdf-info');
     });
 
     // Tasks & Calendar
