@@ -17,7 +17,7 @@ Kurulum ve güncelleme **Git ile** yapılır. Ana rehber: **[GITHUB-KURULUM.md](
 
 ```bash
 cd /var/www/vhosts/kurtulum.com/portal.kurtulum.com
-cp .env.plesk .env    # DB bilgilerini doldurun
+cp .env.plesk.example .env    # MariaDB bilgilerini doldurun
 bash scripts/plesk-deploy.sh
 ```
 
@@ -59,6 +59,40 @@ Document root: `public`
 ### 404 — Plesk "Page Not Found"
 
 Laravel'e ulaşmıyor → document root `public` değil.
+
+### Log / storage izin hatası (Permission denied)
+
+`storage/logs/laravel.log` yazılamıyor.
+
+**Plesk File Manager:**
+
+1. `storage` klasörü → sağ tık → **Change Permissions** → **775** → alt klasörlere uygula
+2. Aynı işlemi `bootstrap/cache` için yapın
+3. `storage/logs` içinde `laravel.log` varsa ve hata devam ediyorsa silin (yeniden oluşur)
+
+Kod tarafında log yazılamazsa Apache loguna düşer; kurulum yine açılabilir.
+
+### .env veritabanı (sqlite hatası)
+
+Kurulum sayfasında `database.sqlite does not exist` görürseniz sunucudaki `.env` yanlış şablondan kalmış demektir.
+
+Plesk **File Manager** → `.env` dosyasını açın:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_DATABASE=...
+DB_USERNAME=...
+DB_PASSWORD=...
+
+SESSION_DRIVER=file
+CACHE_STORE=file
+APP_INSTALLED=false
+```
+
+**Plesk MariaDB:** Veritabanı bilgilerini **Databases** ekranından alın. Laravel’de sürücü adı `mysql` kalır — MariaDB ile uyumludur, `mariadb` yazmayın.
+
+Referans: `.env.plesk.example` (şifre GitHub'a gitmez — sunucuda `.env` içine yazın)
 
 ### 403 — ModSecurity (Comodo WAF)
 

@@ -43,7 +43,7 @@ $checks['vendor/autoload.php'] = file_exists($root . '/vendor/autoload.php')
     ? 'OK'
     : 'HATA — SSH: composer install --no-dev';
 
-$checks['.env dosyası'] = file_exists($root . '/.env') ? 'OK' : 'HATA — cp .env.plesk .env';
+$checks['.env dosyası'] = file_exists($root . '/.env') ? 'OK' : 'HATA — .env.plesk.example → .env kopyalayın';
 
 $env = file_exists($root . '/.env') ? file_get_contents($root . '/.env') : '';
 $checks['APP_KEY'] = (str_contains($env, 'APP_KEY=base64:') && preg_match('/APP_KEY=base64:[A-Za-z0-9+\/=]{20,}/', $env))
@@ -54,7 +54,15 @@ $checks['APP_INSTALLED'] = str_contains($env, 'APP_INSTALLED=false')
     ? 'OK (kurulum bekleniyor)'
     : (str_contains($env, 'APP_INSTALLED=true') ? 'OK (kurulu)' : 'UYARI — .env içinde APP_INSTALLED=false olmalı');
 
-$checks['storage yazılabilir'] = is_writable($root . '/storage') ? 'OK' : 'HATA — chmod 775 storage';
+$checks['storage yazılabilir'] = is_writable($root . '/storage') ? 'OK' : 'HATA — File Manager: storage → İzinler → 775 (alt klasörlere uygula)';
+
+$logsDir = $root . '/storage/logs';
+if (! is_dir($logsDir)) {
+    @mkdir($logsDir, 0775, true);
+}
+$checks['storage/logs yazılabilir'] = is_writable($logsDir)
+    ? 'OK'
+    : 'HATA — File Manager: storage/logs → İzinler → 775';
 
 $viewCache = $root . '/storage/framework/views';
 if (! is_dir($viewCache)) {

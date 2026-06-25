@@ -20,7 +20,7 @@ fi
 $COMPOSER install --no-dev --optimize-autoloader --no-interaction
 
 if [ ! -f .env ]; then
-    cp .env.plesk .env 2>/dev/null || cp .env.example .env
+    cp .env.plesk.example .env 2>/dev/null || cp .env.example .env
 fi
 
 if ! grep -q 'APP_KEY=base64:' .env 2>/dev/null; then

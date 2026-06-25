@@ -32,7 +32,7 @@ class InstallerService
                 'current' => extension_loaded('pdo_sqlite') ? 'Enabled' : 'Disabled',
             ],
             'pdo_mysql' => [
-                'label' => 'PDO MySQL (MySQL kurulumu için)',
+                'label' => 'PDO MySQL / MariaDB (Plesk kurulumu için)',
                 'passed' => extension_loaded('pdo_mysql'),
                 'current' => extension_loaded('pdo_mysql') ? 'Enabled' : 'Disabled',
             ],

@@ -11,6 +11,7 @@
 /storage/framework/views/
 /vendor
 .env
+.env.plesk
 .env.backup
 .env.production
 .env.local.bak

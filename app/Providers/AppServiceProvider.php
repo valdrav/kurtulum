@@ -11,7 +11,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $logsDir = storage_path('logs');
+        if (! is_dir($logsDir)) {
+            @mkdir($logsDir, 0775, true);
+        }
+        if (! is_writable($logsDir)) {
+            config(['logging.default' => 'errorlog']);
+        }
     }
 
     /**

@@ -48,7 +48,7 @@ if [ -f "$ROOT/.env" ]; then
     grep -q 'APP_INSTALLED=false' "$ROOT/.env" 2>/dev/null && ok "APP_INSTALLED=false" || warn "APP_INSTALLED=true veya tanımsız"
     grep -q 'APP_KEY=base64:' "$ROOT/.env" 2>/dev/null && ok "APP_KEY dolu" || fail "APP_KEY boş — php artisan key:generate --force"
 else
-    fail ".env yok — cp .env.plesk .env"
+    fail ".env yok — .env.plesk.example dosyasını .env olarak kopyalayın"
 fi
 
 [ -w "$ROOT/storage" ] && ok "storage yazılabilir" || fail "storage yazılamıyor — chmod -R 775 storage"

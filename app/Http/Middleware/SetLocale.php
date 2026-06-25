@@ -13,6 +13,18 @@ class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
+        if (! filter_var(config('ticari.installed'), FILTER_VALIDATE_BOOLEAN)) {
+            $locale = session('locale') ?? config('app.locale', 'tr');
+            if (! is_dir(lang_path($locale))) {
+                $locale = config('app.fallback_locale', 'en');
+            }
+            App::setLocale($locale);
+            Carbon::setLocale($locale);
+            view()->share('isRtl', config('ticari.locales.' . $locale . '.dir', 'ltr') === 'rtl');
+
+            return $next($request);
+        }
+
         $locale = $request->user()?->locale
             ?? session('locale')
             ?? config('ticari.default_locale');

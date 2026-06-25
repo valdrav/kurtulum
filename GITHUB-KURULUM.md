@@ -37,16 +37,8 @@ git push
    - URL: `https://github.com/valdrav/kurtulum.git`
    - Hedef: site kökü (`artisan` burada olacak)
 3. **Hosting Settings** → document root: **`public`**
-4. SSH / Terminal:
-
-```bash
-cd /var/www/vhosts/kurtulum.com/portal.kurtulum.com
-cp .env.plesk .env
-nano .env          # DB bilgileri
-bash scripts/plesk-deploy.sh
-```
-
-`.env` kurulum öncesi:
+4. **Databases** → MariaDB veritabanı oluşturun (boş, tablo gerekmez)
+5. **File Manager** → `.env.plesk.example` dosyasını `.env` olarak kopyalayın, MariaDB bilgilerini doldurun:
 
 ```env
 APP_URL=https://portal.kurtulum.com
@@ -56,12 +48,15 @@ CACHE_STORE=file
 QUEUE_CONNECTION=sync
 DB_CONNECTION=mysql
 DB_HOST=localhost
-DB_DATABASE=...
+DB_DATABASE=...    # Plesk Databases
 DB_USERNAME=...
 DB_PASSWORD=...
 ```
 
-5. **https://portal.kurtulum.com/install**
+> Plesk **MariaDB** kullanır. `.env` içinde `DB_CONNECTION=mysql` doğrudur (Laravel MariaDB’yi bu sürücüyle bağlar).
+
+6. Plesk **Git** → **Pull** / Deploy
+7. **https://portal.kurtulum.com/install**
 
 ---
 
@@ -85,7 +80,8 @@ bash scripts/plesk-deploy.sh
 
 | Dosya | Neden |
 |-------|--------|
-| `.env` | Şifreler |
+| `.env` / `.env.plesk` | Şifreler — GitHub'a gitmez |
+| `.env.plesk.example` | Şablon (şifresiz) — GitHub'a gider |
 | `vendor/` | Sunucuda composer |
 | `storage/logs/` | Log |
 | `node_modules/` | Gerek yok |
@@ -98,8 +94,10 @@ bash scripts/plesk-deploy.sh
 |------|--------|
 | 404 (Plesk sayfası) | Document root = `public`, `/ping.php` test |
 | AH00124 redirect | Kök `.htaccess` sil |
-| valid cache path | `bash scripts/plesk-deploy.sh` (storage klasörlerini oluşturur) |
-| **403 ModSecurity / COMODO WAF** | Plesk → site → Web Application Firewall → Kapalı veya Detection only |
+| valid cache path | Plesk Pull sonrası deploy script çalışsın |
+| **403 ModSecurity** | Plesk → site → Web Application Firewall → Kapalı |
+| Log Permission denied | File Manager → `storage` ve `bootstrap/cache` → izinler 775 |
+| sqlite / database.sqlite | `.env` → `DB_CONNECTION=mysql` (MariaDB), Plesk Databases bilgileri |
 | vendor hatası | `rm -rf vendor && composer install --no-dev` |
 | `/install` 500 | `.env` → `SESSION_DRIVER=file`, izinler 775 |
 
