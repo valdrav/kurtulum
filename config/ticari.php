@@ -49,6 +49,10 @@ return [
         'verify_ssl' => env('HTTP_VERIFY_SSL'),
     ],
 
+    'document_tools' => [
+        'soffice_path' => env('SOFFICE_PATH'),
+    ],
+
     'vessel_tracking' => [
         'provider' => env('VESSEL_TRACKING_PROVIDER', 'marinesia'),
         'refresh_minutes' => (int) env('VESSEL_TRACKING_REFRESH_MINUTES', 15),

@@ -24,17 +24,22 @@ class OfficeBridgeService
 
     public function binary(): ?string
     {
+        $configured = config('ticari.document_tools.soffice_path');
+        if (is_string($configured) && $configured !== '' && $this->isExecutableSafe($configured)) {
+            return $configured;
+        }
+
         foreach ($this->binaryCandidates as $candidate) {
-            if (str_contains($candidate, '\\') || str_contains($candidate, '/')) {
-                if (is_executable($candidate)) {
-                    return $candidate;
+            if (! str_contains($candidate, '\\') && ! str_contains($candidate, '/')) {
+                $resolved = $this->resolveViaWhich($candidate);
+                if ($resolved !== null) {
+                    return $resolved;
                 }
                 continue;
             }
 
-            $result = Process::run([PHP_OS_FAMILY === 'Windows' ? 'where' : 'which', $candidate]);
-            if ($result->successful() && trim($result->output()) !== '') {
-                return trim(explode("\n", $result->output())[0]);
+            if ($this->isExecutableSafe($candidate)) {
+                return $candidate;
             }
         }
 
@@ -70,5 +75,56 @@ class OfficeBridgeService
         $candidate = $outputDir . '/' . $base . '.' . $targetFormat;
 
         return is_file($candidate) ? $candidate : null;
+    }
+
+    protected function resolveViaWhich(string $command): ?string
+    {
+        try {
+            $result = Process::run([PHP_OS_FAMILY === 'Windows' ? 'where' : 'which', $command]);
+            if ($result->successful() && trim($result->output()) !== '') {
+                $path = trim(explode("\n", $result->output())[0]);
+
+                return $this->isExecutableSafe($path) ? $path : null;
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return null;
+    }
+
+    protected function isExecutableSafe(string $path): bool
+    {
+        if (! $this->isPathAllowed($path)) {
+            return false;
+        }
+
+        try {
+            return is_file($path) && is_executable($path);
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    protected function isPathAllowed(string $path): bool
+    {
+        $openBasedir = ini_get('open_basedir');
+        if (! is_string($openBasedir) || $openBasedir === '') {
+            return true;
+        }
+
+        $normalized = str_replace('\\', '/', $path);
+
+        foreach (preg_split('/[:;]/', $openBasedir) ?: [] as $allowed) {
+            $allowed = rtrim(str_replace('\\', '/', trim($allowed)), '/');
+            if ($allowed === '') {
+                continue;
+            }
+            if (str_starts_with($normalized, $allowed)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

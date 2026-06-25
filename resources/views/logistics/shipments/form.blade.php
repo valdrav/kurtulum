@@ -18,9 +18,7 @@
         'rail' => default_port_type_for_mode('rail'),
         'multimodal' => default_port_type_for_mode('multimodal'),
     ];
-    $countryOptions = collect(['TR', 'DE', 'NL', 'BG', 'GR', 'RO', 'IQ', 'SY', 'RU', 'UA', 'CN', 'AE', 'SA', 'LY', 'EG', 'IT', 'FR', 'ES', 'GB', 'US'])
-        ->mapWithKeys(fn ($c) => [$c => country_label($c)])
-        ->all();
+    $countryOptions = country_options();
 @endphp
 <div class="card"><div class="card-body">
 <form method="POST" action="{{ $shipment->exists ? route('shipments.update', $shipment) : route('shipments.store') }}">@csrf @if($shipment->exists)@method('PUT')@endif

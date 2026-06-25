@@ -8,6 +8,7 @@ return [
     'AE' => 'Birleşik Arap Emirlikleri',
     'SA' => 'Suudi Arabistan',
     'LY' => 'Libya',
+    'SD' => 'Sudan',
     'EG' => 'Mısır',
     'IT' => 'İtalya',
     'GR' => 'Yunanistan',

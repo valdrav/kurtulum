@@ -356,7 +356,7 @@ if (!function_exists('country_iso2')) {
             'TUR' => 'TR', 'DEU' => 'DE', 'USA' => 'US', 'GBR' => 'GB', 'ARE' => 'AE',
             'SAU' => 'SA', 'ITA' => 'IT', 'FRA' => 'FR', 'ESP' => 'ES', 'NLD' => 'NL',
             'CHN' => 'CN', 'RUS' => 'RU', 'UKR' => 'UA', 'EGY' => 'EG', 'LBY' => 'LY',
-            'IRQ' => 'IQ', 'SYR' => 'SY', 'SWE' => 'SE', 'POL' => 'PL', 'ROU' => 'RO',
+            'IRQ' => 'IQ', 'SYR' => 'SY', 'SDN' => 'SD', 'SWE' => 'SE', 'POL' => 'PL', 'ROU' => 'RO',
             'BGR' => 'BG', 'GRC' => 'GR', 'JOR' => 'JO', 'MAR' => 'MA', 'TUN' => 'TN',
             'DZA' => 'DZ', 'ISR' => 'IL',
         ];
