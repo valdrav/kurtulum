@@ -34,4 +34,11 @@ return [
         'partial' => 'Kısmi kapandı',
         'settled' => 'Kapandı',
     ],
+    'shipments' => 'Sevkiyatlar',
+    'no_shipments' => 'Bu sipariş için henüz sevkiyat yok.',
+    'create_shipment' => 'Sevkiyat oluştur',
+    'shipment_auto_note' => 'Sipariş :order için otomatik oluşturuldu.',
+    'shipments_synced' => ':count sipariş için sevkiyat kaydı oluşturuldu.',
+    'sync_shipments_from_orders' => 'Siparişlerden sevkiyat oluştur',
+    'sync_shipments_hint' => 'Onaylı siparişlerden eksik sevkiyat kayıtlarını otomatik oluşturur.',
 ];

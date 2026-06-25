@@ -5,6 +5,7 @@ $nav = [
     ['route' => 'suppliers.index', 'icon' => 'ti-building-factory', 'label' => 'app.suppliers', 'perm' => 'suppliers.view'],
     ['route' => 'orders.index', 'icon' => 'ti-shopping-cart', 'label' => 'app.orders', 'perm' => 'orders.view'],
     ['route' => 'shipments.index', 'icon' => 'ti-truck-delivery', 'label' => 'app.shipments', 'perm' => 'shipments.view'],
+    ['route' => 'shipments.costs.index', 'icon' => 'ti-receipt', 'label' => 'logistics.shipment_costs', 'perm' => 'shipments.view'],
     ['route' => 'vessels.track.index', 'icon' => 'ti-ship', 'label' => 'logistics.vessel_tracking', 'perm' => 'shipments.view'],
     ['route' => 'finance.index', 'icon' => 'ti-currency-lira', 'label' => 'app.finance', 'perm' => 'finance.view'],
     ['route' => 'documents.index', 'icon' => 'ti-files', 'label' => 'app.documents', 'perm' => 'documents.view'],

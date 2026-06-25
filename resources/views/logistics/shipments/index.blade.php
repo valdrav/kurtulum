@@ -3,6 +3,22 @@
 @section('content')
 @include('partials.page-header', ['title' => __('app.shipments'), 'createRoute' => route('shipments.create'), 'createPermission' => 'shipments.create'])
 
+@if(session('success'))
+<div class="alert alert-success">{{ session('success') }}</div>
+@endif
+
+@if(can_access('shipments.create'))
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <form method="POST" action="{{ route('shipments.sync-from-orders') }}" class="d-inline"
+          onsubmit="return confirm(@json(__('orders.sync_shipments_hint')))">
+        @csrf
+        <button type="submit" class="btn btn-outline-primary btn-sm">
+            <i class="ti ti-refresh me-1"></i>{{ __('orders.sync_shipments_from_orders') }}
+        </button>
+    </form>
+</div>
+@endif
+
 <div class="card mb-3">
     <div class="card-body py-3">
         <form class="row g-2" method="GET">
@@ -19,7 +35,7 @@
     @include('partials.mobile-record-card', [
         'url' => route('shipments.show', $s),
         'title' => $s->shipment_number,
-        'subtitle' => $s->customer?->company_name ?? '—',
+        'subtitle' => $s->customer?->company_name ?? ($s->order?->order_number ?? '—'),
         'meta' => __('logistics.'.$s->transport_mode).' · ETA: '.($s->eta?->format('d.m.Y') ?? '—'),
         'badge' => $s->statusDisplay(),
         'editUrl' => route('shipments.edit', $s),
@@ -33,13 +49,14 @@
 <div class="card hide-mobile">
     <div class="table-responsive">
         <table class="table table-vcenter card-table table-striped table-modern">
-            <thead><tr><th>No</th><th>Mod</th><th>{{ __('app.customers') }}</th><th>{{ __('logistics.etd') }}</th><th>{{ __('logistics.eta') }}</th><th>{{ __('app.status') }}</th><th></th></tr></thead>
+            <thead><tr><th>No</th><th>{{ __('app.orders') }}</th><th>Mod</th><th>{{ __('app.customers') }}</th><th>{{ __('logistics.etd') }}</th><th>{{ __('logistics.eta') }}</th><th>{{ __('app.status') }}</th><th></th></tr></thead>
             <tbody>
                 @forelse($shipments as $s)
                 <tr>
                     <td><a href="{{ route('shipments.show', $s) }}" class="fw-bold">{{ $s->shipment_number }}</a>
                         @if($s->bl_number)<div class="text-muted small">B/L: {{ $s->bl_number }}</div>@endif
                     </td>
+                    <td>@if($s->order)<a href="{{ route('orders.show', $s->order) }}">{{ $s->order->order_number }}</a>@else — @endif</td>
                     <td><span class="badge bg-{{ config('ticari.transport_modes.'.$s->transport_mode.'.color') }}-lt">{{ __('logistics.'.$s->transport_mode) }}</span></td>
                     <td>{{ $s->customer?->company_name ?? '-' }}</td>
                     <td>{{ $s->etd?->format('d.m.Y H:i') ?? '-' }}</td>
@@ -52,7 +69,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="text-center text-muted py-4">{{ __('app.no_records') }}</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">{{ __('app.no_records') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

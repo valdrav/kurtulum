@@ -12,6 +12,7 @@ use App\Models\ShipmentLeg;
 use App\Models\ShipmentMilestone;
 use App\Models\Vehicle;
 use App\Models\Vessel;
+use App\Services\OrderShipmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +20,7 @@ class ShipmentController extends Controller
 {
     public function index(Request $request)
     {
-        $shipments = Shipment::with(['customer', 'originPort', 'destinationPort'])
+        $shipments = Shipment::with(['customer', 'order', 'originPort', 'destinationPort'])
             ->when($request->mode, fn ($q, $m) => $q->where('transport_mode', $m))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->where('shipment_number', 'like', "%{$s}%")
@@ -30,9 +31,36 @@ class ShipmentController extends Controller
         return view('logistics.shipments.index', compact('shipments'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('logistics.shipments.form', $this->formData(new Shipment()));
+        $shipment = new Shipment([
+            'status' => 'draft',
+            'transport_mode' => 'road',
+            'currency' => 'USD',
+        ]);
+
+        if ($request->filled('order')) {
+            $order = Order::query()
+                ->with('items')
+                ->where(function ($q) use ($request) {
+                    $q->where('uuid', $request->order)->orWhere('id', $request->order);
+                })
+                ->first();
+
+            if ($order) {
+                $shipment->fill([
+                    'order_id' => $order->id,
+                    'customer_id' => $order->customer_id,
+                    'incoterm' => $order->incoterm,
+                    'currency' => $order->currency ?? 'USD',
+                    'eta' => $order->delivery_date,
+                    'cargo_description' => app(OrderShipmentService::class)->cargoDescriptionForOrder($order),
+                    'notes' => $order->notes,
+                ]);
+            }
+        }
+
+        return view('logistics.shipments.form', $this->formData($shipment));
     }
 
     public function store(Request $request)
@@ -52,11 +80,20 @@ class ShipmentController extends Controller
         return redirect()->route('shipments.show', $shipment)->with('success', __('messages.created'));
     }
 
+    public function syncFromOrders(OrderShipmentService $orderShipments)
+    {
+        $count = $orderShipments->syncOrdersWithoutShipments();
+
+        return redirect()
+            ->route('shipments.index')
+            ->with('success', __('orders.shipments_synced', ['count' => $count]));
+    }
+
     public function show(Shipment $shipment)
     {
         $shipment->load([
             'customer', 'order', 'originPort', 'destinationPort', 'vessel',
-            'vehicle', 'driver', 'legs', 'containers', 'costs', 'milestones',
+            'vehicle', 'driver', 'legs', 'containers', 'costs.user', 'milestones',
             'customsDeclarations', 'documents', 'assignedUser',
         ]);
 
@@ -259,7 +296,7 @@ class ShipmentController extends Controller
         foreach ($milestones ?: $defaults as $m) {
             ShipmentMilestone::create([
                 'shipment_id' => $shipment->id,
-                'title' => $m['title'],
+                'name' => $m['title'],
                 'status' => $m['status'] ?? 'pending',
             ]);
         }

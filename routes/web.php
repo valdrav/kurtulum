@@ -13,6 +13,7 @@ use App\Http\Controllers\Install\InstallController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Logistics\PortController;
 use App\Http\Controllers\Logistics\ShipmentController;
+use App\Http\Controllers\Logistics\ShipmentCostController;
 use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\ProfileController;
@@ -77,6 +78,12 @@ Route::middleware(['auth'])->group(function () {
 
     // Logistics
     Route::get('/shipments/tracking', [ShipmentController::class, 'tracking'])->name('shipments.tracking');
+    Route::post('/shipments/sync-from-orders', [ShipmentController::class, 'syncFromOrders'])->name('shipments.sync-from-orders');
+    Route::get('/shipments/costs', [ShipmentCostController::class, 'index'])->name('shipments.costs.index');
+    Route::post('/shipments/costs', [ShipmentCostController::class, 'storeFromIndex'])->name('shipments.costs.store-from-index');
+    Route::post('/shipments/{shipment}/costs', [ShipmentCostController::class, 'store'])->name('shipments.costs.store');
+    Route::put('/shipment-costs/{cost}', [ShipmentCostController::class, 'update'])->name('shipments.costs.update');
+    Route::delete('/shipment-costs/{cost}', [ShipmentCostController::class, 'destroy'])->name('shipments.costs.destroy');
     Route::post('/shipments/{shipment}/status', [ShipmentController::class, 'updateStatus'])->name('shipments.status');
     Route::resource('shipments', ShipmentController::class);
     Route::post('/api/ports', [PortController::class, 'store'])->name('ports.store');

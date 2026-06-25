@@ -15,20 +15,47 @@ class ShipmentCost extends Model
     protected $fillable = [
         'shipment_id',
         'type',
+        'item_name',
         'description',
+        'payee',
+        'country',
         'amount',
+        'amount_try',
+        'exchange_rate',
         'currency',
         'supplier_id',
         'invoice_number',
+        'expense_date',
+        'notes',
+        'status',
         'paid_at',
+        'user_id',
     ];
 
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:2',
+            'amount_try' => 'decimal:2',
+            'exchange_rate' => 'decimal:6',
+            'expense_date' => 'date',
             'paid_at' => 'date',
         ];
+    }
+
+    public function displayTitle(): string
+    {
+        return $this->item_name ?: ($this->description ?: '—');
+    }
+
+    public function statusLabel(): string
+    {
+        return __('logistics.cost_status.' . ($this->status ?: 'pending'));
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function shipment(): BelongsTo

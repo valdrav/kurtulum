@@ -54,7 +54,12 @@
 
         @if($order->shipments->isNotEmpty())
         <div class="card mt-3">
-            <div class="card-header"><h3 class="card-title mb-0">{{ __('app.shipments') }}</h3></div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">{{ __('orders.shipments') }}</h3>
+                @if(can_access('shipments.create'))
+                <a href="{{ route('shipments.create', ['order' => $order->uuid]) }}" class="btn btn-sm btn-outline-primary">{{ __('orders.create_shipment') }}</a>
+                @endif
+            </div>
             <div class="list-group list-group-flush">
                 @foreach($order->shipments as $shipment)
                 <a href="{{ route('shipments.show', $shipment) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
@@ -62,6 +67,15 @@
                     <span class="badge bg-secondary-lt">{{ status_label($shipment->status, 'shipment') }}</span>
                 </a>
                 @endforeach
+            </div>
+        </div>
+        @elseif(can_access('shipments.create'))
+        <div class="card mt-3">
+            <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span class="text-muted">{{ __('orders.no_shipments') }}</span>
+                <a href="{{ route('shipments.create', ['order' => $order->uuid]) }}" class="btn btn-sm btn-primary">
+                    <i class="ti ti-truck-delivery me-1"></i>{{ __('orders.create_shipment') }}
+                </a>
             </div>
         </div>
         @endif

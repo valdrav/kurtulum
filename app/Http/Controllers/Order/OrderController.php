@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\OrderFinanceService;
+use App\Services\OrderShipmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -62,6 +63,8 @@ class OrderController extends Controller
                 app(OrderFinanceService::class)->postOrderLedger($order->fresh());
             }
 
+            app(OrderShipmentService::class)->ensureShipmentForOrder($order->fresh());
+
             return $order;
         });
 
@@ -110,6 +113,8 @@ class OrderController extends Controller
             if ($order->fresh()->status === 'confirmed' && $oldStatus !== 'confirmed') {
                 app(OrderFinanceService::class)->postOrderLedger($order->fresh());
             }
+
+            app(OrderShipmentService::class)->ensureShipmentForOrder($order->fresh());
         });
 
         return redirect()->route('orders.show', $order)->with('success', __('messages.updated'));

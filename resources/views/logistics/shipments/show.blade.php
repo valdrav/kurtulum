@@ -74,6 +74,42 @@
             </div>
         </div>
         @endif
+
+        <div class="card mb-3">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h3 class="card-title mb-0">{{ __('logistics.shipment_costs') }}</h3>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('shipments.costs.index', ['shipment' => $shipment->uuid]) }}" class="btn btn-sm btn-outline-secondary">
+                        {{ __('finance.view_all') }}
+                    </a>
+                    @if($shipment->costs->isNotEmpty())
+                    <span class="badge bg-primary-lt align-self-center">
+                        {{ __('logistics.cost_total') }}: {{ number_format($shipment->total_cost, 2, ',', '.') }} {{ $shipment->currency }}
+                    </span>
+                    @endif
+                </div>
+            </div>
+            @if(can_access('shipments.create'))
+            <div class="card-body border-bottom bg-light">
+                <form method="POST" action="{{ route('shipments.costs.store', $shipment) }}">
+                    @csrf
+                    @include('logistics.shipments.costs._form', [
+                        'shipment' => $shipment,
+                        'compact' => true,
+                        'redirect' => 'show',
+                    ])
+                    <button type="submit" class="btn btn-primary btn-sm mt-2"><i class="ti ti-plus me-1"></i>{{ __('logistics.cost_add') }}</button>
+                </form>
+            </div>
+            @endif
+            <div class="card-body p-0">
+                @include('logistics.shipments.costs._table', [
+                    'items' => $shipment->costs,
+                    'showShipmentColumn' => false,
+                    'redirect' => 'show',
+                ])
+            </div>
+        </div>
     </div>
 
     <div class="col-lg-4">
@@ -89,16 +125,6 @@
                     </div>
                 </div>
                 @endforeach
-            </div>
-        </div>
-        <div class="card mb-3">
-            <div class="card-header"><h3 class="card-title">{{ __('logistics.costs') }}</h3></div>
-            <div class="card-body">
-                @forelse($shipment->costs as $cost)
-                <div class="d-flex justify-content-between mb-2"><span>{{ $cost->description }}</span><strong>{{ number_format($cost->amount,2) }} {{ $cost->currency }}</strong></div>
-                @empty
-                <p class="text-muted mb-0">{{ __('app.no_records') }}</p>
-                @endforelse
             </div>
         </div>
     </div>

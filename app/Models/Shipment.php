@@ -70,6 +70,19 @@ class Shipment extends Model
         return shipment_status_display($this);
     }
 
+    public function displayLabel(): string
+    {
+        $parts = [$this->shipment_number];
+
+        if ($this->cargo_description) {
+            $parts[] = $this->cargo_description;
+        } elseif ($this->package_count) {
+            $parts[] = $this->package_count . ' box';
+        }
+
+        return implode(' · ', $parts);
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
