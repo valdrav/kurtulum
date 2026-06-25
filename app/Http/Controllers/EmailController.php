@@ -15,6 +15,7 @@ class EmailController extends Controller
         $this->middleware('permission:emails.view')->only(['index', 'show', 'accounts']);
         $this->middleware('permission:emails.create')->only(['storeAccount', 'compose', 'send', 'sync']);
         $this->middleware('permission:emails.edit|emails.create')->only(['editAccount', 'updateAccount']);
+        $this->middleware('permission:emails.delete|emails.create')->only(['destroyAccount']);
     }
 
     protected function userAccounts()
@@ -49,11 +50,7 @@ class EmailController extends Controller
             'is_default' => 'boolean',
         ]);
 
-        if ($validated['provider'] === 'plesk') {
-            $validated = array_merge(EmailAccount::pleskPresetForEmail($validated['email']), $validated);
-        } elseif (in_array($validated['provider'], ['microsoft365', 'google', 'yandex'], true)) {
-            $validated = array_merge(EmailAccount::providerPresets()[$validated['provider']], $validated);
-        }
+        $validated = EmailAccount::applyProviderDefaults($validated);
 
         if ($validated['provider'] === 'custom') {
             $request->validate([
@@ -174,6 +171,15 @@ class EmailController extends Controller
         }
 
         return redirect()->route('emails.accounts')->with('success', __('messages.updated'));
+    }
+
+    public function destroyAccount(EmailAccount $account)
+    {
+        $this->authorizeAccount($account);
+
+        $account->delete();
+
+        return redirect()->route('emails.accounts')->with('success', __('messages.deleted'));
     }
 
     public function sync(Request $request, ImapMailService $imap)

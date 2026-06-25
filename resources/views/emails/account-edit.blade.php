@@ -23,5 +23,16 @@
             'submitLabel' => __('app.save'),
         ])
     </div>
+    @if(Route::has('emails.accounts.destroy') && (can_access('emails.delete') || can_access('emails.create')))
+    <div class="card-footer">
+        <form action="{{ route('emails.accounts.destroy', $account) }}" method="POST"
+              onsubmit="return confirm(@json(__('emails.delete_account_confirm')))">
+            @csrf @method('DELETE')
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="ti ti-trash me-1"></i>{{ __('emails.delete_account') }}
+            </button>
+        </form>
+    </div>
+    @endif
 </div>
 @endsection

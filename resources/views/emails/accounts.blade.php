@@ -38,10 +38,19 @@
             </div>
             <div class="d-flex align-items-center gap-2 flex-shrink-0">
                 @if($a->is_default)<span class="badge bg-primary-lt">{{ __('emails.is_default') }}</span>@endif
-                @if(can_access('emails.edit') || can_access('emails.create'))
+                @if(Route::has('emails.accounts.edit') && (can_access('emails.edit') || can_access('emails.create')))
                 <a href="{{ route('emails.accounts.edit', $a) }}" class="btn btn-sm btn-ghost-primary" title="{{ __('app.edit') }}">
                     <i class="ti ti-edit"></i>
                 </a>
+                @endif
+                @if(Route::has('emails.accounts.destroy') && (can_access('emails.delete') || can_access('emails.create')))
+                <form action="{{ route('emails.accounts.destroy', $a) }}" method="POST"
+                      onsubmit="return confirm(@json(__('emails.delete_account_confirm')))">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-ghost-danger" title="{{ __('emails.delete_account') }}">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </form>
                 @endif
             </div>
         </div>

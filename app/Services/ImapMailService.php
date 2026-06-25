@@ -161,7 +161,8 @@ class ImapMailService
         ];
 
         if ($account->provider === 'plesk') {
-            $hints[] = 'Sunucu: mail.' . substr(strrchr($account->email, '@'), 1) . ' — Plesk posta ayarlarında farklıysa Özel sunucu ile düzeltin.';
+            $domain = substr(strrchr($account->email, '@'), 1);
+            $hints[] = "Sunucu: {$account->imap_host} (Plesk'te genelde {$domain} veya mail.{$domain}) — formda IMAP/SMTP alanlarını Plesk'teki gibi girin.";
         } elseif ($account->provider === 'microsoft365') {
             $hints[] = '@kurtulum.com gibi domain mailleri Microsoft 365 değil; sağlayıcı olarak Plesk Mail seçin.';
         } elseif ($account->provider === 'google') {

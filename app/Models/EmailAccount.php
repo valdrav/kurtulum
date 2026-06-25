@@ -54,13 +54,29 @@ class EmailAccount extends Model
         }
 
         return [
-            'imap_host' => 'mail.' . $domain,
+            'imap_host' => $domain,
             'imap_port' => 993,
             'imap_encryption' => 'ssl',
-            'smtp_host' => 'mail.' . $domain,
+            'smtp_host' => $domain,
             'smtp_port' => 587,
             'smtp_encryption' => 'tls',
         ];
+    }
+
+    public static function applyProviderDefaults(array $validated): array
+    {
+        if ($validated['provider'] === 'plesk') {
+            $preset = self::pleskPresetForEmail($validated['email']);
+            foreach ($preset as $key => $value) {
+                if (empty($validated[$key])) {
+                    $validated[$key] = $value;
+                }
+            }
+        } elseif (in_array($validated['provider'], ['microsoft365', 'google', 'yandex'], true)) {
+            $validated = array_merge(self::providerPresets()[$validated['provider']], $validated);
+        }
+
+        return $validated;
     }
 
     public static function providerPresets(): array

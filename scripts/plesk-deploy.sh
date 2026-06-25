@@ -50,6 +50,8 @@ $PHP artisan storage:link --force 2>/dev/null || true
 
 if [ "$INSTALLED" = true ]; then
     $PHP artisan migrate --force --no-interaction 2>/dev/null || true
+    # Eski route cache yeni rotalari gizler (RouteNotFoundException onler)
+    $PHP artisan route:clear --no-interaction 2>/dev/null || true
     $PHP artisan optimize --no-interaction 2>/dev/null || true
 else
     $PHP artisan optimize:clear --no-interaction 2>/dev/null || true

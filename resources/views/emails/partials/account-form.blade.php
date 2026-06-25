@@ -2,15 +2,18 @@
     $isEdit = isset($account);
     $providerDefault = $isEdit ? $account->provider : 'plesk';
     $emailDefault = $isEdit ? $account->email : '';
+    $domainFromEmail = fn (?string $email) => $email && str_contains($email, '@')
+        ? substr(strrchr($email, '@'), 1)
+        : 'alanadiniz.com';
+    $suggestedHost = $domainFromEmail(old('email', $emailDefault));
 @endphp
 
 <form method="POST" action="{{ $formAction }}"
       x-data="{
           provider: '{{ old('provider', $providerDefault) }}',
           email: '{{ old('email', $emailDefault) }}',
-          mailHost() {
-              const d = this.email.includes('@') ? this.email.split('@')[1] : 'alanadiniz.com';
-              return 'mail.' + d;
+          mailDomain() {
+              return this.email.includes('@') ? this.email.split('@')[1] : '{{ $suggestedHost }}';
           }
       }">
     @csrf
@@ -38,7 +41,10 @@
         </div>
 
         <div class="col-12" x-show="provider === 'plesk'" x-cloak>
-            <div class="alert alert-info mb-0 py-2">{{ __('emails.plesk_hint') }}</div>
+            <div class="alert alert-info mb-0 py-2">
+                {{ __('emails.plesk_hint') }}
+                <span class="d-block small mt-1" x-text="'Önerilen sunucu: ' + mailDomain()"></span>
+            </div>
         </div>
 
         <div class="col-md-6">
@@ -61,14 +67,8 @@
                 <div class="row g-3">
                     <div class="col-12"><h4 class="h5 mb-0">{{ __('emails.incoming_server') }}</h4></div>
                     <div class="col-md-4">
-                        @if($isEdit)
                         <input type="text" name="imap_host" class="form-control" placeholder="{{ __('emails.imap_host') }}"
-                               value="{{ old('imap_host', $account->imap_host) }}">
-                        @else
-                        <input type="text" name="imap_host" class="form-control" placeholder="{{ __('emails.imap_host') }}"
-                               x-bind:value="provider === 'plesk' && !{{ json_encode((bool) old('imap_host')) }} ? mailHost() : $el.value"
-                               value="{{ old('imap_host') }}">
-                        @endif
+                               value="{{ old('imap_host', $isEdit ? $account->imap_host : $suggestedHost) }}">
                     </div>
                     <div class="col-md-2">
                         <input type="number" name="imap_port" class="form-control" placeholder="993"
@@ -82,14 +82,8 @@
                     </div>
                     <div class="col-12 mt-2"><h4 class="h5 mb-0">{{ __('emails.outgoing_server') }}</h4></div>
                     <div class="col-md-4">
-                        @if($isEdit)
                         <input type="text" name="smtp_host" class="form-control" placeholder="{{ __('emails.smtp_host') }}"
-                               value="{{ old('smtp_host', $account->smtp_host) }}">
-                        @else
-                        <input type="text" name="smtp_host" class="form-control" placeholder="{{ __('emails.smtp_host') }}"
-                               x-bind:value="provider === 'plesk' && !{{ json_encode((bool) old('smtp_host')) }} ? mailHost() : $el.value"
-                               value="{{ old('smtp_host') }}">
-                        @endif
+                               value="{{ old('smtp_host', $isEdit ? $account->smtp_host : $suggestedHost) }}">
                     </div>
                     <div class="col-md-2">
                         <input type="number" name="smtp_port" class="form-control" placeholder="587"
@@ -112,7 +106,7 @@
                 <span class="form-check-label">{{ __('emails.is_default') }}</span>
             </label>
         </div>
-        <div class="col-12">
+        <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
             <button type="submit" class="btn btn-primary">{{ $submitLabel ?? __('app.save') }}</button>
             <a href="{{ route('emails.accounts') }}" class="btn btn-link">{{ __('emails.back_to_accounts') }}</a>
         </div>
