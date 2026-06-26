@@ -75,7 +75,8 @@
                             <a href="{{ route('settings.users.edit', $user) }}" class="btn btn-sm btn-outline-primary">{{ __('app.edit') }}</a>
                             @endif
                             @if(can_access('users.delete') && $user->id !== auth()->id())
-                            <form action="{{ route('settings.users.destroy', $user) }}" method="POST" onsubmit="return confirm('{{ __('app.confirm_delete') }}')">
+                            <form action="{{ route('settings.users.destroy', $user) }}" method="POST" class="d-inline"
+                                  data-confirm="{{ __('app.confirm_delete') }}">
                                 @csrf @method('DELETE')
                                 <button class="btn btn-sm btn-outline-danger">{{ __('app.delete') }}</button>
                             </form>

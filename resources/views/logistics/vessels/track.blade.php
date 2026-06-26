@@ -75,7 +75,8 @@
                     </div>
                 </div>
             </a>
-            <form method="POST" action="{{ route('vessels.track.destroy', $v) }}" onsubmit="return confirm('{{ __('logistics.vessel_remove_confirm') }}')">
+            <form method="POST" action="{{ route('vessels.track.destroy', $v) }}" class="d-inline"
+                  data-confirm="{{ __('logistics.vessel_remove_confirm') }}">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ __('logistics.remove_vessel') }}">

@@ -16,6 +16,10 @@
 </div>
 @endif
 
+@if(!empty($deletionBlockReason) && can_access('suppliers.delete'))
+<div class="alert alert-warning py-2 small mb-3">{{ $deletionBlockReason }}</div>
+@endif
+
 <div class="row g-3 mb-3">
     <div class="col-6 col-md-3">
         <div class="card stat-card h-100"><div class="card-body py-3">
@@ -56,6 +60,12 @@
             </dl>
             <div class="d-flex flex-wrap gap-2 mt-3">
                 <a href="{{ route('suppliers.edit', $supplier) }}" class="btn btn-outline-primary btn-sm">{{ __('app.edit') }}</a>
+                @include('partials.crm-delete-button', [
+                    'destroyRoute' => route('suppliers.destroy', $supplier),
+                    'confirm' => __('suppliers.delete_confirm'),
+                    'blockReason' => $deletionBlockReason ?? null,
+                    'permission' => 'suppliers.delete',
+                ])
                 @if(can_access('orders.create'))
                 <a href="{{ route('orders.create', ['supplier_id' => $supplier->id]) }}" class="btn btn-primary btn-sm">
                     <i class="ti ti-plus me-1"></i>{{ __('suppliers.new_purchase_order') }}

@@ -67,7 +67,8 @@
                             <td>{{ $dept->manager?->name ?? '—' }}</td>
                             <td><span class="badge bg-secondary-lt">{{ $dept->employees_count }}</span></td>
                             <td>
-                                <form action="{{ route('settings.departments.destroy', $dept) }}" method="POST" onsubmit="return confirm('{{ __('app.confirm_delete') }}')">
+                                <form action="{{ route('settings.departments.destroy', $dept) }}" method="POST" class="d-inline"
+                                      data-confirm="{{ __('app.confirm_delete') }}">
                                     @csrf @method('DELETE')
                                     <button class="btn btn-sm btn-outline-danger">{{ __('app.delete') }}</button>
                                 </form>

@@ -58,6 +58,7 @@ return [
     'cancel_confirm' => 'Bu siparişi iptal etmek istediğinize emin misiniz? Cari kayıtlar geri alınır; sipariş silinmez.',
     'cancel_action' => 'İptal et',
     'deleted_banner' => 'Bu sipariş silinmiş. Finans kayıtları geri alınmış olmalıdır. Geri yükleyebilir veya yalnızca görüntüleyebilirsiniz.',
+    'already_deleted' => 'Bu sipariş zaten silinmiş. Bakiye hâlâ yanlışsa yöneticinize finance:repair-cari-balances komutunu çalıştırmasını söyleyin.',
     'cancelled' => 'Sipariş iptal edildi.',
     'cancelled_finance_notice' => 'Müşteri alacağı ve tedarikçi borcu cari hesaplardan geri alındı.',
     'already_cancelled' => 'Sipariş zaten iptal edilmiş.',

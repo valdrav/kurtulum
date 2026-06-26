@@ -33,6 +33,10 @@
                     <i class="ti ti-trash"></i>
                 </button>
             </form>
+            @elseif(!empty($deleteBlockReason) && (empty($deletePermission) || can_access($deletePermission)))
+            <button type="button" class="btn btn-sm btn-ghost-danger ef-mobile-card-edit disabled" title="{{ $deleteBlockReason }}" disabled aria-label="{{ __('app.delete') }}">
+                <i class="ti ti-trash"></i>
+            </button>
             @endif
         </div>
     </div>

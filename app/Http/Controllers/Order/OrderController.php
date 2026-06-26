@@ -201,8 +201,15 @@ class OrderController extends Controller
         return redirect()->route('orders.show', $order)->with('success', __('messages.updated'));
     }
 
-    public function destroy(Order $order)
+    public function destroy(int $orderId)
     {
+        $order = Order::withTrashed()->findOrFail($orderId);
+
+        if ($order->trashed()) {
+            return redirect()->route('orders.index', ['trashed' => 1])
+                ->with('info', __('orders.already_deleted'));
+        }
+
         $summary = app(OrderFinanceService::class)->deleteOrder($order);
 
         $redirect = redirect()->route('orders.index')->with('success', __('messages.deleted'));

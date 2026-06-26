@@ -20,7 +20,10 @@ return [
     'sale_amount' => 'Satış',
     'new_sale_order' => 'Satış Siparişi Oluştur',
     'no_orders_hint' => 'Bu müşteriye bağlı sipariş yok. Sipariş oluştururken müşteri seçin veya mevcut siparişi düzenleyin.',
-    'cannot_delete_has_orders' => 'Bu müşterinin sipariş kayıtları var; silinemez.',
+    'cannot_delete_has_orders' => 'Bu müşterinin aktif sipariş kayıtları var; önce siparişleri iptal edin veya silin.',
+    'cannot_delete_has_balance' => 'Cari hesapta bakiye var. Önce finans kayıtlarını düzeltin veya `php artisan finance:repair-cari-balances` çalıştırın.',
+    'cannot_delete_has_shipments' => 'Devam eden sevkiyat kayıtları var; önce sevkiyatları tamamlayın veya iptal edin.',
+    'delete_confirm' => 'Bu müşteriyi silmek istediğinize emin misiniz? Cari hesap ve iletişim kayıtları da kaldırılır.',
     'types' => [
         'buyer' => 'Alıcı',
         'agent' => 'Acente',

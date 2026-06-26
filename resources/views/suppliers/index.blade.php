@@ -37,6 +37,10 @@
         'badge' => type_label($s->status, 'suppliers'),
         'editUrl' => route('suppliers.edit', $s),
         'editPermission' => 'suppliers.edit',
+        'deleteUrl' => empty($s->deletion_block_reason) ? route('suppliers.destroy', $s) : null,
+        'deletePermission' => 'suppliers.delete',
+        'deleteConfirm' => __('suppliers.delete_confirm'),
+        'deleteBlockReason' => $s->deletion_block_reason,
     ])
     @empty
     <div class="card"><div class="card-body text-muted">{{ __('app.no_records') }}</div></div>
@@ -76,6 +80,14 @@
                         @if(can_access('suppliers.edit'))
                         <a href="{{ route('suppliers.edit', $s) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
                         @endif
+                        @include('partials.crm-delete-button', [
+                            'destroyRoute' => route('suppliers.destroy', $s),
+                            'confirm' => __('suppliers.delete_confirm'),
+                            'blockReason' => $s->deletion_block_reason ?? null,
+                            'permission' => 'suppliers.delete',
+                            'class' => 'btn btn-sm btn-ghost-danger',
+                            'iconOnly' => true,
+                        ])
                     </td>
                 </tr>
                 @empty

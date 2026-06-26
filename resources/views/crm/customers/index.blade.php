@@ -31,6 +31,10 @@
         'badgeClass' => 'bg-'.($c->status === 'active' ? 'success' : 'secondary').'-lt',
         'editUrl' => route('customers.edit', $c),
         'editPermission' => 'customers.edit',
+        'deleteUrl' => empty($c->deletion_block_reason) ? route('customers.destroy', $c) : null,
+        'deletePermission' => 'customers.delete',
+        'deleteConfirm' => __('customers.delete_confirm'),
+        'deleteBlockReason' => $c->deletion_block_reason,
     ])
     @empty
     <div class="card"><div class="card-body text-muted">{{ __('app.no_records') }}</div></div>
@@ -70,6 +74,14 @@
                         @if(can_access('customers.edit'))
                         <a href="{{ route('customers.edit', $c) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
                         @endif
+                        @include('partials.crm-delete-button', [
+                            'destroyRoute' => route('customers.destroy', $c),
+                            'confirm' => __('customers.delete_confirm'),
+                            'blockReason' => $c->deletion_block_reason ?? null,
+                            'permission' => 'customers.delete',
+                            'class' => 'btn btn-sm btn-ghost-danger',
+                            'iconOnly' => true,
+                        ])
                     </td>
                 </tr>
                 @empty

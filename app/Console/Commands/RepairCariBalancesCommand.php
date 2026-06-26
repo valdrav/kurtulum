@@ -3,16 +3,26 @@
 namespace App\Console\Commands;
 
 use App\Models\Account;
+use App\Services\OrderFinanceService;
 use Illuminate\Console\Command;
 
 class RepairCariBalancesCommand extends Command
 {
-    protected $signature = 'finance:repair-cari-balances {--account= : Account ID or UUID}';
+    protected $signature = 'finance:repair-cari-balances
+                            {--account= : Belirli cari hesap ID veya UUID}
+                            {--skip-deleted-orders : Silinen sipariş düzeltmesini atla}';
 
-    protected $description = 'Cari hesap bakiyelerini hareket kayıtlarından yeniden hesaplar';
+    protected $description = 'Silinen siparişlerden kalan cari etkisini sıfırlar ve bakiyeleri hareket kayıtlarından yeniden hesaplar';
 
-    public function handle(): int
+    public function handle(OrderFinanceService $finance): int
     {
+        if (! $this->option('skip-deleted-orders')) {
+            $ordersFixed = $finance->repairDeletedOrdersCari();
+            if ($ordersFixed > 0) {
+                $this->info("{$ordersFixed} silinen sipariş için cari kayıtlar düzeltildi.");
+            }
+        }
+
         $query = Account::query()->cari();
 
         if ($id = $this->option('account')) {
@@ -39,7 +49,11 @@ class RepairCariBalancesCommand extends Command
             }
         });
 
-        $this->info($fixed > 0 ? "{$fixed} cari hesap düzeltildi." : 'Tüm cari bakiyeler tutarlı.');
+        if ($fixed > 0) {
+            $this->info("{$fixed} cari hesap bakiyesi güncellendi.");
+        } elseif (! $this->option('skip-deleted-orders')) {
+            $this->info('Tüm cari bakiyeler tutarlı.');
+        }
 
         return self::SUCCESS;
     }

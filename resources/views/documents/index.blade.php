@@ -46,11 +46,24 @@
     @php
         $slug = ($f->folder_name === __('documents.default_folder') || $f->folder_name === '') ? '__default' : $f->folder_name;
     @endphp
-    <a href="{{ route('documents.folder', $slug) }}" class="doc-folder-tile">
-        <div class="doc-folder-icon"><i class="ti ti-folder"></i></div>
-        <div class="doc-folder-name">{{ $f->folder_name }}</div>
-        <div class="text-muted small">{{ $f->file_count }} {{ __('documents.file_count') }}</div>
-    </a>
+    <div class="doc-folder-tile-wrap position-relative">
+        <a href="{{ route('documents.folder', $slug) }}" class="doc-folder-tile">
+            <div class="doc-folder-icon"><i class="ti ti-folder"></i></div>
+            <div class="doc-folder-name">{{ $f->folder_name }}</div>
+            <div class="text-muted small">{{ $f->file_count }} {{ __('documents.file_count') }}</div>
+        </a>
+        @if(can_access('documents.create'))
+        <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="doc-folder-delete"
+              data-confirm="{{ __('documents.delete_folder_confirm') }}"
+              data-confirm-title="{{ __('app.confirm_title') }}"
+              data-confirm-button="{{ __('documents.delete_folder') }}">
+            @csrf @method('DELETE')
+            <button type="submit" class="btn btn-sm btn-ghost-danger" title="{{ __('documents.delete_folder') }}">
+                <i class="ti ti-trash"></i>
+            </button>
+        </form>
+        @endif
+    </div>
     @empty
     <div class="col-12 text-muted py-4 text-center">{{ __('documents.no_folders') }}</div>
     @endforelse

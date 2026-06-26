@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Crm;
 use App\Http\Controllers\Concerns\RequiresPermissions;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Services\CrmDeletionService;
 use App\Services\CustomerProfileService;
 use App\Services\OrderFinanceService;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class CustomerController extends Controller
             'destroy' => 'customers.delete',
         ]);
     }
-    public function index(Request $request)
+    public function index(Request $request, CrmDeletionService $deletion)
     {
         $customers = Customer::query()
             ->with('account')
@@ -34,6 +35,12 @@ class CustomerController extends Controller
             ->orderBy('company_name')
             ->paginate(20)
             ->withQueryString();
+
+        $customers->getCollection()->transform(function (Customer $customer) use ($deletion) {
+            $customer->setAttribute('deletion_block_reason', $deletion->customerDeletionBlockReason($customer));
+
+            return $customer;
+        });
 
         return view('crm.customers.index', compact('customers'));
     }
@@ -52,7 +59,7 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', __('messages.created'));
     }
 
-    public function show(Customer $customer, OrderFinanceService $orderFinance, CustomerProfileService $profile)
+    public function show(Customer $customer, OrderFinanceService $orderFinance, CustomerProfileService $profile, CrmDeletionService $deletion)
     {
         $customer->load(['contacts', 'activities.user', 'documents', 'account']);
         $account = $customer->account ?? $orderFinance->ensureCustomerAccount($customer);
@@ -62,10 +69,11 @@ class CustomerController extends Controller
         $productLines = $profile->productLines($customer);
         $collections = $profile->collections($customer);
         $shipments = $customer->shipments()->latest('id')->limit(40)->get();
+        $deletionBlockReason = $deletion->customerDeletionBlockReason($customer);
 
         return view('crm.customers.show', compact(
             'customer', 'account', 'summary', 'orders', 'products',
-            'productLines', 'collections', 'shipments'
+            'productLines', 'collections', 'shipments', 'deletionBlockReason'
         ));
     }
 
@@ -80,13 +88,13 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', __('messages.updated'));
     }
 
-    public function destroy(Customer $customer)
+    public function destroy(Customer $customer, CrmDeletionService $deletion)
     {
-        if ($customer->orders()->exists()) {
-            return back()->with('warning', __('customers.cannot_delete_has_orders'));
+        if ($reason = $deletion->customerDeletionBlockReason($customer)) {
+            return back()->with('warning', $reason);
         }
 
-        $customer->delete();
+        $deletion->deleteCustomer($customer);
 
         return redirect()->route('customers.index')->with('success', __('messages.deleted'));
     }

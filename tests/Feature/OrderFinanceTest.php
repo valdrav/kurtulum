@@ -225,4 +225,24 @@ class OrderFinanceTest extends FeatureTestCase
         $response->assertSee(__('orders.finance_title'));
         $response->assertSee(__('orders.record_collection'));
     }
+
+    public function test_repair_deleted_orders_clears_orphan_cari_balance(): void
+    {
+        $order = $this->createConfirmedOrder();
+        $customerAccount = Account::where('customer_id', $order->customer_id)->first();
+
+        $this->assertEquals(10000, (float) $customerAccount->current_balance);
+
+        $order->update(['finance_posted_at' => null]);
+        $order->delete();
+
+        $customerAccount->refresh();
+        $this->assertEquals(10000, (float) $customerAccount->current_balance);
+
+        $fixed = app(OrderFinanceService::class)->repairDeletedOrdersCari();
+        $customerAccount->refresh();
+
+        $this->assertSame(1, $fixed);
+        $this->assertEquals(0, (float) $customerAccount->current_balance);
+    }
 }

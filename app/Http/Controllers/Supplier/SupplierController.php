@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Supplier;
 use App\Http\Controllers\Concerns\RequiresPermissions;
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
+use App\Services\CrmDeletionService;
 use App\Services\OrderFinanceService;
 use App\Services\SupplierProfileService;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class SupplierController extends Controller
         ]);
     }
 
-    public function index(Request $request)
+    public function index(Request $request, CrmDeletionService $deletion)
     {
         $suppliers = Supplier::query()
             ->with('account')
@@ -35,6 +36,12 @@ class SupplierController extends Controller
             ->orderBy('company_name')
             ->paginate(20)
             ->withQueryString();
+
+        $suppliers->getCollection()->transform(function (Supplier $supplier) use ($deletion) {
+            $supplier->setAttribute('deletion_block_reason', $deletion->supplierDeletionBlockReason($supplier));
+
+            return $supplier;
+        });
 
         return view('suppliers.index', compact('suppliers'));
     }
@@ -52,7 +59,7 @@ class SupplierController extends Controller
         return redirect()->route('suppliers.show', $supplier)->with('success', __('messages.created'));
     }
 
-    public function show(Supplier $supplier, OrderFinanceService $orderFinance, SupplierProfileService $profile)
+    public function show(Supplier $supplier, OrderFinanceService $orderFinance, SupplierProfileService $profile, CrmDeletionService $deletion)
     {
         $supplier->load(['contacts', 'documents', 'account']);
         $account = $supplier->account ?? $orderFinance->ensureSupplierAccount($supplier);
@@ -63,10 +70,11 @@ class SupplierController extends Controller
         $productLines = $profile->productLines($supplier);
         $payments = $profile->payments($supplier);
         $shipmentCosts = $profile->shipmentCosts($supplier);
+        $deletionBlockReason = $deletion->supplierDeletionBlockReason($supplier);
 
         return view('suppliers.show', compact(
             'supplier', 'account', 'summary', 'unlinkedOrderCount', 'orders', 'products',
-            'productLines', 'payments', 'shipmentCosts'
+            'productLines', 'payments', 'shipmentCosts', 'deletionBlockReason'
         ));
     }
 
@@ -90,13 +98,13 @@ class SupplierController extends Controller
         return redirect()->route('suppliers.show', $supplier)->with('success', __('messages.updated'));
     }
 
-    public function destroy(Supplier $supplier)
+    public function destroy(Supplier $supplier, CrmDeletionService $deletion)
     {
-        if ($supplier->orders()->exists()) {
-            return back()->with('warning', __('suppliers.cannot_delete_has_orders'));
+        if ($reason = $deletion->supplierDeletionBlockReason($supplier)) {
+            return back()->with('warning', $reason);
         }
 
-        $supplier->delete();
+        $deletion->deleteSupplier($supplier);
 
         return redirect()->route('suppliers.index')->with('success', __('messages.deleted'));
     }

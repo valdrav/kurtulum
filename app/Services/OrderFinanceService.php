@@ -165,6 +165,49 @@ class OrderFinanceService
             ->sum(fn ($tx) => $tx->type === 'credit' ? (float) $tx->amount : -(float) $tx->amount);
     }
 
+    public function orderHasCariPostings(Order $order): bool
+    {
+        return \App\Models\AccountTransaction::query()
+            ->where('reference_type', Order::class)
+            ->where('reference_id', $order->id)
+            ->exists();
+    }
+
+    /** Silinmiş siparişlerden kalan cari etkisini sıfırlar (veri onarımı). */
+    public function repairDeletedOrdersCari(): int
+    {
+        $fixed = 0;
+
+        Order::onlyTrashed()->orderBy('id')->each(function (Order $order) use (&$fixed) {
+            if (! $this->orderHasCariPostings($order)) {
+                return;
+            }
+
+            $order->loadMissing(['customer', 'supplier']);
+            $beforeCustomer = $order->customer
+                ? $this->netOrderLedgerDelta($this->ensureCustomerAccount($order->customer), $order)
+                : 0;
+            $beforeSupplier = $order->supplier
+                ? $this->netOrderLedgerDelta($this->ensureSupplierAccount($order->supplier), $order)
+                : 0;
+
+            if (abs($beforeCustomer) < 0.001 && abs($beforeSupplier) < 0.001) {
+                return;
+            }
+
+            DB::transaction(function () use ($order) {
+                $this->zeroAllOrderCariPostings($order, 'Silinen sipariş bakiye düzeltme');
+                if ($order->finance_posted_at) {
+                    $order->update(['finance_posted_at' => null]);
+                }
+            });
+
+            $fixed++;
+        });
+
+        return $fixed;
+    }
+
     protected function reverseOrderLedgerPostings(Order $order): void
     {
         $this->zeroAllOrderCariPostings($order, 'Sipariş cari düzeltme');
@@ -405,7 +448,7 @@ class OrderFinanceService
                     $summary['income_expenses']++;
                 });
 
-            if ($order->finance_posted_at) {
+            if ($order->finance_posted_at || $this->orderHasCariPostings($order)) {
                 $this->zeroAllOrderCariPostings($order, 'Sipariş silindi');
                 $order->update(['finance_posted_at' => null]);
                 $summary['finance_reversed'] = true;

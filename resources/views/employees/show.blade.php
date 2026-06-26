@@ -13,7 +13,8 @@
             <a href="{{ route('employees.edit', $employee) }}" class="btn btn-primary">{{ __('app.edit') }}</a>
             @endif
             @if(can_access('employees.delete'))
-            <form action="{{ route('employees.destroy', $employee) }}" method="POST" onsubmit="return confirm('{{ __('app.confirm_delete') }}')">
+            <form action="{{ route('employees.destroy', $employee) }}" method="POST" class="d-inline"
+                  data-confirm="{{ __('app.confirm_delete') }}">
                 @csrf @method('DELETE')
                 <button class="btn btn-outline-danger">{{ __('app.delete') }}</button>
             </form>
