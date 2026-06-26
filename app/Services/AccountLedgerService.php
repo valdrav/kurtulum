@@ -14,6 +14,7 @@ class AccountLedgerService
         ?string $description = null,
         ?string $transactionDate = null,
         ?int $userId = null,
+        ?float $exchangeRate = null,
     ): void {
         if ($delta == 0.0) {
             return;
@@ -26,7 +27,7 @@ class AccountLedgerService
             'type' => $delta >= 0 ? 'credit' : 'debit',
             'amount' => abs($delta),
             'currency' => $account->currency,
-            'exchange_rate' => 1,
+            'exchange_rate' => $exchangeRate ?? 1,
             'reference_type' => $reference ? $reference::class : null,
             'reference_id' => $reference?->id,
             'description' => $description ?? 'Finans hareketi',
@@ -42,8 +43,9 @@ class AccountLedgerService
         ?string $description = null,
         ?string $transactionDate = null,
         ?int $userId = null,
+        ?float $exchangeRate = null,
     ): void {
-        $this->adjustBalance($account, -$delta, $reference, $description, $transactionDate, $userId);
+        $this->adjustBalance($account, -$delta, $reference, $description, $transactionDate, $userId, $exchangeRate);
     }
 
     public function updateStandaloneTransaction(AccountTransaction $transaction, array $data): void

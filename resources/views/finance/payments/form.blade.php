@@ -42,6 +42,7 @@
             <div class="mb-3">
                 <label class="form-label">{{ __('finance.exchange_rate') }}</label>
                 <input type="number" step="0.000001" name="exchange_rate" class="form-control" value="{{ old('exchange_rate', $payment->exchange_rate) }}">
+                <div class="form-hint">{{ __('finance.locked_rate_note') }}: {{ number_format((float) $payment->exchange_rate, 4, ',', '.') }}</div>
             </div>
             <div class="mb-3">
                 <label class="form-label">{{ __('extensions.payment_method') }} *</label>

@@ -15,6 +15,13 @@
                     <a href="{{ route('vessels.track.show', $shipment->vessel) }}" class="btn btn-sm btn-outline-cyan me-1"><i class="ti ti-map"></i> {{ __('logistics.vessel_tracking') }}</a>
                     @endif
                     <a href="{{ route('shipments.edit', $shipment) }}" class="btn btn-sm btn-primary">{{ __('app.edit') }}</a>
+                    @if(can_access('shipments.delete'))
+                    <form action="{{ route('shipments.destroy', $shipment) }}" method="POST" class="d-inline ms-1"
+                          onsubmit="return confirm(@json(__('logistics.delete_confirm')))">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger">{{ __('app.delete') }}</button>
+                    </form>
+                    @endif
                 </div>
             </div>
             <div class="card-body">

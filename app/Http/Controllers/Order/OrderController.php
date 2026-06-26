@@ -93,9 +93,11 @@ class OrderController extends Controller
         $collectionMethods = payment_methods()->forCollection();
         $paymentMethods = payment_methods()->forPayment();
 
+        $fxRates = fx_snapshot_rates();
+
         return view('orders.show', compact(
             'order', 'finance', 'customerAccount', 'supplierAccount',
-            'treasuryAccounts', 'collectionMethods', 'paymentMethods'
+            'treasuryAccounts', 'collectionMethods', 'paymentMethods', 'fxRates'
         ));
     }
 
@@ -138,8 +140,30 @@ class OrderController extends Controller
 
     public function destroy(Order $order)
     {
-        $order->delete();
-        return redirect()->route('orders.index')->with('success', __('messages.deleted'));
+        $summary = app(OrderFinanceService::class)->deleteOrder($order);
+
+        $redirect = redirect()->route('orders.index')->with('success', __('messages.deleted'));
+
+        if ($this->orderDeleteHadFinanceImpact($summary)) {
+            $redirect->with('warning', __('orders.deleted_finance_notice', [
+                'collections' => $summary['collections'],
+                'payments' => $summary['payments'],
+                'income_expenses' => $summary['income_expenses'],
+                'shipments' => $summary['shipments'],
+                'finance' => $summary['finance_reversed'] ? __('orders.deleted_finance_reversed') : '',
+            ]));
+        }
+
+        return $redirect;
+    }
+
+    protected function orderDeleteHadFinanceImpact(array $summary): bool
+    {
+        return $summary['finance_reversed']
+            || $summary['collections'] > 0
+            || $summary['payments'] > 0
+            || $summary['income_expenses'] > 0
+            || $summary['shipments'] > 0;
     }
 
     protected function validateOrder(Request $request, ?Order $order = null): array

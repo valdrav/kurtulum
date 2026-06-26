@@ -13,6 +13,15 @@
                 <i class="ti ti-edit me-1"></i>{{ __('orders.edit_order') }}
             </a>
             @endif
+            @if(can_access('orders.delete'))
+            <form action="{{ route('orders.destroy', $order) }}" method="POST" class="d-inline"
+                  onsubmit="return confirm(@json(__('orders.delete_confirm')))">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="ti ti-trash me-1"></i>{{ __('app.delete') }}
+                </button>
+            </form>
+            @endif
         </div>
     </div>
 </div>
@@ -192,8 +201,10 @@
                     @if($order->currency !== 'TRY')
                     <div class="mb-2">
                         <label class="form-label">{{ __('finance.exchange_rate') }}</label>
-                        <input type="number" step="0.000001" name="exchange_rate" class="form-control" id="collection-rate" min="0.000001" placeholder="1 {{ $order->currency }} = ? TRY">
-                        <div class="form-hint">{{ __('finance.exchange_rate_hint') }}</div>
+                        <input type="number" step="0.000001" name="exchange_rate" class="form-control" id="collection-rate" min="0.000001"
+                            value="{{ old('exchange_rate', $fxRates[$order->currency] ?? '') }}"
+                            placeholder="1 {{ $order->currency }} = ? TRY">
+                        <div class="form-hint">{{ __('finance.transaction_rate_hint', ['currency' => $order->currency]) }}</div>
                     </div>
                     @endif
                     <div class="mb-2">
@@ -241,8 +252,10 @@
                     @if($order->currency !== 'TRY')
                     <div class="mb-2">
                         <label class="form-label">{{ __('finance.exchange_rate') }}</label>
-                        <input type="number" step="0.000001" name="exchange_rate" class="form-control" id="payment-rate" min="0.000001" placeholder="1 {{ $order->currency }} = ? TRY">
-                        <div class="form-hint">{{ __('finance.exchange_rate_hint') }}</div>
+                        <input type="number" step="0.000001" name="exchange_rate" class="form-control" id="payment-rate" min="0.000001"
+                            value="{{ old('exchange_rate', $fxRates[$order->currency] ?? '') }}"
+                            placeholder="1 {{ $order->currency }} = ? TRY">
+                        <div class="form-hint">{{ __('finance.transaction_rate_hint', ['currency' => $order->currency]) }}</div>
                     </div>
                     @endif
                     <div class="mb-2">

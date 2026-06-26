@@ -3,10 +3,6 @@
 @section('content')
 @include('partials.page-header', ['title' => __('app.shipments'), 'createRoute' => route('shipments.create'), 'createPermission' => 'shipments.create'])
 
-@if(session('success'))
-<div class="alert alert-success">{{ session('success') }}</div>
-@endif
-
 @if(can_access('shipments.create'))
 <div class="d-flex flex-wrap gap-2 mb-3">
     <form method="POST" action="{{ route('shipments.sync-from-orders') }}" class="d-inline"
@@ -65,6 +61,15 @@
                     <td>
                         @if(can_access('shipments.edit'))
                         <a href="{{ route('shipments.edit', $s) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
+                        @endif
+                        @if(can_access('shipments.delete'))
+                        <form action="{{ route('shipments.destroy', $s) }}" method="POST" class="d-inline"
+                              onsubmit="return confirm(@json(__('logistics.delete_confirm')))">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-ghost-danger" aria-label="{{ __('app.delete') }}">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </form>
                         @endif
                     </td>
                 </tr>

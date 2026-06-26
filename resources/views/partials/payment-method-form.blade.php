@@ -19,9 +19,9 @@
 
     <div class="mb-3" x-show="selectedCurrency && selectedCurrency !== baseCurrency" x-cloak>
         <label class="form-label fw-semibold">{{ __('finance.exchange_rate') }}</label>
-        <input type="number" step="0.000001" name="exchange_rate" class="form-control" min="0.000001"
+        <input type="number" step="0.000001" name="exchange_rate" class="form-control" min="0.000001" x-model="exchangeRate"
                :placeholder="'1 ' + selectedCurrency + ' = ? ' + baseCurrency">
-        <small class="text-muted">{{ __('finance.exchange_rate_hint') }}</small>
+        <small class="text-muted">{{ __('finance.exchange_rate_editable') }} {{ __('finance.transaction_rate_short') }} <span x-text="selectedCurrency"></span> = ? {{ baseCurrency }}</small>
     </div>
 
     <div class="mb-2">
@@ -71,12 +71,23 @@ function paymentForm() {
         currencies: @json(registry()->currencyCodes()),
         selectedCurrency: @json(registry()->currencyCodes()[0] ?? 'TRY'),
         baseCurrency: @json(registry()->defaultCurrency()?->code ?? 'TRY'),
+        fxRates: @json(fx_snapshot_rates()),
+        exchangeRate: '',
         requiresReference: false,
         feePreview: '',
         init() {
             if (this.currencies.length === 0) {
                 this.currencies = ['TRY', 'USD', 'EUR'];
                 this.selectedCurrency = 'TRY';
+            }
+            this.applyFxRate();
+            this.$watch('selectedCurrency', () => this.applyFxRate());
+        },
+        applyFxRate() {
+            if (this.selectedCurrency && this.selectedCurrency !== this.baseCurrency) {
+                this.exchangeRate = this.fxRates[this.selectedCurrency] || '';
+            } else {
+                this.exchangeRate = '';
             }
         },
         updatePreview() {},

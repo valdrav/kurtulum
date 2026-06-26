@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Logistics;
 
+use App\Http\Controllers\Concerns\RequiresPermissions;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Driver;
@@ -13,11 +14,24 @@ use App\Models\ShipmentMilestone;
 use App\Models\Vehicle;
 use App\Models\Vessel;
 use App\Services\OrderShipmentService;
+use App\Services\ShipmentDeletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ShipmentController extends Controller
 {
+    use RequiresPermissions;
+
+    public function __construct()
+    {
+        $this->registerPermissions([
+            'index|show|tracking' => 'shipments.view',
+            'create|store|syncFromOrders|updateStatus' => 'shipments.create',
+            'edit|update' => 'shipments.edit',
+            'destroy' => 'shipments.delete',
+        ]);
+    }
+
     public function index(Request $request)
     {
         $shipments = Shipment::with(['customer', 'order', 'originPort', 'destinationPort'])
@@ -189,8 +203,15 @@ class ShipmentController extends Controller
 
     public function destroy(Shipment $shipment)
     {
-        $shipment->delete();
-        return redirect()->route('shipments.index')->with('success', __('messages.deleted'));
+        $summary = app(ShipmentDeletionService::class)->deleteShipment($shipment);
+
+        $redirect = redirect()->route('shipments.index')->with('success', __('messages.deleted'));
+
+        if ($summary['costs'] > 0) {
+            $redirect->with('warning', __('logistics.deleted_costs_notice', $summary));
+        }
+
+        return $redirect;
     }
 
     public function tracking()

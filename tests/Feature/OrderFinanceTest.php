@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Supplier;
+use App\Models\SystemCurrency;
 use App\Services\OrderFinanceService;
 use Tests\FeatureTestCase;
 
@@ -203,6 +204,14 @@ class OrderFinanceTest extends FeatureTestCase
 
         $treasury->refresh();
         $this->assertEquals($treasuryBefore + 1725000, (float) $treasury->current_balance);
+
+        SystemCurrency::where('code', 'USD')->update(['tcmb_rate' => 40, 'exchange_rate' => 40, 'market_rate' => 40]);
+
+        $collection = \App\Models\Collection::where('order_id', $order->id)->first();
+        $this->assertEquals(34.5, (float) $collection->exchange_rate);
+        $treasury->refresh();
+        $this->assertEquals($treasuryBefore + 1725000, (float) $treasury->current_balance);
+        $this->assertSame('1.725.000,00 ₺', format_try_equivalent(50000, 'USD', (float) $collection->exchange_rate));
     }
 
     public function test_order_show_displays_finance_panel(): void

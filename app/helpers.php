@@ -414,6 +414,13 @@ if (!function_exists('trade_currency')) {
     }
 }
 
+if (!function_exists('fx_snapshot_rates')) {
+    function fx_snapshot_rates(): array
+    {
+        return app(\App\Services\ExchangeRateService::class)->snapshotRates();
+    }
+}
+
 if (!function_exists('format_money_dual')) {
     /** USD + TRY birlikte göster (kur otomatik). */
     function format_money_dual(float $usd, float $try, int $decimals = 0): string

@@ -52,4 +52,7 @@ return [
     'shipments_synced' => ':count sipariş için sevkiyat kaydı oluşturuldu.',
     'sync_shipments_from_orders' => 'Siparişlerden sevkiyat oluştur',
     'sync_shipments_hint' => 'Onaylı siparişlerden eksik sevkiyat kayıtlarını otomatik oluşturur.',
+    'delete_confirm' => 'Bu siparişi silmek istediğinize emin misiniz? Bağlı tahsilat, ödeme, cari kayıtları ve sevkiyatlar geri alınır / silinir.',
+    'deleted_finance_notice' => 'İlişkili kayıtlar geri alındı: :collections tahsilat, :payments ödeme, :income_expenses gelir/gider, :shipments sevkiyat.:finance',
+    'deleted_finance_reversed' => ' Cari sipariş kayıtları iptal edildi.',
 ];

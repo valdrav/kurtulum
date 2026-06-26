@@ -330,36 +330,56 @@ class ExchangeRateService
         return $rate;
     }
 
-    public function amountForAccount(float $amount, string $fromCurrency, \App\Models\Account $account, ?float $rateToDefault = null): float
+    public function amountForAccount(float $amount, string $fromCurrency, \App\Models\Account $account, ?float $lockedRateToDefault = null): float
     {
-        if ($fromCurrency === $account->currency) {
+        $from = strtoupper($fromCurrency);
+        $to = strtoupper($account->currency ?? 'TRY');
+        $default = strtoupper(registry()->defaultCurrency()?->code ?? 'TRY');
+
+        if ($from === $to) {
             return round($amount, 2);
         }
 
-        $default = registry()->defaultCurrency()?->code ?? 'TRY';
+        // İşlem anında kilitlenen kur (foreign → TRY) üzerinden hesapla; güncel kura dönme.
+        $amountInDefault = $from === $default
+            ? $amount
+            : round($amount * $this->rateToDefaultCurrency($from, $lockedRateToDefault), 2);
 
-        if ($account->currency === $default) {
-            $rate = $this->rateToDefaultCurrency($fromCurrency, $rateToDefault);
-
-            return round($amount * $rate, 2);
+        if ($to === $default) {
+            return round($amountInDefault, 2);
         }
 
-        if ($fromCurrency === $default) {
-            $rate = $this->rateToDefaultCurrency($account->currency);
+        $toRate = $this->rateToDefaultCurrency($to, $from === $to ? $lockedRateToDefault : null);
 
-            return round($amount / $rate, 2);
-        }
-
-        $converted = $this->convert($amount, $fromCurrency, $account->currency);
-
-        if ($converted === null) {
+        if ($toRate <= 0) {
             throw new \RuntimeException(__('finance.currency_convert_failed', [
                 'from' => $fromCurrency,
                 'to' => $account->currency,
             ]));
         }
 
-        return round($converted, 2);
+        return round($amountInDefault / $toRate, 2);
+    }
+
+    /** Formda gösterilecek güncel kurlar (kaydetmeden önce kullanıcı düzenleyebilir). */
+    public function snapshotRates(): array
+    {
+        $default = registry()->defaultCurrency()?->code ?? 'TRY';
+        $rates = [$default => 1.0];
+
+        foreach (registry()->currencyCodes() as $code) {
+            $code = strtoupper($code);
+            if ($code === $default) {
+                continue;
+            }
+            try {
+                $rates[$code] = $this->rateToDefaultCurrency($code);
+            } catch (\Throwable) {
+                // Kur yoksa atla
+            }
+        }
+
+        return $rates;
     }
 
     protected function currencyRateValue(SystemCurrency $currency, string $column): float

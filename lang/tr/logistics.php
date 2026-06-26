@@ -149,4 +149,6 @@ return [
         'paid' => 'Ödendi',
         'delivered' => 'Teslim Edildi',
     ],
+    'delete_confirm' => 'Bu sevkiyatı silmek istediğinize emin misiniz? Bağlı maliyet kalemleri de silinir.',
+    'deleted_costs_notice' => ':costs maliyet kalemi silindi.',
 ];
