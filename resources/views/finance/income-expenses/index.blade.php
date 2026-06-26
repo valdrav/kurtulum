@@ -51,6 +51,7 @@
                         'paymentMethods' => $paymentMethods,
                         'defaultTreasuryId' => $defaultTreasury->id,
                         'compact' => true,
+                        'orders' => $orders ?? [],
                     ])
                     <button type="submit" class="btn btn-primary w-100 mt-2">{{ __('app.save') }}</button>
                 </form>

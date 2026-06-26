@@ -6,21 +6,21 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Shipment;
 use App\Models\Task;
-use App\Models\Account;
 use App\Models\IncomeExpense;
-use App\Services\ExchangeRateService;
+use App\Services\TradeFinanceService;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function __construct(
-        protected ExchangeRateService $rates,
+        protected TradeFinanceService $tradeFinance,
     ) {
         $this->middleware('permission:dashboard.view');
     }
 
     public function index()
     {
+        $tradeCurrency = $this->tradeFinance->tradeCurrency();
         $defaultCurrency = registry()->defaultCurrency()?->code ?? 'TRY';
 
         $monthlyIncome = (float) IncomeExpense::where('type', 'income')
@@ -32,44 +32,19 @@ class DashboardController extends Controller
             ->whereYear('transaction_date', now()->year)
             ->sum('amount_base');
 
-        $monthlyMargin = (float) Order::whereMonth('order_date', now()->month)
-            ->whereYear('order_date', now()->year)
-            ->get()
-            ->sum(fn (Order $order) => $this->rates->amountForAccount(
-                (float) ($order->margin_total ?? 0),
-                $order->currency ?? $defaultCurrency,
-                new Account(['currency' => $defaultCurrency])
-            ));
-
-        $totalMargin = (float) Order::whereNotIn('status', ['cancelled', 'draft'])
-            ->get()
-            ->sum(fn (Order $order) => $this->rates->amountForAccount(
-                (float) ($order->margin_total ?? 0),
-                $order->currency ?? $defaultCurrency,
-                new Account(['currency' => $defaultCurrency])
-            ));
-
-        $receivables = (float) Account::query()
-            ->where('type', 'customer')
-            ->where('is_treasury', false)
-            ->get()
-            ->sum(fn (Account $account) => $this->rates->amountForAccount(
-                (float) $account->current_balance,
-                $account->currency ?? $defaultCurrency,
-                $account
-            ));
-
         $stats = [
-            'currency' => $defaultCurrency,
+            'currency' => $tradeCurrency,
+            'treasury_currency' => $defaultCurrency,
             'customers' => Customer::count(),
             'orders' => Order::whereNotIn('status', ['cancelled'])->count(),
             'shipments_active' => Shipment::whereIn('status', ['booked', 'in_transit', 'at_port', 'customs'])->count(),
             'tasks_pending' => Task::where('status', 'pending')->count(),
-            'receivables' => $receivables,
+            'receivables' => $this->tradeFinance->totalReceivables(),
+            'payables' => $this->tradeFinance->totalPayables(),
             'monthly_income' => $monthlyIncome,
             'monthly_expense' => $monthlyExpense,
-            'monthly_margin' => $monthlyMargin,
-            'total_margin' => $totalMargin,
+            'monthly_margin' => $this->tradeFinance->monthlyMargin(),
+            'total_margin' => $this->tradeFinance->totalMargin(),
         ];
 
         $stats['monthly_profit'] = $stats['monthly_income'] - $stats['monthly_expense'];
@@ -100,7 +75,13 @@ class DashboardController extends Controller
                 ->sum('amount_base'))->values(),
             'margin' => $chartMonths->map(fn ($d) => (float) Order::whereYear('order_date', $d->year)
                 ->whereMonth('order_date', $d->month)
-                ->sum('margin_total'))->values(),
+                ->whereNotIn('status', ['cancelled'])
+                ->get()
+                ->sum(fn (Order $order) => $this->tradeFinance->toTradeCurrency(
+                    (float) ($order->margin_total ?? 0),
+                    $order->currency ?? $tradeCurrency
+                )))->values(),
+            'currency' => $tradeCurrency,
         ];
 
         return view('dashboard.index', compact(

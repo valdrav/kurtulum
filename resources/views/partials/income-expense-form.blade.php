@@ -68,6 +68,21 @@
     <input type="hidden" name="account_id" value="{{ $treasuryAccounts->first()->id }}">
     @endunless
 
+    @if(!empty($orders))
+    <div class="mb-2">
+        <label class="form-label">{{ __('finance.linked_order') }}</label>
+        <select name="order_id" class="form-select">
+            <option value="">— {{ __('finance.linked_order_hint') }}</option>
+            @foreach($orders as $o)
+            <option value="{{ $o->id }}" @selected(old('order_id', ($record?->reference_type === \App\Models\Order::class ? $record?->reference_id : null)) == $o->id)>
+                {{ $o->order_number }} · {{ $o->customer?->company_name ?? '—' }} ({{ $o->currency }})
+            </option>
+            @endforeach
+        </select>
+        <small class="text-muted">{{ __('finance.linked_order_note') }}</small>
+    </div>
+    @endif
+
     @if($compact)
     <details class="mb-2 small">
         <summary class="text-muted mb-2" style="cursor:pointer">{{ __('finance.optional_details') }}</summary>

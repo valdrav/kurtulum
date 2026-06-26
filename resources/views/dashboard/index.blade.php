@@ -56,12 +56,14 @@
         <div class="card stat-card"><div class="card-body">
             <div class="d-flex justify-content-between"><span class="text-muted">Alacaklar</span><i class="ti ti-wallet text-purple"></i></div>
             <div class="h1 mb-0">{{ format_money($stats['receivables'], $stats['currency']) }}</div>
+            <div class="text-muted small">{{ __('orders.customer_receivable') }} · {{ $stats['currency'] }}</div>
         </div></div>
     </div>
     <div class="col-sm-6 col-xl-3">
         <div class="card stat-card"><div class="card-body">
-            <div class="d-flex justify-content-between"><span class="text-muted">Siparişler</span><i class="ti ti-shopping-cart text-orange"></i></div>
-            <div class="h1 mb-0">{{ $stats['orders'] }}</div>
+            <div class="d-flex justify-content-between"><span class="text-muted">Borçlar</span><i class="ti ti-credit-card text-red"></i></div>
+            <div class="h1 mb-0 text-red">{{ format_money($stats['payables'], $stats['currency']) }}</div>
+            <div class="text-muted small">{{ __('orders.supplier_payable') }} · {{ $stats['currency'] }}</div>
         </div></div>
     </div>
 </div>
@@ -94,22 +96,29 @@
                 <div class="row g-3">
                     <div class="col-6">
                         <div class="text-muted small">{{ __('app.collections') }}</div>
-                        <div class="h2 text-green mb-0">{{ format_money($stats['monthly_income'], $stats['currency']) }}</div>
+                        <div class="h2 text-green mb-0">{{ format_money($stats['monthly_income'], $stats['treasury_currency']) }}</div>
+                        <div class="text-muted small">{{ __('finance.treasury') }} · {{ $stats['treasury_currency'] }}</div>
                     </div>
                     <div class="col-6">
                         <div class="text-muted small">{{ __('app.payments') }}</div>
-                        <div class="h2 text-red mb-0">{{ format_money($stats['monthly_expense'], $stats['currency']) }}</div>
+                        <div class="h2 text-red mb-0">{{ format_money($stats['monthly_expense'], $stats['treasury_currency']) }}</div>
+                        <div class="text-muted small">{{ __('finance.treasury') }} · {{ $stats['treasury_currency'] }}</div>
                     </div>
                     <div class="col-12">
                         <div class="progress progress-sm">
                             @php $ratio = $stats['monthly_income'] > 0 ? min(100, ($stats['monthly_profit'] / $stats['monthly_income']) * 100) : 0; @endphp
                             <div class="progress-bar bg-green" style="width: {{ max(0, $ratio) }}%"></div>
                         </div>
-                        <div class="text-muted small mt-1">Net: {{ format_money($stats['monthly_profit'], $stats['currency']) }}</div>
+                        <div class="text-muted small mt-1">Net (kasa): {{ format_money($stats['monthly_profit'], $stats['treasury_currency']) }}</div>
                     </div>
                     <div class="col-12">
                         <div class="text-muted small">Toplam ticari marj</div>
                         <div class="h3 text-green mb-0">{{ format_money($stats['total_margin'], $stats['currency']) }}</div>
+                        <div class="text-muted small">{{ __('orders.trade_currency_note', ['currency' => $stats['currency']]) }}</div>
+                    </div>
+                    <div class="col-12">
+                        <div class="text-muted small">{{ __('orders.supplier_payable') }}</div>
+                        <div class="h3 text-red mb-0">{{ format_money($stats['payables'], $stats['currency']) }}</div>
                     </div>
                 </div>
             </div>
@@ -196,7 +205,17 @@ document.addEventListener('DOMContentLoaded', function() {
             yaxis: { labels: { formatter: v => (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) } },
             legend: { position: 'top', horizontalAlign: 'left' },
             grid: { borderColor: 'rgba(148,163,184,0.15)' },
-            tooltip: { shared: true, intersect: false },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                    formatter: (v, opts) => {
+                        const isMargin = opts?.seriesIndex === 2;
+                        const suffix = isMargin ? ' {{ $revenueChart['currency'] }}' : ' {{ $stats['treasury_currency'] }}';
+                        return (v ?? 0).toLocaleString('tr-TR', {maximumFractionDigits: 0}) + suffix;
+                    }
+                }
+            },
         }).render();
     }
 

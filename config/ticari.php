@@ -42,6 +42,9 @@ return [
 
     'currencies' => ['TRY', 'USD', 'EUR', 'SAR'],
 
+    /** Sipariş / ticari KPI'ların gösterileceği para birimi */
+    'trade_currency' => env('TRADE_CURRENCY', 'USD'),
+
     'bar_currencies' => ['USD', 'EUR', 'SAR'],
 
     'exchange_rates' => [

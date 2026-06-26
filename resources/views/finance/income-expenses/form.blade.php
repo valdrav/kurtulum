@@ -14,6 +14,7 @@
                 'paymentMethods' => $paymentMethods,
                 'defaultTreasuryId' => $defaultTreasury->id,
                 'compact' => false,
+                'orders' => $orders ?? [],
             ])
             <button type="submit" class="btn btn-primary">{{ __('app.save') }}</button>
             <a href="{{ route('finance.income-expenses') }}" class="btn btn-link">{{ __('app.cancel') }}</a>

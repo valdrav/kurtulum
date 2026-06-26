@@ -70,10 +70,11 @@ class FinanceController extends Controller
 
         $paymentMethods = finance_categories()->paymentMethods();
         $defaultTreasury = $treasury->defaultAccount();
+        $orders = $this->ordersForExpenseForm();
 
         return view('finance.treasury.index', compact(
             'year', 'treasuryAccounts', 'summary', 'months', 'totalCash',
-            'recentEntries', 'paymentMethods', 'defaultTreasury'
+            'recentEntries', 'paymentMethods', 'defaultTreasury', 'orders'
         ));
     }
 
@@ -467,10 +468,11 @@ class FinanceController extends Controller
         $treasuryAccounts = company_treasury()->accounts();
         $defaultTreasury = company_treasury()->defaultAccount();
         $paymentMethods = finance_categories()->paymentMethods();
+        $orders = $this->ordersForExpenseForm();
 
         return view('finance.income-expenses.index', compact(
             'items', 'summary', 'treasuryAccounts', 'defaultTreasury', 'paymentMethods',
-            'periodMeta'
+            'periodMeta', 'orders'
         ));
     }
 
@@ -496,9 +498,10 @@ class FinanceController extends Controller
         $treasuryAccounts = company_treasury()->accounts();
         $defaultTreasury = company_treasury()->defaultAccount();
         $paymentMethods = finance_categories()->paymentMethods();
+        $orders = $this->ordersForExpenseForm();
 
         return view('finance.income-expenses.form', compact(
-            'incomeExpense', 'treasuryAccounts', 'defaultTreasury', 'paymentMethods'
+            'incomeExpense', 'treasuryAccounts', 'defaultTreasury', 'paymentMethods', 'orders'
         ));
     }
 
@@ -564,6 +567,7 @@ class FinanceController extends Controller
             'currency' => 'required|string|size:3',
             'exchange_rate' => 'nullable|numeric|min:0',
             'account_id' => 'nullable|exists:accounts,id',
+            'order_id' => 'nullable|exists:orders,id',
             'transaction_date' => 'required|date',
         ]);
 
@@ -583,6 +587,15 @@ class FinanceController extends Controller
         $validated['amount_base'] = round($validated['amount'] * $validated['exchange_rate'], 2);
 
         $validated['account_id'] = $this->resolveTreasuryAccountId($validated['account_id'] ?? null);
+
+        if ($request->filled('order_id')) {
+            $validated['reference_type'] = Order::class;
+            $validated['reference_id'] = $validated['order_id'];
+        } elseif ($request->has('order_id')) {
+            $validated['reference_type'] = null;
+            $validated['reference_id'] = null;
+        }
+        unset($validated['order_id']);
 
         return $validated;
     }
@@ -662,5 +675,15 @@ class FinanceController extends Controller
             $account,
             (float) $entry->exchange_rate
         );
+    }
+
+    protected function ordersForExpenseForm()
+    {
+        return Order::with('customer:id,company_name')
+            ->whereNotIn('status', ['cancelled'])
+            ->latest('order_date')
+            ->latest('id')
+            ->limit(100)
+            ->get(['id', 'order_number', 'customer_id', 'currency']);
     }
 }

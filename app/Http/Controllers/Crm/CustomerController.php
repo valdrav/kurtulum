@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Crm;
 use App\Http\Controllers\Concerns\RequiresPermissions;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Services\CustomerProfileService;
 use App\Services\OrderFinanceService;
 use Illuminate\Http\Request;
 
@@ -23,11 +24,16 @@ class CustomerController extends Controller
     }
     public function index(Request $request)
     {
-        $customers = Customer::with('assignedUser')
+        $customers = Customer::query()
+            ->with('account')
+            ->withCount(['orders' => fn ($q) => $q->whereNotIn('status', ['cancelled'])])
+            ->withSum(['orders as sale_total_sum' => fn ($q) => $q->whereNotIn('status', ['cancelled'])], 'sale_total')
             ->when($request->search, fn ($q, $s) => $q->where('company_name', 'like', "%{$s}%")
                 ->orWhere('email', 'like', "%{$s}%"))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->latest()->paginate(20);
+            ->orderBy('company_name')
+            ->paginate(20)
+            ->withQueryString();
 
         return view('crm.customers.index', compact('customers'));
     }
@@ -46,12 +52,21 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', __('messages.created'));
     }
 
-    public function show(Customer $customer, OrderFinanceService $orderFinance)
+    public function show(Customer $customer, OrderFinanceService $orderFinance, CustomerProfileService $profile)
     {
-        $customer->load(['contacts', 'activities.user', 'orders', 'shipments', 'documents', 'account']);
+        $customer->load(['contacts', 'activities.user', 'documents', 'account']);
         $account = $customer->account ?? $orderFinance->ensureCustomerAccount($customer);
+        $summary = $profile->summary($customer);
+        $orders = $profile->orders($customer);
+        $products = $profile->aggregatedProducts($customer);
+        $productLines = $profile->productLines($customer);
+        $collections = $profile->collections($customer);
+        $shipments = $customer->shipments()->latest('id')->limit(40)->get();
 
-        return view('crm.customers.show', compact('customer', 'account'));
+        return view('crm.customers.show', compact(
+            'customer', 'account', 'summary', 'orders', 'products',
+            'productLines', 'collections', 'shipments'
+        ));
     }
 
     public function edit(Customer $customer)

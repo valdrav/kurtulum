@@ -407,6 +407,13 @@ if (!function_exists('country_options')) {
     }
 }
 
+if (!function_exists('trade_currency')) {
+    function trade_currency(): string
+    {
+        return strtoupper(config('ticari.trade_currency', 'USD'));
+    }
+}
+
 if (!function_exists('format_money')) {
     function format_money(float $amount, ?string $currency = null, int $decimals = 0): string
     {

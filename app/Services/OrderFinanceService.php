@@ -372,6 +372,8 @@ class OrderFinanceService
         $collected = (float) ($order->amount_collected ?? 0);
         $paid = (float) ($order->amount_paid ?? 0);
         $margin = (float) ($order->margin_total ?? 0);
+        $expenses = app(TradeFinanceService::class)->orderRelatedExpenses($order);
+        $orderExpenses = (float) $expenses['total'];
 
         return [
             'sale_total' => $sale,
@@ -381,7 +383,10 @@ class OrderFinanceService
             'amount_paid' => $paid,
             'remaining_receivable' => max(0, $sale - $collected),
             'remaining_payable' => max(0, $purchase - $paid),
-            'treasury_profit' => $collected - $paid,
+            'order_expenses' => $orderExpenses,
+            'order_expense_items' => $expenses['items'],
+            'net_margin' => round($margin - $orderExpenses, 2),
+            'treasury_profit' => round($collected - $paid - $orderExpenses, 2),
             'finance_status' => $this->financeStatus($sale, $purchase, $collected, $paid),
             'finance_posted' => (bool) $order->finance_posted_at,
         ];

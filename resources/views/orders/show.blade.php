@@ -125,6 +125,29 @@
                     <span class="small">{{ __('orders.expected_margin') }}</span>
                     <strong class="text-green">{{ number_format($finance['margin_total'], 2) }} {{ $order->currency }}</strong>
                 </div>
+                @if(($finance['order_expenses'] ?? 0) > 0)
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-light">
+                    <span class="small">{{ __('orders.order_expenses') }}</span>
+                    <strong class="text-red">−{{ number_format($finance['order_expenses'], 2) }} {{ $order->currency }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded bg-light">
+                    <span class="small">{{ __('orders.net_margin') }}</span>
+                    <strong class="{{ ($finance['net_margin'] ?? 0) >= 0 ? 'text-green' : 'text-red' }}">{{ number_format($finance['net_margin'], 2) }} {{ $order->currency }}</strong>
+                </div>
+                @if(!empty($finance['order_expense_items']))
+                <details class="mb-3 small">
+                    <summary class="text-muted mb-2" style="cursor:pointer">{{ __('orders.order_expense_breakdown') }}</summary>
+                    <ul class="list-unstyled mb-0">
+                        @foreach($finance['order_expense_items'] as $expense)
+                        <li class="d-flex justify-content-between py-1 border-bottom">
+                            <span>{{ $expense['label'] }} <span class="text-muted">({{ $expense['meta'] }})</span></span>
+                            <span class="text-red">−{{ number_format($expense['amount'], 2) }}</span>
+                        </li>
+                        @endforeach
+                    </ul>
+                </details>
+                @endif
+                @endif
                 <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded bg-light">
                     <span class="small">{{ __('orders.cash_profit') }}</span>
                     <strong class="{{ $finance['treasury_profit'] >= 0 ? 'text-green' : 'text-red' }}">{{ number_format($finance['treasury_profit'], 2) }} {{ $order->currency }}</strong>

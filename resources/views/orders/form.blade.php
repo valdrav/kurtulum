@@ -10,7 +10,15 @@
             @if($order->exists) @method('PUT') @endif
 
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    <label class="form-label">{{ __('orders.order_number') }}</label>
+                    <input type="text" name="order_number" class="form-control @error('order_number') is-invalid @enderror"
+                        value="{{ old('order_number', $order->order_number ?? '') }}"
+                        placeholder="{{ $order->exists ? '' : __('orders.order_number_auto') }}">
+                    @error('order_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-hint">{{ __('orders.order_number_hint') }}</div>
+                </div>
+                <div class="col-md-4">
                     <label class="form-label">{{ __('app.customers') }}</label>
                     <select name="customer_id" class="form-select">
                         <option value="">—</option>
@@ -19,7 +27,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">{{ __('orders.supplier_purchase') }} *</label>
                     <select name="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror">
                         <option value="">— {{ __('orders.supplier_purchase_hint') }}</option>

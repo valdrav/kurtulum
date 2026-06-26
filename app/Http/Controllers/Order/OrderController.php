@@ -13,6 +13,7 @@ use App\Services\OrderFinanceService;
 use App\Services\OrderShipmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
@@ -47,6 +48,9 @@ class OrderController extends Controller
         if ($request->filled('supplier_id')) {
             $order->supplier_id = (int) $request->supplier_id;
         }
+        if ($request->filled('customer_id')) {
+            $order->customer_id = (int) $request->customer_id;
+        }
 
         return view('orders.form', [
             'order' => $order,
@@ -62,7 +66,7 @@ class OrderController extends Controller
 
         $order = DB::transaction(function () use ($validated, $request) {
             $orderData = collect($validated)->except('items')->toArray();
-            $orderData['order_number'] = $this->generateNumber('ORD');
+            $orderData['order_number'] = $validated['order_number'] ?? $this->generateNumber('ORD');
             $order = Order::create($orderData);
             $this->syncItems($order, $request->input('items', []));
             $this->recalculateTotal($order);
@@ -108,7 +112,7 @@ class OrderController extends Controller
 
     public function update(Request $request, Order $order)
     {
-        $validated = $this->validateOrder($request);
+        $validated = $this->validateOrder($request, $order);
 
         $oldStatus = $order->status;
 
@@ -134,9 +138,15 @@ class OrderController extends Controller
         return redirect()->route('orders.index')->with('success', __('messages.deleted'));
     }
 
-    protected function validateOrder(Request $request): array
+    protected function validateOrder(Request $request, ?Order $order = null): array
     {
         $validated = $request->validate([
+            'order_number' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('orders', 'order_number')->ignore($order?->id),
+            ],
             'customer_id' => 'nullable|exists:customers,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'status' => 'nullable|in:draft,confirmed,production,ready,shipped,delivered,cancelled',
@@ -167,6 +177,10 @@ class OrderController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'supplier_id' => [__('orders.supplier_required_for_purchase')],
             ]);
+        }
+
+        if (empty(trim($validated['order_number'] ?? ''))) {
+            unset($validated['order_number']);
         }
 
         return $validated;
