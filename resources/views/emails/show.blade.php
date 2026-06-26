@@ -60,6 +60,9 @@
             @endif
         </div>
         @endif
+        @if($email->direction === 'inbound' && $email->attachments->isEmpty())
+        <p class="text-muted small mt-3 mb-0">{{ __('emails.attachments_missing_hint') }}</p>
+        @endif
     </div>
 </div>
 @endsection

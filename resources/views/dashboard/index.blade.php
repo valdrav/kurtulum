@@ -20,12 +20,12 @@
     <div class="card stat-card"><div class="card-body p-3">
         <div class="stat-icon bg-blue-lt text-blue mb-2"><i class="ti ti-trending-up"></i></div>
         <div class="text-muted small">Aylık Gelir</div>
-        <div class="h3 mb-0">{{ number_format($stats['monthly_income'], 0) }}</div>
+        <div class="h3 mb-0">{{ format_money($stats['monthly_income'], $stats['currency']) }}</div>
     </div></div>
     <div class="card stat-card"><div class="card-body p-3">
         <div class="stat-icon bg-green-lt text-green mb-2"><i class="ti ti-chart-line"></i></div>
         <div class="text-muted small">Marj</div>
-        <div class="h3 mb-0 text-green">{{ number_format($stats['monthly_margin'], 0) }}</div>
+        <div class="h3 mb-0 text-green">{{ format_money($stats['monthly_margin'], $stats['currency']) }}</div>
     </div></div>
     <div class="card stat-card"><div class="card-body p-3">
         <div class="stat-icon bg-orange-lt text-orange mb-2"><i class="ti ti-truck-delivery"></i></div>
@@ -43,19 +43,19 @@
     <div class="col-sm-6 col-xl-3">
         <div class="card stat-card"><div class="card-body">
             <div class="d-flex justify-content-between"><span class="text-muted">Aylık Gelir</span><i class="ti ti-trending-up text-blue"></i></div>
-            <div class="h1 mb-0">{{ number_format($stats['monthly_income'], 0) }} ₺</div>
+            <div class="h1 mb-0">{{ format_money($stats['monthly_income'], $stats['currency']) }}</div>
         </div></div>
     </div>
     <div class="col-sm-6 col-xl-3">
         <div class="card stat-card"><div class="card-body">
             <div class="d-flex justify-content-between"><span class="text-muted">Aylık Marj</span><i class="ti ti-chart-line text-green"></i></div>
-            <div class="h1 mb-0 text-green">{{ number_format($stats['monthly_margin'], 0) }}</div>
+            <div class="h1 mb-0 text-green">{{ format_money($stats['monthly_margin'], $stats['currency']) }}</div>
         </div></div>
     </div>
     <div class="col-sm-6 col-xl-3">
         <div class="card stat-card"><div class="card-body">
             <div class="d-flex justify-content-between"><span class="text-muted">Alacaklar</span><i class="ti ti-wallet text-purple"></i></div>
-            <div class="h1 mb-0">{{ number_format($stats['receivables'], 0) }}</div>
+            <div class="h1 mb-0">{{ format_money($stats['receivables'], $stats['currency']) }}</div>
         </div></div>
     </div>
     <div class="col-sm-6 col-xl-3">
@@ -94,22 +94,22 @@
                 <div class="row g-3">
                     <div class="col-6">
                         <div class="text-muted small">{{ __('app.collections') }}</div>
-                        <div class="h2 text-green mb-0">{{ number_format($stats['monthly_income'], 0) }}</div>
+                        <div class="h2 text-green mb-0">{{ format_money($stats['monthly_income'], $stats['currency']) }}</div>
                     </div>
                     <div class="col-6">
                         <div class="text-muted small">{{ __('app.payments') }}</div>
-                        <div class="h2 text-red mb-0">{{ number_format($stats['monthly_expense'], 0) }}</div>
+                        <div class="h2 text-red mb-0">{{ format_money($stats['monthly_expense'], $stats['currency']) }}</div>
                     </div>
                     <div class="col-12">
                         <div class="progress progress-sm">
                             @php $ratio = $stats['monthly_income'] > 0 ? min(100, ($stats['monthly_profit'] / $stats['monthly_income']) * 100) : 0; @endphp
                             <div class="progress-bar bg-green" style="width: {{ max(0, $ratio) }}%"></div>
                         </div>
-                        <div class="text-muted small mt-1">Net: {{ number_format($stats['monthly_profit'], 0) }} ₺</div>
+                        <div class="text-muted small mt-1">Net: {{ format_money($stats['monthly_profit'], $stats['currency']) }}</div>
                     </div>
                     <div class="col-12">
                         <div class="text-muted small">Toplam ticari marj</div>
-                        <div class="h3 text-green mb-0">{{ number_format($stats['total_margin'], 0) }}</div>
+                        <div class="h3 text-green mb-0">{{ format_money($stats['total_margin'], $stats['currency']) }}</div>
                     </div>
                 </div>
             </div>

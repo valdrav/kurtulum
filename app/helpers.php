@@ -407,6 +407,22 @@ if (!function_exists('country_options')) {
     }
 }
 
+if (!function_exists('format_money')) {
+    function format_money(float $amount, ?string $currency = null, int $decimals = 0): string
+    {
+        $currency = strtoupper($currency ?? (registry()->defaultCurrency()?->code ?? 'TRY'));
+        $formatted = number_format($amount, $decimals, ',', '.');
+
+        return match ($currency) {
+            'TRY' => $formatted . ' ₺',
+            'USD' => $formatted . ' USD',
+            'EUR' => $formatted . ' EUR',
+            'GBP' => $formatted . ' GBP',
+            default => $formatted . ' ' . $currency,
+        };
+    }
+}
+
 if (!function_exists('format_try_equivalent')) {
     function format_try_equivalent(float $amount, string $currency, ?float $exchangeRate = null): ?string
     {

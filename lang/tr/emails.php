@@ -49,6 +49,7 @@ return [
     'attachments' => 'Ekler',
     'has_attachments' => 'Eki var',
     'attachment_download' => 'Eki indir',
+    'attachments_missing_hint' => 'Ek görünmüyorsa Senkronize butonuna basın veya sayfayı yenileyin.',
     'direction_inbound' => 'Gelen',
     'direction_outbound' => 'Giden',
     'folder_all' => 'Tümü',

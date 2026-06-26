@@ -8,29 +8,68 @@ use App\Models\Shipment;
 use App\Models\Task;
 use App\Models\Account;
 use App\Models\IncomeExpense;
+use App\Services\ExchangeRateService;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        protected ExchangeRateService $rates,
+    ) {
         $this->middleware('permission:dashboard.view');
     }
 
     public function index()
     {
+        $defaultCurrency = registry()->defaultCurrency()?->code ?? 'TRY';
+
+        $monthlyIncome = (float) IncomeExpense::where('type', 'income')
+            ->whereMonth('transaction_date', now()->month)
+            ->whereYear('transaction_date', now()->year)
+            ->sum('amount_base');
+        $monthlyExpense = (float) IncomeExpense::where('type', 'expense')
+            ->whereMonth('transaction_date', now()->month)
+            ->whereYear('transaction_date', now()->year)
+            ->sum('amount_base');
+
+        $monthlyMargin = (float) Order::whereMonth('order_date', now()->month)
+            ->whereYear('order_date', now()->year)
+            ->get()
+            ->sum(fn (Order $order) => $this->rates->amountForAccount(
+                (float) ($order->margin_total ?? 0),
+                $order->currency ?? $defaultCurrency,
+                new Account(['currency' => $defaultCurrency])
+            ));
+
+        $totalMargin = (float) Order::whereNotIn('status', ['cancelled', 'draft'])
+            ->get()
+            ->sum(fn (Order $order) => $this->rates->amountForAccount(
+                (float) ($order->margin_total ?? 0),
+                $order->currency ?? $defaultCurrency,
+                new Account(['currency' => $defaultCurrency])
+            ));
+
+        $receivables = (float) Account::query()
+            ->where('type', 'customer')
+            ->where('is_treasury', false)
+            ->get()
+            ->sum(fn (Account $account) => $this->rates->amountForAccount(
+                (float) $account->current_balance,
+                $account->currency ?? $defaultCurrency,
+                $account
+            ));
+
         $stats = [
+            'currency' => $defaultCurrency,
             'customers' => Customer::count(),
             'orders' => Order::whereNotIn('status', ['cancelled'])->count(),
             'shipments_active' => Shipment::whereIn('status', ['booked', 'in_transit', 'at_port', 'customs'])->count(),
             'tasks_pending' => Task::where('status', 'pending')->count(),
-            'receivables' => Account::where('type', 'customer')->sum('current_balance'),
-            'monthly_income' => IncomeExpense::where('type', 'income')
-                ->whereMonth('transaction_date', now()->month)->sum('amount_base'),
-            'monthly_expense' => IncomeExpense::where('type', 'expense')
-                ->whereMonth('transaction_date', now()->month)->sum('amount_base'),
-            'monthly_margin' => Order::whereMonth('order_date', now()->month)->sum('margin_total'),
-            'total_margin' => Order::whereNotIn('status', ['cancelled', 'draft'])->sum('margin_total'),
+            'receivables' => $receivables,
+            'monthly_income' => $monthlyIncome,
+            'monthly_expense' => $monthlyExpense,
+            'monthly_margin' => $monthlyMargin,
+            'total_margin' => $totalMargin,
         ];
 
         $stats['monthly_profit'] = $stats['monthly_income'] - $stats['monthly_expense'];

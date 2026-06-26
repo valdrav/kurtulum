@@ -9,6 +9,7 @@ use App\Models\Collection;
 use App\Models\Customer;
 use App\Models\IncomeExpense;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\Supplier;
 use App\Models\SystemCurrency;
 use App\Services\AccountLedgerService;
@@ -29,6 +30,7 @@ class FinanceController extends Controller
         $this->middleware('permission:finance.view')->only([
             'index', 'accounts', 'showAccount', 'payments', 'collections',
             'incomeExpenses', 'profitLoss', 'showPayment', 'showCollection', 'treasury',
+            'editTransaction', 'updateTransaction',
         ]);
         $this->middleware('permission:finance.create')->only([
             'createAccount', 'storeAccount', 'storePayment', 'storeCollection', 'storeIncomeExpense',
@@ -37,6 +39,7 @@ class FinanceController extends Controller
         $this->middleware('permission:finance.edit')->only([
             'editAccount', 'updateAccount', 'editPayment', 'updatePayment',
             'editCollection', 'updateCollection', 'editIncomeExpense', 'updateIncomeExpense',
+            'editTransaction', 'updateTransaction',
         ]);
         $this->middleware('permission:finance.delete|finance.create')->only([
             'destroyPayment', 'destroyCollection', 'destroyIncomeExpense',
@@ -207,7 +210,16 @@ class FinanceController extends Controller
 
     public function showAccount(Account $account)
     {
-        $account->load(['customer', 'supplier', 'transactions' => fn ($q) => $q->latest()->limit(50)]);
+        $account->load([
+            'customer',
+            'supplier',
+            'transactions' => fn ($q) => $q->with([
+                'reference.account.customer',
+                'reference.account.supplier',
+                'reference.customer',
+                'reference.supplier',
+            ])->latest()->limit(100),
+        ]);
 
         return view('finance.accounts.show', compact('account'));
     }
@@ -234,22 +246,30 @@ class FinanceController extends Controller
     public function editPayment(Payment $payment)
     {
         $paymentMethods = payment_methods()->forPayment();
-        $accounts = Account::where('is_active', true)->orderBy('name')->get();
+        $accounts = Account::query()->cari()->where('is_active', true)->orderBy('name')->get();
+        $treasuryAccounts = company_treasury()->accounts();
 
-        return view('finance.payments.form', compact('payment', 'paymentMethods', 'accounts'));
+        return view('finance.payments.form', compact('payment', 'paymentMethods', 'accounts', 'treasuryAccounts'));
     }
 
     public function updatePayment(Request $request, Payment $payment)
     {
-        $validated = $request->validate([
-            'reference' => 'nullable|string|max:255',
-            'notes' => 'nullable|string|max:2000',
-            'payment_date' => 'required|date',
-        ]);
+        $method = PaymentMethod::findOrFail($request->input('payment_method_id', $payment->payment_method_id));
+        $validated = $request->validate(array_merge(
+            payment_methods()->buildValidationRules($method),
+            [
+                'treasury_account_id' => 'nullable|exists:accounts,id',
+                'exchange_rate' => 'nullable|numeric|min:0.000001',
+                'notes' => 'nullable|string|max:2000',
+            ]
+        ));
 
-        $payment->update($validated);
+        $fee = payment_methods()->calculateFee($method, (float) $validated['amount']);
+        $payment = $this->orderFinance->updatePayment($payment, $validated, $method, $fee);
 
-        return redirect()->route('finance.payments.show', $payment)->with('success', __('messages.saved'));
+        return redirect()
+            ->route('finance.accounts.show', $payment->account_id)
+            ->with('success', __('messages.saved'));
     }
 
     public function destroyPayment(Payment $payment)
@@ -308,22 +328,66 @@ class FinanceController extends Controller
     public function editCollection(Collection $collection)
     {
         $paymentMethods = payment_methods()->forCollection();
-        $accounts = Account::where('is_active', true)->orderBy('name')->get();
+        $accounts = Account::query()->cari()->where('is_active', true)->orderBy('name')->get();
+        $treasuryAccounts = company_treasury()->accounts();
 
-        return view('finance.collections.form', compact('collection', 'paymentMethods', 'accounts'));
+        return view('finance.collections.form', compact('collection', 'paymentMethods', 'accounts', 'treasuryAccounts'));
     }
 
     public function updateCollection(Request $request, Collection $collection)
     {
-        $validated = $request->validate([
-            'reference' => 'nullable|string|max:255',
+        $method = PaymentMethod::findOrFail($request->input('payment_method_id', $collection->payment_method_id));
+        $rules = payment_methods()->buildValidationRules($method);
+        $rules['collection_date'] = $rules['payment_date'];
+        unset($rules['payment_date']);
+
+        $validated = $request->validate(array_merge($rules, [
+            'treasury_account_id' => 'nullable|exists:accounts,id',
+            'exchange_rate' => 'nullable|numeric|min:0.000001',
             'notes' => 'nullable|string|max:2000',
-            'collection_date' => 'required|date',
+        ]));
+
+        $fee = payment_methods()->calculateFee($method, (float) $validated['amount']);
+        $collection = $this->orderFinance->updateCollection($collection, $validated, $method, $fee);
+
+        return redirect()
+            ->route('finance.accounts.show', $collection->account_id)
+            ->with('success', __('messages.saved'));
+    }
+
+    public function editTransaction(AccountTransaction $transaction)
+    {
+        $transaction->load('reference');
+
+        if ($transaction->reference instanceof Collection) {
+            return redirect()->route('finance.collections.edit', $transaction->reference);
+        }
+
+        if ($transaction->reference instanceof Payment) {
+            return redirect()->route('finance.payments.edit', $transaction->reference);
+        }
+
+        abort_unless($transaction->reference_type === null, 404);
+
+        return view('finance.transactions.form', compact('transaction'));
+    }
+
+    public function updateTransaction(Request $request, AccountTransaction $transaction)
+    {
+        abort_unless($transaction->reference_type === null, 403);
+
+        $validated = $request->validate([
+            'type' => 'required|in:credit,debit',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'nullable|string|max:500',
+            'transaction_date' => 'required|date',
         ]);
 
-        $collection->update($validated);
+        $this->ledger->updateStandaloneTransaction($transaction, $validated);
 
-        return redirect()->route('finance.collections.show', $collection)->with('success', __('messages.saved'));
+        return redirect()
+            ->route('finance.accounts.show', $transaction->account_id)
+            ->with('success', __('messages.saved'));
     }
 
     public function destroyCollection(Collection $collection)

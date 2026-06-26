@@ -25,7 +25,7 @@ class ImapMailService
         imap_close($connection);
     }
 
-    public function syncAccount(EmailAccount $account, int $limit = 30): int
+    public function syncAccount(EmailAccount $account, int $limit = 100): int
     {
         $connection = $this->openConnection($account);
 
@@ -96,6 +96,83 @@ class ImapMailService
         imap_close($connection);
 
         return $synced;
+    }
+
+    public function refreshAttachmentsForEmail(Email $email): int
+    {
+        $email->loadMissing('emailAccount');
+
+        if (! $email->emailAccount || $email->direction !== 'inbound') {
+            return 0;
+        }
+
+        $connection = $this->openConnection($email->emailAccount);
+
+        try {
+            $msgNo = $this->findMessageNumber($connection, $email);
+
+            if (! $msgNo) {
+                return 0;
+            }
+
+            $structure = imap_fetchstructure($connection, $msgNo);
+
+            return $this->attachments->syncAttachments($connection, $msgNo, $structure, $email);
+        } finally {
+            imap_close($connection);
+        }
+    }
+
+    protected function findMessageNumber($connection, Email $email): ?int
+    {
+        if ($email->message_id && ! str_starts_with($email->message_id, 'local-')) {
+            $normalized = trim($email->message_id, "<> \t\r\n");
+
+            if ($normalized !== '') {
+                $escaped = addcslashes($normalized, '"\\');
+                $found = imap_search($connection, 'HEADER Message-ID "' . $escaped . '"');
+
+                if (is_array($found) && $found !== []) {
+                    return (int) reset($found);
+                }
+            }
+        }
+
+        $messages = imap_search($connection, 'ALL') ?: [];
+        rsort($messages);
+
+        foreach (array_slice($messages, 0, 250) as $msgNo) {
+            $header = imap_headerinfo($connection, $msgNo);
+            $remoteId = $header->message_id ?? null;
+
+            if ($remoteId && $email->message_id && $this->messageIdsMatch($remoteId, $email->message_id)) {
+                return (int) $msgNo;
+            }
+        }
+
+        if ($email->subject && $email->received_at) {
+            foreach (array_slice($messages, 0, 250) as $msgNo) {
+                $header = imap_headerinfo($connection, $msgNo);
+                $remoteSubject = isset($header->subject) ? imap_utf8($header->subject) : '';
+                $remoteFrom = isset($header->from[0])
+                    ? $header->from[0]->mailbox . '@' . $header->from[0]->host
+                    : '';
+
+                if ($remoteSubject === $email->subject
+                    && strcasecmp($remoteFrom, (string) $email->from_email) === 0
+                    && isset($header->date)
+                    && abs(strtotime($header->date) - $email->received_at->timestamp) < 120) {
+                    return (int) $msgNo;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected function messageIdsMatch(string $left, string $right): bool
+    {
+        return strcasecmp(trim($left, "<> \t\r\n"), trim($right, "<> \t\r\n")) === 0;
     }
 
     protected function shouldRepairBody(Email $email, ?string $bodyText, ?string $bodyHtml): bool

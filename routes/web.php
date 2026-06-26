@@ -110,6 +110,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/accounts', [FinanceController::class, 'storeAccount'])->name('accounts.store');
         Route::get('/accounts/{account}/edit', [FinanceController::class, 'editAccount'])->name('accounts.edit');
         Route::put('/accounts/{account}', [FinanceController::class, 'updateAccount'])->name('accounts.update');
+        Route::get('/transactions/{transaction}/edit', [FinanceController::class, 'editTransaction'])->name('transactions.edit');
+        Route::put('/transactions/{transaction}', [FinanceController::class, 'updateTransaction'])->name('transactions.update');
         Route::get('/accounts/{account}', [FinanceController::class, 'showAccount'])->name('accounts.show');
         Route::get('/payments', [FinanceController::class, 'payments'])->name('payments');
         Route::post('/payments', [FinanceController::class, 'storePayment'])->name('payments.store');

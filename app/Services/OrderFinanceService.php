@@ -120,16 +120,51 @@ class OrderFinanceService
                 'user_id' => auth()->id(),
             ]);
 
-            $label = 'Tahsilat: ' . $collection->collection_number . ($order ? ' (' . $order->order_number . ')' : '');
-            $cariAmount = $this->rates->amountForAccount($net, $currency, $cariAccount, $exchangeRate);
-            $treasuryAmount = $this->rates->amountForAccount($net, $currency, $treasury, $exchangeRate);
+            $this->applyCollectionLedger($collection->fresh(['account', 'treasuryAccount']), $order);
 
-            $this->ledger->adjustBalance($cariAccount, -$cariAmount, $collection, $label, $date);
-            $this->ledger->adjustBalance($treasury, $treasuryAmount, $collection, $label, $date);
+            return $collection;
+        });
+    }
 
-            if ($order) {
-                $this->incrementOrderCollected($order, $net);
+    public function updateCollection(Collection $collection, array $validated, PaymentMethod $method, float $fee): Collection
+    {
+        return DB::transaction(function () use ($collection, $validated, $method, $fee) {
+            $collection->load(['account', 'treasuryAccount', 'order']);
+            $oldNet = round((float) $collection->amount - (float) $collection->fee_amount, 2);
+
+            if ($collection->order) {
+                $collection->order->decrement(
+                    'amount_collected',
+                    min($oldNet, (float) $collection->order->amount_collected)
+                );
             }
+
+            $this->reverseCollectionLedger($collection, 'Düzeltme iptali');
+
+            $currency = $validated['currency'];
+            $exchangeRate = $this->resolveTransactionRate(
+                $currency,
+                isset($validated['exchange_rate']) ? (float) $validated['exchange_rate'] : null
+            );
+
+            $collection->update([
+                'account_id' => $validated['account_id'],
+                'customer_id' => Account::find($validated['account_id'])?->customer_id ?? $collection->customer_id,
+                'treasury_account_id' => $validated['treasury_account_id'] ?? $collection->treasury_account_id,
+                'amount' => $validated['amount'],
+                'currency' => $currency,
+                'exchange_rate' => $exchangeRate,
+                'fee_amount' => $fee,
+                'payment_method_id' => $method->id,
+                'collection_method' => $method->code,
+                'method_data' => $validated['method_data'] ?? null,
+                'collection_date' => $validated['collection_date'],
+                'reference' => $validated['reference'] ?? null,
+                'notes' => $validated['description'] ?? $validated['notes'] ?? null,
+            ]);
+
+            $collection->refresh()->load(['account', 'treasuryAccount', 'order']);
+            $this->applyCollectionLedger($collection, $collection->order);
 
             return $collection;
         });
@@ -165,16 +200,50 @@ class OrderFinanceService
                 'user_id' => auth()->id(),
             ]);
 
-            $label = 'Ödeme: ' . $payment->payment_number . ($order ? ' (' . $order->order_number . ')' : '');
-            $cariAmount = $this->rates->amountForAccount($total, $currency, $cariAccount, $exchangeRate);
-            $treasuryAmount = $this->rates->amountForAccount($total, $currency, $treasury, $exchangeRate);
+            $this->applyPaymentLedger($payment->fresh(['account', 'treasuryAccount']), $order);
 
-            $this->ledger->adjustBalance($cariAccount, -$cariAmount, $payment, $label, $date);
-            $this->ledger->adjustBalance($treasury, -$treasuryAmount, $payment, $label, $date);
+            return $payment;
+        });
+    }
 
-            if ($order) {
-                $this->incrementOrderPaid($order, $gross);
+    public function updatePayment(Payment $payment, array $validated, PaymentMethod $method, float $fee): Payment
+    {
+        return DB::transaction(function () use ($payment, $validated, $method, $fee) {
+            $payment->load(['account', 'treasuryAccount', 'order']);
+
+            if ($payment->order) {
+                $payment->order->decrement(
+                    'amount_paid',
+                    min((float) $payment->amount, (float) $payment->order->amount_paid)
+                );
             }
+
+            $this->reversePaymentLedger($payment, 'Düzeltme iptali');
+
+            $currency = $validated['currency'];
+            $exchangeRate = $this->resolveTransactionRate(
+                $currency,
+                isset($validated['exchange_rate']) ? (float) $validated['exchange_rate'] : null
+            );
+
+            $payment->update([
+                'account_id' => $validated['account_id'],
+                'supplier_id' => Account::find($validated['account_id'])?->supplier_id ?? $payment->supplier_id,
+                'treasury_account_id' => $validated['treasury_account_id'] ?? $payment->treasury_account_id,
+                'amount' => $validated['amount'],
+                'currency' => $currency,
+                'exchange_rate' => $exchangeRate,
+                'fee_amount' => $fee,
+                'payment_method_id' => $method->id,
+                'payment_method' => $method->code,
+                'method_data' => $validated['method_data'] ?? null,
+                'payment_date' => $validated['payment_date'],
+                'reference' => $validated['reference'] ?? null,
+                'notes' => $validated['description'] ?? $validated['notes'] ?? null,
+            ]);
+
+            $payment->refresh()->load(['account', 'treasuryAccount', 'order']);
+            $this->applyPaymentLedger($payment, $payment->order);
 
             return $payment;
         });
@@ -184,17 +253,6 @@ class OrderFinanceService
     {
         DB::transaction(function () use ($collection) {
             $net = round((float) $collection->amount - (float) $collection->fee_amount, 2);
-            $cari = $collection->account;
-            $treasury = $collection->treasuryAccount ?? company_treasury()->defaultAccount();
-            $date = now()->toDateString();
-            $rate = (float) $collection->exchange_rate;
-            $cariAmount = $cari ? $this->rates->amountForAccount($net, $collection->currency, $cari, $rate) : 0;
-            $treasuryAmount = $this->rates->amountForAccount($net, $collection->currency, $treasury, $rate);
-
-            if ($cari) {
-                $this->ledger->adjustBalance($cari, $cariAmount, $collection, 'İptal tahsilat: ' . $collection->collection_number, $date);
-            }
-            $this->ledger->adjustBalance($treasury, -$treasuryAmount, $collection, 'İptal tahsilat: ' . $collection->collection_number, $date);
 
             if ($collection->order_id) {
                 $order = Order::find($collection->order_id);
@@ -203,6 +261,7 @@ class OrderFinanceService
                 }
             }
 
+            $this->reverseCollectionLedger($collection, 'İptal');
             $collection->delete();
         });
     }
@@ -210,19 +269,6 @@ class OrderFinanceService
     public function reversePayment(Payment $payment): void
     {
         DB::transaction(function () use ($payment) {
-            $total = round((float) $payment->amount + (float) $payment->fee_amount, 2);
-            $cari = $payment->account;
-            $treasury = $payment->treasuryAccount ?? company_treasury()->defaultAccount();
-            $date = now()->toDateString();
-            $rate = (float) $payment->exchange_rate;
-            $cariAmount = $cari ? $this->rates->amountForAccount($total, $payment->currency, $cari, $rate) : 0;
-            $treasuryAmount = $this->rates->amountForAccount($total, $payment->currency, $treasury, $rate);
-
-            if ($cari) {
-                $this->ledger->adjustBalance($cari, $cariAmount, $payment, 'İptal ödeme: ' . $payment->payment_number, $date);
-            }
-            $this->ledger->adjustBalance($treasury, $treasuryAmount, $payment, 'İptal ödeme: ' . $payment->payment_number, $date);
-
             if ($payment->order_id) {
                 $order = Order::find($payment->order_id);
                 if ($order) {
@@ -230,8 +276,93 @@ class OrderFinanceService
                 }
             }
 
+            $this->reversePaymentLedger($payment, 'İptal');
             $payment->delete();
         });
+    }
+
+    protected function applyCollectionLedger(Collection $collection, ?Order $order = null): void
+    {
+        $cari = $collection->account;
+        $treasury = $collection->treasuryAccount ?? company_treasury()->defaultAccount();
+        $net = round((float) $collection->amount - (float) $collection->fee_amount, 2);
+        $date = $collection->collection_date?->toDateString() ?? now()->toDateString();
+        $label = 'Tahsilat: ' . $collection->collection_number . ($order ? ' (' . $order->order_number . ')' : '');
+
+        $cariAmount = $cari
+            ? $this->rates->amountForAccount($net, $collection->currency, $cari, (float) $collection->exchange_rate)
+            : 0;
+        $treasuryAmount = $this->rates->amountForAccount($net, $collection->currency, $treasury, (float) $collection->exchange_rate);
+
+        if ($cari) {
+            $this->ledger->adjustBalance($cari, -$cariAmount, $collection, $label, $date);
+        }
+        $this->ledger->adjustBalance($treasury, $treasuryAmount, $collection, $label, $date);
+
+        if ($order) {
+            $this->incrementOrderCollected($order, $net);
+        }
+    }
+
+    protected function reverseCollectionLedger(Collection $collection, string $prefix = 'İptal'): void
+    {
+        $cari = $collection->account;
+        $treasury = $collection->treasuryAccount ?? company_treasury()->defaultAccount();
+        $net = round((float) $collection->amount - (float) $collection->fee_amount, 2);
+        $date = now()->toDateString();
+        $label = $prefix . ' tahsilat: ' . $collection->collection_number;
+
+        $cariAmount = $cari
+            ? $this->rates->amountForAccount($net, $collection->currency, $cari, (float) $collection->exchange_rate)
+            : 0;
+        $treasuryAmount = $this->rates->amountForAccount($net, $collection->currency, $treasury, (float) $collection->exchange_rate);
+
+        if ($cari) {
+            $this->ledger->adjustBalance($cari, $cariAmount, $collection, $label, $date);
+        }
+        $this->ledger->adjustBalance($treasury, -$treasuryAmount, $collection, $label, $date);
+    }
+
+    protected function applyPaymentLedger(Payment $payment, ?Order $order = null): void
+    {
+        $cari = $payment->account;
+        $treasury = $payment->treasuryAccount ?? company_treasury()->defaultAccount();
+        $total = round((float) $payment->amount + (float) $payment->fee_amount, 2);
+        $date = $payment->payment_date?->toDateString() ?? now()->toDateString();
+        $label = 'Ödeme: ' . $payment->payment_number . ($order ? ' (' . $order->order_number . ')' : '');
+
+        $cariAmount = $cari
+            ? $this->rates->amountForAccount($total, $payment->currency, $cari, (float) $payment->exchange_rate)
+            : 0;
+        $treasuryAmount = $this->rates->amountForAccount($total, $payment->currency, $treasury, (float) $payment->exchange_rate);
+
+        if ($cari) {
+            $this->ledger->adjustBalance($cari, -$cariAmount, $payment, $label, $date);
+        }
+        $this->ledger->adjustBalance($treasury, -$treasuryAmount, $payment, $label, $date);
+
+        if ($order) {
+            $this->incrementOrderPaid($order, (float) $payment->amount);
+        }
+    }
+
+    protected function reversePaymentLedger(Payment $payment, string $prefix = 'İptal'): void
+    {
+        $cari = $payment->account;
+        $treasury = $payment->treasuryAccount ?? company_treasury()->defaultAccount();
+        $total = round((float) $payment->amount + (float) $payment->fee_amount, 2);
+        $date = now()->toDateString();
+        $label = $prefix . ' ödeme: ' . $payment->payment_number;
+
+        $cariAmount = $cari
+            ? $this->rates->amountForAccount($total, $payment->currency, $cari, (float) $payment->exchange_rate)
+            : 0;
+        $treasuryAmount = $this->rates->amountForAccount($total, $payment->currency, $treasury, (float) $payment->exchange_rate);
+
+        if ($cari) {
+            $this->ledger->adjustBalance($cari, $cariAmount, $payment, $label, $date);
+        }
+        $this->ledger->adjustBalance($treasury, $treasuryAmount, $payment, $label, $date);
     }
 
     public function financeSummary(Order $order): array

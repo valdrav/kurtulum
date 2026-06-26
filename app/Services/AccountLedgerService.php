@@ -45,4 +45,32 @@ class AccountLedgerService
     ): void {
         $this->adjustBalance($account, -$delta, $reference, $description, $transactionDate, $userId);
     }
+
+    public function updateStandaloneTransaction(AccountTransaction $transaction, array $data): void
+    {
+        $account = $transaction->account;
+
+        if (! $account) {
+            return;
+        }
+
+        $oldDelta = $transaction->type === 'credit'
+            ? (float) $transaction->amount
+            : -(float) $transaction->amount;
+
+        $newType = $data['type'] ?? $transaction->type;
+        $newAmount = (float) $data['amount'];
+        $newDelta = $newType === 'credit' ? $newAmount : -$newAmount;
+
+        if ($newDelta !== $oldDelta) {
+            $account->increment('current_balance', $newDelta - $oldDelta);
+        }
+
+        $transaction->update([
+            'type' => $newType,
+            'amount' => $newAmount,
+            'description' => $data['description'] ?? $transaction->description,
+            'transaction_date' => $data['transaction_date'] ?? $transaction->transaction_date,
+        ]);
+    }
 }

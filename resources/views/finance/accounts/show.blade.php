@@ -7,7 +7,7 @@
 <div class="row g-3 mb-3">
     <div class="col-md-4"><div class="card"><div class="card-body">
         <div class="subheader">{{ __('finance.current_balance') }}</div>
-        <div class="h1 {{ $account->balance >= 0 ? 'text-green' : 'text-red' }}">{{ number_format($account->balance, 2, ',', '.') }} {{ $account->currency }}</div>
+        <div class="h1 {{ $account->balance >= 0 ? 'text-green' : 'text-red' }}">{{ format_money($account->balance, $account->currency, 2) }}</div>
     </div></div></div>
     <div class="col-md-8"><div class="card"><div class="card-body">
         <dl class="row mb-0 small">
@@ -27,17 +27,32 @@
     <div class="card-header"><h3 class="card-title">{{ __('finance.transactions') }}</h3></div>
     <div class="table-responsive">
         <table class="table table-vcenter card-table">
-            <thead><tr><th>{{ __('app.date') }}</th><th>Tip</th><th>{{ __('app.description') }}</th><th>{{ __('app.amount') }}</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>{{ __('app.date') }}</th>
+                    <th>{{ __('finance.counterparty') }}</th>
+                    <th>Tip</th>
+                    <th>{{ __('app.description') }}</th>
+                    <th>{{ __('app.amount') }}</th>
+                    <th></th>
+                </tr>
+            </thead>
             <tbody>
                 @forelse($account->transactions as $t)
                 <tr>
                     <td>{{ $t->transaction_date->format('d.m.Y') }}</td>
-                    <td><span class="badge bg-{{ $t->type==='credit'?'green':'red' }}-lt">{{ $t->type }}</span></td>
+                    <td>{{ $t->counterpartyLabel() ?: '—' }}</td>
+                    <td><span class="badge bg-{{ $t->type==='credit'?'green':'red' }}-lt">{{ $t->typeLabelTr() }}</span></td>
                     <td>{{ $t->description }}</td>
-                    <td>{{ number_format($t->amount, 2, ',', '.') }} {{ $t->currency }}</td>
+                    <td>{{ format_money((float) $t->amount, $t->currency, 2) }}</td>
+                    <td class="text-end">
+                        @if(can_access('finance.edit') && $t->editUrl())
+                        <a href="{{ $t->editUrl() }}" class="btn btn-sm btn-ghost-primary" title="{{ __('finance.edit_transaction') }}"><i class="ti ti-edit"></i></a>
+                        @endif
+                    </td>
                 </tr>
                 @empty
-                <tr><td colspan="4" class="text-muted text-center">{{ __('app.no_records') }}</td></tr>
+                <tr><td colspan="6" class="text-muted text-center">{{ __('app.no_records') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

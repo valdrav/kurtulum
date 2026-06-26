@@ -159,6 +159,19 @@ class EmailController extends Controller
 
         $email->load(['emailAccount', 'attachments']);
 
+        if ($email->direction === 'inbound' && $email->attachments->isEmpty()) {
+            $imap = app(ImapMailService::class);
+
+            if ($imap->isAvailable()) {
+                try {
+                    $imap->refreshAttachmentsForEmail($email);
+                    $email->load('attachments');
+                } catch (\Throwable) {
+                    // IMAP hatası mail gövdesini engellemesin
+                }
+            }
+        }
+
         return view('emails.show', compact('email'));
     }
 

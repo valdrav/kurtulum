@@ -7,9 +7,17 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class DocumentController extends Controller
 {
+    /** @var array<int, string> */
+    protected array $allowedExtensions = [
+        'pdf', 'xlsx', 'xls', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'csv', 'txt', 'zip',
+    ];
+
+    protected int $maxFileKb = 20480;
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -53,24 +61,25 @@ class DocumentController extends Controller
     {
         $validated = $request->validate([
             'files' => 'required|array|min:1|max:30',
-            'files.*' => 'required|file|max:20480|mimes:pdf,xlsx,xls,doc,docx,jpg,jpeg,png,gif,webp,csv,txt,zip',
             'folder' => 'required|string|max:100',
             'description' => 'nullable|string|max:500',
             'documentable_type' => 'nullable|string',
             'documentable_id' => 'nullable|integer',
         ]);
 
+        [$files, $warnings] = $this->collectValidUploads($request);
+
         $folder = trim($validated['folder']);
         $count = 0;
 
-        foreach ($request->file('files') as $file) {
+        foreach ($files as $file) {
             $path = $file->store('documents/' . date('Y/m'), 'local');
 
             Document::create([
                 'name' => Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension(),
                 'original_name' => $file->getClientOriginalName(),
                 'path' => $path,
-                'mime_type' => $file->getMimeType(),
+                'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
                 'size' => $file->getSize(),
                 'category' => 'other',
                 'documentable_type' => $validated['documentable_type'] ?? User::class,
@@ -85,8 +94,76 @@ class DocumentController extends Controller
         }
 
         $redirect = route('documents.folder', $folder !== '' ? $folder : '__default');
+        $flash = redirect($redirect)->with('success', __('documents.files_uploaded', ['count' => $count]));
 
-        return redirect($redirect)->with('success', __('documents.files_uploaded', ['count' => $count]));
+        if ($warnings !== []) {
+            $flash->with('warning', implode(' ', $warnings));
+        }
+
+        return $flash;
+    }
+
+    /**
+     * @return array{0: array<int, \Illuminate\Http\UploadedFile>, 1: array<int, string>}
+     */
+    protected function collectValidUploads(Request $request): array
+    {
+        $raw = $request->file('files');
+
+        if ($raw === null) {
+            throw ValidationException::withMessages([
+                'files' => [__('documents.upload_no_files')],
+            ]);
+        }
+
+        $candidates = is_array($raw) ? $raw : [$raw];
+        $valid = [];
+        $errors = [];
+
+        foreach ($candidates as $index => $file) {
+            if ($file === null) {
+                continue;
+            }
+
+            $label = $file->getClientOriginalName() ?: __('documents.upload_file_number', ['n' => $index + 1]);
+
+            if (! $file->isValid()) {
+                $errors[] = $label . ': ' . $this->uploadErrorMessage($file->getError());
+                continue;
+            }
+
+            $ext = strtolower($file->getClientOriginalExtension() ?: '');
+
+            if ($ext === '' || ! in_array($ext, $this->allowedExtensions, true)) {
+                $errors[] = $label . ': ' . __('documents.upload_bad_extension');
+                continue;
+            }
+
+            if ($file->getSize() > $this->maxFileKb * 1024) {
+                $errors[] = $label . ': ' . __('documents.upload_too_large', ['max' => $this->maxFileKb / 1024]);
+                continue;
+            }
+
+            $valid[] = $file;
+        }
+
+        if ($valid === []) {
+            throw ValidationException::withMessages([
+                'files' => $errors !== [] ? $errors : [__('documents.upload_failed_all')],
+            ]);
+        }
+
+        return [$valid, $errors];
+    }
+
+    protected function uploadErrorMessage(int $code): string
+    {
+        return match ($code) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => __('documents.upload_php_size'),
+            UPLOAD_ERR_PARTIAL => __('documents.upload_partial'),
+            UPLOAD_ERR_NO_FILE => __('documents.upload_no_file'),
+            default => __('documents.upload_failed'),
+        };
     }
 
     public function preview(Document $document)
