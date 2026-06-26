@@ -65,13 +65,20 @@ class ShipmentCostService
         $cost = ShipmentCost::create($data);
         $this->syncShipmentTotal($shipment);
 
+        if ($cost->status === 'paid') {
+            app(ShipmentCostTreasuryService::class)->syncPaidStatus($cost->fresh(), 'pending');
+        }
+
         return $cost;
     }
 
     public function updateCost(ShipmentCost $cost, array $data): ShipmentCost
     {
+        $previousStatus = $cost->status;
         $data = $this->normalizePayload($data);
         $cost->update($data);
+        $cost->refresh();
+        app(ShipmentCostTreasuryService::class)->syncPaidStatus($cost, $previousStatus);
         $this->syncShipmentTotal($cost->shipment);
 
         return $cost->fresh();
@@ -79,6 +86,7 @@ class ShipmentCostService
 
     public function deleteCost(ShipmentCost $cost): void
     {
+        app(ShipmentCostTreasuryService::class)->reverseOnDelete($cost);
         $shipment = $cost->shipment;
         $cost->delete();
 

@@ -18,18 +18,22 @@
 <div class="card">
     <div class="table-responsive">
         <table class="table table-vcenter card-table mb-0">
-            <thead><tr><th>{{ __('reports.month') }}</th><th class="text-end">{{ __('reports.order_total') }}</th></tr></thead>
+            <thead><tr><th>{{ __('reports.month') }}</th><th class="text-end">USD</th><th class="text-end">TRY</th><th class="text-end">{{ __('reports.order_total') }}</th></tr></thead>
             <tbody>
                 @foreach($monthly as $row)
                 <tr>
                     <td>{{ \Illuminate\Support\Carbon::create(null, $row->month)->translatedFormat('F') }}</td>
-                    <td class="text-end">{{ number_format($row->total, 2, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($row->usd ?? 0, 2, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($row->try ?? 0, 2, ',', '.') }}</td>
+                    <td class="text-end fw-semibold">{{ number_format($row->total, 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr class="fw-bold">
                     <td>{{ __('app.total') }}</td>
+                    <td class="text-end">{{ number_format($monthly->sum('usd'), 2, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($monthly->sum('try'), 2, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($monthly->sum('total'), 2, ',', '.') }}</td>
                 </tr>
             </tfoot>

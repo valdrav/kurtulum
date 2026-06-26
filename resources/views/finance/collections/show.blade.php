@@ -15,8 +15,11 @@
             @if($collection->reference)<dt class="col-sm-4">Referans</dt><dd class="col-sm-8">{{ $collection->reference }}</dd>@endif
             @if($collection->notes)<dt class="col-sm-4">{{ __('app.description') }}</dt><dd class="col-sm-8">{{ $collection->notes }}</dd>@endif
         </dl>
-        <div class="mt-3">
+        <div class="mt-3 d-flex flex-wrap gap-2">
             @if(can_access('finance.edit'))<a href="{{ route('finance.collections.edit', $collection) }}" class="btn btn-primary btn-sm"><i class="ti ti-edit"></i> Düzenle</a>@endif
+            @if(can_access('finance.delete'))
+            @include('partials.delete-form', ['action' => route('finance.collections.destroy', $collection), 'confirm' => __('app.confirm_delete')])
+            @endif
             <a href="{{ route('finance.collections') }}" class="btn btn-ghost-secondary btn-sm">Listeye dön</a>
         </div>
     </div>

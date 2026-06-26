@@ -6,7 +6,25 @@
     'subtitle' => $order->exists ? $order->order_number : __('app.orders'),
 ])
 
-<div class="card" x-data="orderTradeForm('{{ old('currency', $order->currency ?? 'USD') }}')">
+@php
+$productsJson = collect($products ?? [])->map(fn ($p) => [
+    'id' => $p->id,
+    'name' => $p->name,
+    'sku' => $p->sku,
+    'sale_price' => (float) ($p->unit_price ?? 0),
+    'purchase_price' => (float) ($p->unit_price ?? 0),
+])->values();
+$items = old('items', $order->exists ? $order->items->map(fn($i) => [
+    'product_id' => $i->product_id,
+    'description' => $i->description,
+    'quantity' => $i->quantity,
+    'purchase_unit_price' => $i->purchase_unit_price ?? 0,
+    'purchase_discount_percent' => $i->purchase_discount_percent ?? 0,
+    'sale_unit_price' => $i->sale_unit_price ?? $i->unit_price,
+])->toArray() : [['product_id'=>null,'description'=>'','quantity'=>1,'purchase_unit_price'=>0,'purchase_discount_percent'=>0,'sale_unit_price'=>0]]);
+@endphp
+
+<div class="card" x-data="orderTradeForm('{{ old('currency', $order->currency ?? 'USD') }}', @js($productsJson))">
     <div class="card-body">
         <form method="POST" action="{{ $order->exists ? route('orders.update', $order) : route('orders.store') }}" id="orderForm">
             @csrf
@@ -70,21 +88,20 @@
             <p class="text-muted small">{{ __('orders.trade_items_hint') }}</p>
 
             <div id="items">
-                @php
-                $items = old('items', $order->exists ? $order->items->map(fn($i) => [
-                    'description' => $i->description,
-                    'quantity' => $i->quantity,
-                    'purchase_unit_price' => $i->purchase_unit_price ?? 0,
-                    'purchase_discount_percent' => $i->purchase_discount_percent ?? 0,
-                    'sale_unit_price' => $i->sale_unit_price ?? $i->unit_price,
-                ])->toArray() : [['description'=>'','quantity'=>1,'purchase_unit_price'=>0,'purchase_discount_percent'=>0,'sale_unit_price'=>0]]);
-                @endphp
+                <datalist id="product-catalog">
+                    @foreach($products ?? [] as $p)
+                    <option value="{{ $p->name }}">{{ $p->sku ? $p->sku.' — ' : '' }}{{ $p->name }}</option>
+                    @endforeach
+                </datalist>
 
                 <template x-for="(row, index) in rows" :key="index">
                     <div class="trade-row">
                         <div class="row g-2">
                             <div class="col-12">
-                                <input type="text" :name="'items['+index+'][description]'" class="form-control" placeholder="{{ __('orders.item_description') }}" x-model="row.description">
+                                <input type="hidden" :name="'items['+index+'][product_id]'" :value="row.product_id || ''">
+                                <input type="text" :name="'items['+index+'][description]'" class="form-control" list="product-catalog"
+                                    placeholder="{{ __('orders.item_description') }}" x-model="row.description"
+                                    @change="applyProduct(row, row.description)">
                             </div>
                             <div class="col-4 col-md-2">
                                 <label class="form-label small text-muted">{{ __('orders.quantity') }}</label>
@@ -135,17 +152,27 @@
 
 @push('scripts')
 <script>
-function orderTradeForm(initialCurrency) {
+function orderTradeForm(initialCurrency, productsJson) {
     const initial = @json($items);
+    const products = productsJson || [];
     return {
         currency: initialCurrency || 'USD',
+        products,
         purchaseLabel: '{{ __('orders.purchase_price') }} (USD)',
         saleLabel: '{{ __('orders.sale_price') }} (USD)',
-        rows: initial.length ? initial : [{ description: '', quantity: 1, purchase_unit_price: 0, purchase_discount_percent: 0, sale_unit_price: 0 }],
+        rows: initial.length ? initial : [{ product_id: null, description: '', quantity: 1, purchase_unit_price: 0, purchase_discount_percent: 0, sale_unit_price: 0 }],
         init() { this.updateLabels(); },
         updateLabels() {
             this.purchaseLabel = '{{ __('orders.purchase_price') }} (' + this.currency + ')';
             this.saleLabel = '{{ __('orders.sale_price') }} (' + this.currency + ')';
+        },
+        applyProduct(row, name) {
+            const product = this.products.find(p => p.name === name);
+            if (!product) return;
+            row.product_id = product.id;
+            row.description = product.name;
+            row.purchase_unit_price = product.purchase_price;
+            row.sale_unit_price = product.sale_price;
         },
         get totals() {
             return this.rows.reduce((acc, row) => {
@@ -159,7 +186,7 @@ function orderTradeForm(initialCurrency) {
             }, { purchase: 0, sale: 0, margin: 0 });
         },
         addRow() {
-            this.rows.push({ description: '', quantity: 1, purchase_unit_price: 0, purchase_discount_percent: 0, sale_unit_price: 0 });
+            this.rows.push({ product_id: null, description: '', quantity: 1, purchase_unit_price: 0, purchase_discount_percent: 0, sale_unit_price: 0 });
         },
         removeRow(i) {
             this.rows.splice(i, 1);

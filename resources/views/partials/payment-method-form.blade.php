@@ -21,7 +21,7 @@
         <label class="form-label fw-semibold">{{ __('finance.exchange_rate') }}</label>
         <input type="number" step="0.000001" name="exchange_rate" class="form-control" min="0.000001" x-model="exchangeRate"
                :placeholder="'1 ' + selectedCurrency + ' = ? ' + baseCurrency">
-        <small class="text-muted">{{ __('finance.exchange_rate_editable') }} {{ __('finance.transaction_rate_short') }} <span x-text="selectedCurrency"></span> = ? {{ baseCurrency }}</small>
+        <small class="text-muted">{{ __('finance.exchange_rate_editable') }} {{ __('finance.transaction_rate_short') }} <span x-text="selectedCurrency"></span> = ? <span x-text="baseCurrency"></span></small>
     </div>
 
     <div class="mb-2">

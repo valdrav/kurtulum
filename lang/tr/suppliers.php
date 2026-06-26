@@ -15,6 +15,7 @@ return [
     'unlinked_orders_hint' => ':count sipariş ödeme/cari kaydından bu tedarikçiyle eşleşiyor ancak siparişe atanmamış. Bağlantıyı kalıcı yapmak için düğmeye tıklayın.',
     'backfill_orders' => 'Siparişleri Bağla',
     'backfill_done' => ':count sipariş bu tedarikçiye bağlandı.',
+    'cannot_delete_has_orders' => 'Bu tedarikçinin sipariş kayıtları var; silinemez.',
     'new_purchase_order' => 'Alım Siparişi Oluştur',
     'shipment_costs' => 'Lojistik Masrafları',
     'product' => 'Ürün',

@@ -121,6 +121,58 @@
     </div>
 </div>
 
+@if($delayedShipments->isNotEmpty() || $overdueTasks->isNotEmpty())
+<div class="row row-cards mb-3">
+    @if($delayedShipments->isNotEmpty())
+    <div class="col-lg-7">
+        <div class="card border-warning">
+            <div class="card-header bg-warning-lt d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0"><i class="ti ti-alert-triangle me-1"></i>{{ __('reports.delayed_shipments') }}</h3>
+                <a href="{{ route('shipments.index') }}" class="btn btn-sm btn-ghost-secondary">Tümü</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table table-modern mb-0">
+                    <thead><tr><th>No</th><th>Müşteri</th><th>ETA</th><th>{{ __('app.status') }}</th></tr></thead>
+                    <tbody>
+                        @foreach($delayedShipments as $s)
+                        <tr>
+                            <td><a href="{{ route('shipments.show', $s) }}">{{ $s->shipment_number }}</a></td>
+                            <td>{{ $s->customer?->company_name ?? ($s->order?->order_number ?? '—') }}</td>
+                            <td class="text-warning fw-semibold">{{ $s->eta?->format('d.m.Y') ?? '—' }}</td>
+                            <td><span class="badge">{{ $s->statusDisplay() }}</span></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
+    @if($overdueTasks->isNotEmpty())
+    <div class="col-lg-5">
+        <div class="card border-warning">
+            <div class="card-header bg-warning-lt">
+                <h3 class="card-title mb-0"><i class="ti ti-clock-exclamation me-1"></i>Geciken Görevler</h3>
+            </div>
+            <div class="list-group list-group-flush">
+                @foreach($overdueTasks as $task)
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-semibold">{{ $task->title }}</div>
+                            <div class="text-warning small">{{ $task->due_date?->format('d.m.Y') }} · {{ $task->assignee?->name ?? '—' }}</div>
+                        </div>
+                        <span class="badge priority-{{ $task->priority }}">{{ $task->priority }}</span>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
+</div>
+@endif
+
 <div class="row row-cards">
     <div class="col-lg-7">
         <div class="card">

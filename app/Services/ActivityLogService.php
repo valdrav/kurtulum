@@ -23,7 +23,8 @@ class ActivityLogService
         '$.old.bcc',
     ];
 
-    public function paginated(int $perPage = 25): LengthAwarePaginator
+    /** @param array<string, mixed> $filters */
+    public function paginated(int $perPage = 25, array $filters = []): LengthAwarePaginator
     {
         $table = (new Activity)->getTable();
         $removePaths = implode(', ', array_map(
@@ -35,6 +36,15 @@ class ActivityLogService
 
         return Activity::query()
             ->with(['causer' => fn ($q) => $q->select('id', 'name')])
+            ->when($filters['user_id'] ?? null, fn ($q, $id) => $q->where('causer_id', $id))
+            ->when($filters['event'] ?? null, fn ($q, $event) => $q->where('event', $event))
+            ->when($filters['subject_type'] ?? null, fn ($q, $type) => $q->where('subject_type', 'like', '%' . class_basename($type) . '%'))
+            ->when($filters['search'] ?? null, function ($q, $search) use ($table) {
+                $q->where(function ($inner) use ($search, $table) {
+                    $inner->where("{$table}.description", 'like', "%{$search}%")
+                        ->orWhere("{$table}.properties", 'like', "%{$search}%");
+                });
+            })
             ->select([
                 "{$table}.id",
                 "{$table}.description",

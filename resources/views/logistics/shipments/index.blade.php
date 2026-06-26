@@ -26,6 +26,19 @@
     </div>
 </div>
 
+<div class="d-flex flex-wrap gap-2 mb-3">
+    @if(can_access('shipments.view'))
+    <a href="{{ route('shipments.export', request()->query()) }}" class="btn btn-outline-secondary btn-sm">
+        <i class="ti ti-download me-1"></i>{{ __('app.export') }}
+    </a>
+    @endif
+    @if(request('trashed'))
+    <a href="{{ route('shipments.index', request()->except('trashed')) }}" class="btn btn-ghost-secondary btn-sm">Aktif sevkiyatlar</a>
+    @else
+    <a href="{{ route('shipments.index', array_merge(request()->query(), ['trashed' => 1])) }}" class="btn btn-ghost-secondary btn-sm">Silinen sevkiyatlar</a>
+    @endif
+</div>
+
 <div class="d-md-none ef-mobile-list mb-3">
     @forelse($shipments as $s)
     @include('partials.mobile-record-card', [
@@ -36,6 +49,9 @@
         'badge' => $s->statusDisplay(),
         'editUrl' => route('shipments.edit', $s),
         'editPermission' => 'shipments.edit',
+        'deleteUrl' => route('shipments.destroy', $s),
+        'deletePermission' => 'shipments.delete',
+        'deleteConfirm' => __('logistics.delete_confirm'),
     ])
     @empty
     <div class="card"><div class="card-body text-muted">{{ __('app.no_records') }}</div></div>

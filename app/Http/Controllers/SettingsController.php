@@ -262,11 +262,18 @@ class SettingsController extends Controller
         return back()->with('success', __('messages.saved'));
     }
 
-    public function auditLog(ActivityLogService $activityLog)
+    public function auditLog(Request $request, ActivityLogService $activityLog)
     {
-        $logs = $activityLog->paginated(25);
+        $logs = $activityLog->paginated(25, [
+            'user_id' => $request->user_id,
+            'event' => $request->event,
+            'subject_type' => $request->subject_type,
+            'search' => $request->search,
+        ]);
 
-        return view('settings.audit-log', compact('logs'));
+        $users = \App\Models\User::orderBy('name')->get(['id', 'name']);
+
+        return view('settings.audit-log', compact('logs', 'users'));
     }
 
     public function updates(UpdateService $updateService)

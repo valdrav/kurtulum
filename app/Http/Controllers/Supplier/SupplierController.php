@@ -92,7 +92,12 @@ class SupplierController extends Controller
 
     public function destroy(Supplier $supplier)
     {
+        if ($supplier->orders()->exists()) {
+            return back()->with('warning', __('suppliers.cannot_delete_has_orders'));
+        }
+
         $supplier->delete();
+
         return redirect()->route('suppliers.index')->with('success', __('messages.deleted'));
     }
 

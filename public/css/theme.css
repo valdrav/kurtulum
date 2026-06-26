@@ -1519,3 +1519,89 @@ a.ef-mobile-card-title:hover {
     border-left-color: #94a3b8;
     opacity: 0.85;
 }
+
+/* Guest login — no app chrome */
+html {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+body.ef-guest {
+    min-height: 100dvh;
+    margin: 0;
+    background: var(--ef-bg);
+    overflow-x: hidden;
+}
+
+.ef-guest-main {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.ef-login-wrap {
+    max-width: 24rem;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Prevent horizontal scroll on mobile */
+body.ef-app {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+.ef-main {
+    overflow-x: clip;
+    width: 100%;
+    max-width: 100%;
+}
+
+.ef-container {
+    max-width: min(1320px, 100%);
+}
+
+/* Mobile: fixed topbar + bottom dock stay in place while scrolling */
+@media (max-width: 991.98px) {
+    .ef-topbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 100vw;
+    }
+
+    .ef-main-auth {
+        padding-top: var(--ef-topbar-h);
+    }
+
+    .ef-dock {
+        position: fixed;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 100vw;
+        transform: translateZ(0);
+        will-change: transform;
+    }
+
+    .ef-bottom-nav {
+        width: 100%;
+        max-width: 100vw;
+    }
+
+    .ef-currency-bar {
+        max-width: 100vw;
+    }
+}
+
+/* Password toggle on login */
+.input-group .btn-outline-secondary {
+    border-color: var(--ef-border);
+}
+

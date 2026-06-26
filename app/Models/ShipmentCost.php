@@ -29,6 +29,7 @@ class ShipmentCost extends Model
         'notes',
         'status',
         'paid_at',
+        'treasury_posted_at',
         'user_id',
     ];
 
@@ -40,6 +41,7 @@ class ShipmentCost extends Model
             'exchange_rate' => 'decimal:6',
             'expense_date' => 'date',
             'paid_at' => 'date',
+            'treasury_posted_at' => 'datetime',
         ];
     }
 

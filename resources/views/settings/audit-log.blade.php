@@ -2,6 +2,46 @@
 @section('settings-title', __('app.audit_log'))
 
 @section('settings-content')
+<form method="GET" class="row g-2 align-items-end mb-3">
+    <div class="col-md-2">
+        <label class="form-label small">{{ __('audit.user') }}</label>
+        <select name="user_id" class="form-select form-select-sm">
+            <option value="">Tümü</option>
+            @foreach($users as $u)
+            <option value="{{ $u->id }}" @selected(request('user_id') == $u->id)>{{ $u->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small">{{ __('audit.action') }}</label>
+        <select name="event" class="form-select form-select-sm">
+            <option value="">Tümü</option>
+            @foreach(__('audit.events') as $key => $label)
+            <option value="{{ $key }}" @selected(request('event') === $key)>{{ $label }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small">{{ __('audit.subject') }}</label>
+        <select name="subject_type" class="form-select form-select-sm">
+            <option value="">Tümü</option>
+            @foreach(__('audit.subjects') as $type => $label)
+            <option value="{{ $type }}" @selected(request('subject_type') === $type)>{{ $label }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small">{{ __('app.search') }}</label>
+        <input type="search" name="search" class="form-control form-control-sm" value="{{ request('search') }}" placeholder="Açıklama, detay...">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">{{ __('app.filter') }}</button>
+        @if(request()->hasAny(['user_id', 'event', 'subject_type', 'search']))
+        <a href="{{ route('settings.audit-log') }}" class="btn btn-ghost-secondary btn-sm">Temizle</a>
+        @endif
+    </div>
+</form>
+
 <div class="card audit-log-card">
     <div class="table-responsive">
         <table class="table table-vcenter table-modern card-table table-sm audit-log-table">

@@ -65,6 +65,23 @@ class DashboardController extends Controller
             ->where('due_date', '>=', now())
             ->orderBy('due_date')->limit(5)->get();
 
+        $overdueTasks = Task::with('assignee')
+            ->where('status', '!=', 'completed')
+            ->where(function ($q) {
+                $q->where('due_date', '<', now())
+                    ->orWhere(function ($q2) {
+                        $q2->whereNotNull('reminder_at')->where('reminder_at', '<=', now());
+                    });
+            })
+            ->orderBy('due_date')->limit(5)->get();
+
+        $delayedShipments = Shipment::with(['customer', 'order'])
+            ->where('eta', '<', now())
+            ->whereNotIn('status', ['delivered', 'completed', 'cancelled'])
+            ->orderBy('eta')
+            ->limit(6)
+            ->get();
+
         $chartMonths = collect(range(5, 0))->map(fn ($i) => now()->subMonths($i));
         $revenueChart = [
             'labels' => $chartMonths->map(fn ($d) => $d->translatedFormat('M Y'))->values(),
@@ -101,7 +118,7 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard.index', compact(
-            'stats', 'recentShipments', 'recentOrders', 'shipmentsByMode', 'upcomingTasks', 'revenueChart'
+            'stats', 'recentShipments', 'recentOrders', 'shipmentsByMode', 'upcomingTasks', 'overdueTasks', 'delayedShipments', 'revenueChart'
         ));
     }
 }

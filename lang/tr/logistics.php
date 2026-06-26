@@ -151,4 +151,10 @@ return [
     ],
     'delete_confirm' => 'Bu sevkiyatı silmek istediğinize emin misiniz? Bağlı maliyet kalemleri de silinir.',
     'deleted_costs_notice' => ':costs maliyet kalemi silindi.',
+    'restored' => 'Sevkiyat geri yüklendi.',
+    'export' => 'Excel indir',
+    'trashed' => 'Silinenler',
+    'no_documents_for_pack' => 'Bu sevkiyat için indirilecek belge yok.',
+    'documents_pack' => 'Belge paketi indir',
+    'delayed_alert' => 'ETA geçmiş sevkiyatlar',
 ];

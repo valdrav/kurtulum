@@ -12,7 +12,7 @@
 @php
     $accountUuids = $accounts->pluck('uuid', 'id');
 @endphp
-<div class="row g-3" x-data="emailCompose(@js($signatureMap), @js($accountUuids), '{{ (string) $defaultAccountId }}')">
+<div class="row g-3" x-data="emailCompose(@js($signatureMap), @js($accountUuids), '{{ (string) $defaultAccountId }}', @js($linkType ?? ''), @js($linkId ?? ''))">
     <div class="col-lg-8">
         <div class="card">
             <div class="card-body">
@@ -66,6 +66,36 @@
                                 <div x-html="previewHtml()"></div>
                             </div>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">Kayıt bağlantısı (isteğe bağlı)</label>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <select class="form-select" x-model="linkType" @change="linkId = ''">
+                                        <option value="">—</option>
+                                        <option value="order">{{ __('app.orders') }}</option>
+                                        <option value="shipment">{{ __('app.shipments') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8" x-show="linkType === 'order'">
+                                    <select class="form-select" x-model="linkId">
+                                        <option value="">Sipariş seçin</option>
+                                        @foreach($orders as $o)
+                                        <option value="{{ $o->id }}">{{ $o->order_number }} — {{ $o->customer?->company_name ?? '—' }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-8" x-show="linkType === 'shipment'" x-cloak>
+                                    <select class="form-select" x-model="linkId">
+                                        <option value="">Sevkiyat seçin</option>
+                                        @foreach($shipments as $s)
+                                        <option value="{{ $s->id }}">{{ $s->shipment_number }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="hidden" name="emailable_type" :value="emailableType()">
+                            <input type="hidden" name="emailable_id" :value="linkId || ''">
+                        </div>
                         <div class="col-12 d-flex flex-wrap gap-2">
                             <button type="submit" class="btn btn-primary"><i class="ti ti-send me-1"></i>{{ __('emails.send') }}</button>
                             <a href="{{ route('emails.index') }}" class="btn btn-link">{{ __('emails.back_to_inbox') }}</a>
@@ -104,11 +134,13 @@
 @if(!$accounts->isEmpty())
 @push('scripts')
 <script>
-function emailCompose(signatureMap, accountUuids, defaultAccountId) {
+function emailCompose(signatureMap, accountUuids, defaultAccountId, linkType, linkId) {
     return {
         accountId: String(defaultAccountId || Object.keys(signatureMap)[0] || ''),
         accountUuids,
         signatureMap,
+        linkType: linkType || '',
+        linkId: linkId ? String(linkId) : '',
         includeSignature: true,
         signatureAuto: true,
         saving: false,
@@ -123,6 +155,11 @@ function emailCompose(signatureMap, accountUuids, defaultAccountId) {
         },
         currentSignature() {
             return this.signatureMap[this.accountId]?.signature_html || '';
+        },
+        emailableType() {
+            if (this.linkType === 'order') return @js(\App\Models\Order::class);
+            if (this.linkType === 'shipment') return @js(\App\Models\Shipment::class);
+            return '';
         },
         onAccountChange() {
             const row = this.signatureMap[this.accountId];

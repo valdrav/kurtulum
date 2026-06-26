@@ -11,6 +11,11 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title mb-0">{{ __('logistics.title') }}</h3>
                 <div>
+                    @if($shipment->documents->isNotEmpty())
+                    <a href="{{ route('shipments.documents-pack', $shipment) }}" class="btn btn-sm btn-outline-secondary me-1">
+                        <i class="ti ti-file-zip me-1"></i>Belgeleri indir
+                    </a>
+                    @endif
                     @if($shipment->vessel)
                     <a href="{{ route('vessels.track.show', $shipment->vessel) }}" class="btn btn-sm btn-outline-cyan me-1"><i class="ti ti-map"></i> {{ __('logistics.vessel_tracking') }}</a>
                     @endif

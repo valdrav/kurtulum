@@ -76,6 +76,10 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('suppliers', SupplierController::class);
 
     // Orders
+    Route::get('/orders/export', [OrderController::class, 'export'])->name('orders.export');
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+    Route::post('/orders/{order}/duplicate', [OrderController::class, 'duplicate'])->name('orders.duplicate');
+    Route::post('/orders/{orderId}/restore', [OrderController::class, 'restore'])->name('orders.restore');
     Route::resource('orders', OrderController::class);
 
     // Logistics
@@ -87,6 +91,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/shipment-costs/{cost}', [ShipmentCostController::class, 'update'])->name('shipments.costs.update');
     Route::delete('/shipment-costs/{cost}', [ShipmentCostController::class, 'destroy'])->name('shipments.costs.destroy');
     Route::post('/shipments/{shipment}/status', [ShipmentController::class, 'updateStatus'])->name('shipments.status');
+    Route::get('/shipments/export', [ShipmentController::class, 'export'])->name('shipments.export');
+    Route::get('/shipments/{shipment}/documents-pack', [ShipmentController::class, 'downloadDocumentsPack'])->name('shipments.documents-pack');
+    Route::post('/shipments/{shipmentId}/restore', [ShipmentController::class, 'restore'])->name('shipments.restore');
     Route::resource('shipments', ShipmentController::class);
     Route::post('/api/ports', [PortController::class, 'store'])->name('ports.store');
 
@@ -183,6 +190,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/finance', [ReportController::class, 'finance'])->name('finance');
         Route::get('/customers', [ReportController::class, 'customers'])->name('customers');
         Route::get('/suppliers', [ReportController::class, 'suppliers'])->name('suppliers');
+        Route::get('/exchange-rates', [ReportController::class, 'exchangeRates'])->name('exchange-rates');
     });
 
     // Emails

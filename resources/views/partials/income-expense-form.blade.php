@@ -74,7 +74,7 @@
         <select name="order_id" class="form-select">
             <option value="">— {{ __('finance.linked_order_hint') }}</option>
             @foreach($orders as $o)
-            <option value="{{ $o->id }}" @selected(old('order_id', ($record?->reference_type === \App\Models\Order::class ? $record?->reference_id : null)) == $o->id)>
+            <option value="{{ $o->id }}" @selected(old('order_id', ($record?->reference_type === \App\Models\Order::class ? $record?->reference_id : null) ?? request('order_id')) == $o->id)>
                 {{ $o->order_number }} · {{ $o->customer?->company_name ?? '—' }} ({{ $o->currency }})
             </option>
             @endforeach

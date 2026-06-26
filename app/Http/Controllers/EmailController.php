@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Email;
 use App\Models\EmailAccount;
 use App\Models\EmailAttachment;
+use App\Models\Order;
+use App\Models\Shipment;
 use App\Services\EmailSignatureService;
 use App\Services\ImapMailService;
 use Illuminate\Http\Request;
@@ -302,13 +304,22 @@ class EmailController extends Controller
         return back()->with('success', __('messages.saved'));
     }
 
-    public function compose(EmailSignatureService $signatures)
+    public function compose(Request $request, EmailSignatureService $signatures)
     {
         $accounts = $this->userAccounts()->get();
         $signatureMap = $signatures->signatureMapForAccounts($accounts);
         $defaultAccountId = $accounts->firstWhere('is_default', true)?->id ?? $accounts->first()?->id;
 
-        return view('emails.compose', compact('accounts', 'signatureMap', 'defaultAccountId'));
+        $orders = Order::with('customer:id,company_name')
+            ->latest('order_date')->limit(50)->get(['id', 'order_number', 'customer_id']);
+        $shipments = Shipment::latest()->limit(50)->get(['id', 'shipment_number', 'order_id']);
+
+        $linkType = $request->input('link_type');
+        $linkId = $request->input('link_id');
+
+        return view('emails.compose', compact(
+            'accounts', 'signatureMap', 'defaultAccountId', 'orders', 'shipments', 'linkType', 'linkId'
+        ));
     }
 
     public function send(Request $request, EmailSignatureService $signatures)

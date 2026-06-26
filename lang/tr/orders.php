@@ -55,4 +55,13 @@ return [
     'delete_confirm' => 'Bu siparişi silmek istediğinize emin misiniz? Bağlı tahsilat, ödeme, cari kayıtları ve sevkiyatlar geri alınır / silinir.',
     'deleted_finance_notice' => 'İlişkili kayıtlar geri alındı: :collections tahsilat, :payments ödeme, :income_expenses gelir/gider, :shipments sevkiyat.:finance',
     'deleted_finance_reversed' => ' Cari sipariş kayıtları iptal edildi.',
+    'cancel_confirm' => 'Bu siparişi iptal etmek istediğinize emin misiniz? Cari kayıtlar geri alınır; sipariş silinmez.',
+    'cancelled' => 'Sipariş iptal edildi.',
+    'cancelled_finance_notice' => 'Müşteri alacağı ve tedarikçi borcu cari hesaplardan geri alındı.',
+    'already_cancelled' => 'Sipariş zaten iptal edilmiş.',
+    'duplicated' => 'Sipariş kopyalandı — yeni taslak olarak açıldı.',
+    'restored' => 'Sipariş geri yüklendi.',
+    'export' => 'Excel indir',
+    'trashed' => 'Silinenler',
+    'product_catalog' => 'Ürün kataloğu',
 ];

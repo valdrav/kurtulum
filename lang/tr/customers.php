@@ -20,6 +20,7 @@ return [
     'sale_amount' => 'Satış',
     'new_sale_order' => 'Satış Siparişi Oluştur',
     'no_orders_hint' => 'Bu müşteriye bağlı sipariş yok. Sipariş oluştururken müşteri seçin veya mevcut siparişi düzenleyin.',
+    'cannot_delete_has_orders' => 'Bu müşterinin sipariş kayıtları var; silinemez.',
     'types' => [
         'buyer' => 'Alıcı',
         'agent' => 'Acente',

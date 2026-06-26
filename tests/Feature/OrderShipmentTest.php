@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Shipment;
+use App\Models\Supplier;
 use App\Services\OrderShipmentService;
 use Tests\FeatureTestCase;
 
@@ -21,8 +22,15 @@ class OrderShipmentTest extends FeatureTestCase
             'currency' => 'USD',
         ]);
 
+        $supplier = Supplier::create([
+            'company_name' => 'Shipment Test Supplier',
+            'status' => 'active',
+            'currency' => 'USD',
+        ]);
+
         $response = $this->post(route('orders.store'), [
             'customer_id' => $customer->id,
+            'supplier_id' => $supplier->id,
             'status' => 'confirmed',
             'currency' => 'USD',
             'incoterm' => 'FCA',

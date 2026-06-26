@@ -13,10 +13,13 @@ use App\Models\ShipmentLeg;
 use App\Models\ShipmentMilestone;
 use App\Models\Vehicle;
 use App\Models\Vessel;
+use App\Services\CsvExportService;
 use App\Services\OrderShipmentService;
 use App\Services\ShipmentDeletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use ZipArchive;
 
 class ShipmentController extends Controller
 {
@@ -25,16 +28,22 @@ class ShipmentController extends Controller
     public function __construct()
     {
         $this->registerPermissions([
-            'index|show|tracking' => 'shipments.view',
+            'index|show|tracking|export|downloadDocumentsPack' => 'shipments.view',
             'create|store|syncFromOrders|updateStatus' => 'shipments.create',
             'edit|update' => 'shipments.edit',
-            'destroy' => 'shipments.delete',
+            'destroy|restore' => 'shipments.delete',
         ]);
     }
 
     public function index(Request $request)
     {
-        $shipments = Shipment::with(['customer', 'order', 'originPort', 'destinationPort'])
+        $query = Shipment::with(['customer', 'order', 'originPort', 'destinationPort']);
+
+        if ($request->boolean('trashed')) {
+            $query->onlyTrashed();
+        }
+
+        $shipments = $query
             ->when($request->mode, fn ($q, $m) => $q->where('transport_mode', $m))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->where('shipment_number', 'like', "%{$s}%")
@@ -179,6 +188,14 @@ class ShipmentController extends Controller
 
         $shipment->update($updates);
 
+        if ($shipment->order && in_array($validated['status'], ['delivered', 'completed'], true)) {
+            $shipment->order->update(['status' => 'delivered']);
+        } elseif ($shipment->order && $validated['status'] === 'in_transit') {
+            if (! in_array($shipment->order->status, ['delivered', 'cancelled'], true)) {
+                $shipment->order->update(['status' => 'shipped']);
+            }
+        }
+
         return back()->with('success', __('messages.updated'));
     }
 
@@ -212,6 +229,65 @@ class ShipmentController extends Controller
         }
 
         return $redirect;
+    }
+
+    public function export(Request $request, CsvExportService $csv)
+    {
+        $shipments = Shipment::with(['customer', 'order'])
+            ->when($request->mode, fn ($q, $m) => $q->where('transport_mode', $m))
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->search, fn ($q, $s) => $q->where('shipment_number', 'like', "%{$s}%"))
+            ->latest()->get();
+
+        return $csv->download('sevkiyatlar-' . now()->format('Y-m-d') . '.csv', [
+            'Sevkiyat No', 'Sipariş', 'Müşteri', 'Mod', 'Durum', 'ETD', 'ETA', 'Maliyet',
+        ], $shipments->map(fn (Shipment $s) => [
+            $s->shipment_number,
+            $s->order?->order_number ?? '',
+            $s->customer?->company_name ?? '',
+            __('logistics.' . $s->transport_mode),
+            $s->statusDisplay(),
+            $s->etd?->format('d.m.Y') ?? '',
+            $s->eta?->format('d.m.Y') ?? '',
+            $s->total_cost,
+        ]));
+    }
+
+    public function restore(int $shipmentId)
+    {
+        $shipment = Shipment::onlyTrashed()->findOrFail($shipmentId);
+        $shipment->restore();
+
+        return redirect()->route('shipments.show', $shipment)->with('success', __('logistics.restored'));
+    }
+
+    public function downloadDocumentsPack(Shipment $shipment)
+    {
+        $shipment->load('documents');
+        if ($shipment->documents->isEmpty()) {
+            return back()->with('warning', __('logistics.no_documents_for_pack'));
+        }
+
+        $zipPath = storage_path('app/temp/shipment-' . $shipment->id . '-' . time() . '.zip');
+        if (! is_dir(dirname($zipPath))) {
+            mkdir(dirname($zipPath), 0755, true);
+        }
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            abort(500, 'ZIP oluşturulamadı');
+        }
+
+        foreach ($shipment->documents as $doc) {
+            $disk = Storage::disk($doc->disk);
+            if ($disk->exists($doc->path)) {
+                $zip->addFromString($doc->original_name ?: $doc->name, $disk->get($doc->path));
+            }
+        }
+
+        $zip->close();
+
+        return response()->download($zipPath, $shipment->shipment_number . '-belgeler.zip')->deleteFileAfterSend(true);
     }
 
     public function tracking()

@@ -21,4 +21,6 @@ return [
     'order_total' => 'Sipariş Toplamı',
     'total_shipments' => 'Toplam Sevkiyat',
     'delayed_shipments' => 'Geciken Sevkiyat',
+    'exchange_rates_title' => 'Kur Kilitleme Raporu',
+    'exchange_rates_desc' => 'İşlem anı döviz kurları (tahsilat/ödeme)',
 ];

@@ -2,20 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Collection;
 use App\Models\Customer;
 use App\Models\IncomeExpense;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Shipment;
 use App\Models\Supplier;
 use App\Services\IncomeExpenseReportService;
+use App\Services\TradeFinanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
-    public function __construct()
+    public function __construct(protected TradeFinanceService $tradeFinance)
     {
-        $this->middleware('permission:reports.view')->only(['index', 'sales', 'logistics', 'finance', 'customers', 'suppliers']);
+        $this->middleware('permission:reports.view')->only([
+            'index', 'sales', 'logistics', 'finance', 'customers', 'suppliers', 'exchangeRates',
+        ]);
     }
 
     public function index()
@@ -31,18 +36,25 @@ class ReportController extends Controller
         $data = Order::query()
             ->selectRaw("{$monthExpr} as month")
             ->selectRaw('SUM(total_amount) as total')
+            ->selectRaw('currency')
             ->whereYear('order_date', $year)
             ->whereNotIn('status', ['cancelled'])
-            ->groupBy('month')
+            ->groupBy('month', 'currency')
             ->orderBy('month')
-            ->get();
+            ->get()
+            ->groupBy('month');
 
         $monthly = collect(range(1, 12))->map(function (int $month) use ($data) {
-            $row = $data->firstWhere('month', $month);
+            $rows = $data->get($month, collect());
+            $usd = (float) $rows->where('currency', 'USD')->sum('total');
+            $try = (float) $rows->where('currency', 'TRY')->sum('total');
+            $other = (float) $rows->whereNotIn('currency', ['USD', 'TRY'])->sum('total');
 
             return (object) [
                 'month' => $month,
-                'total' => (float) ($row->total ?? 0),
+                'total' => $usd + $try + $other,
+                'usd' => $usd,
+                'try' => $try,
             ];
         });
 
@@ -130,6 +142,30 @@ class ReportController extends Controller
         $totalCount = Supplier::count();
 
         return view('reports.suppliers', compact('topSuppliers', 'byType', 'byCountry', 'activeCount', 'totalCount'));
+    }
+
+    public function exchangeRates(Request $request)
+    {
+        $from = $request->input('from', now()->startOfMonth()->toDateString());
+        $to = $request->input('to', now()->toDateString());
+
+        $collections = Collection::with(['account', 'order'])
+            ->whereDate('collection_date', '>=', $from)
+            ->whereDate('collection_date', '<=', $to)
+            ->where('currency', '!=', registry()->defaultCurrency()?->code ?? 'TRY')
+            ->latest('collection_date')
+            ->limit(200)
+            ->get();
+
+        $payments = Payment::with(['account', 'order'])
+            ->whereDate('payment_date', '>=', $from)
+            ->whereDate('payment_date', '<=', $to)
+            ->where('currency', '!=', registry()->defaultCurrency()?->code ?? 'TRY')
+            ->latest('payment_date')
+            ->limit(200)
+            ->get();
+
+        return view('reports.exchange-rates', compact('collections', 'payments', 'from', 'to'));
     }
 
     protected function monthExpression(string $column): string

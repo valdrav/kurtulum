@@ -9,7 +9,9 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Services\CsvExportService;
 use App\Services\OrderFinanceService;
+use App\Services\OrderLifecycleService;
 use App\Services\OrderShipmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,16 +24,22 @@ class OrderController extends Controller
     public function __construct()
     {
         $this->registerPermissions([
-            'index|show' => 'orders.view',
-            'create|store' => 'orders.create',
-            'edit|update' => 'orders.edit',
-            'destroy' => 'orders.delete',
+            'index|show|export' => 'orders.view',
+            'create|store|duplicate' => 'orders.create',
+            'edit|update|cancel' => 'orders.edit',
+            'destroy|restore' => 'orders.delete',
         ]);
     }
 
     public function index(Request $request)
     {
-        $orders = Order::with(['customer', 'supplier'])
+        $query = Order::with(['customer', 'supplier']);
+
+        if ($request->boolean('trashed')) {
+            $query->onlyTrashed();
+        }
+
+        $orders = $query
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->supplier, fn ($q, $id) => $q->where('supplier_id', $id))
             ->when($request->search, fn ($q, $s) => $q->where('order_number', 'like', "%{$s}%"))
@@ -40,6 +48,57 @@ class OrderController extends Controller
         $suppliers = Supplier::where('status', 'active')->orderBy('company_name')->get(['id', 'company_name']);
 
         return view('orders.index', compact('orders', 'suppliers'));
+    }
+
+    public function export(Request $request, CsvExportService $csv)
+    {
+        $orders = Order::with(['customer', 'supplier'])
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->supplier, fn ($q, $id) => $q->where('supplier_id', $id))
+            ->when($request->search, fn ($q, $s) => $q->where('order_number', 'like', "%{$s}%"))
+            ->latest()->get();
+
+        return $csv->download('siparisler-' . now()->format('Y-m-d') . '.csv', [
+            'Sipariş No', 'Müşteri', 'Tedarikçi', 'Durum', 'Tarih', 'Para Birimi', 'Alış', 'Satış', 'Marj',
+        ], $orders->map(fn (Order $o) => [
+            $o->order_number,
+            $o->customer?->company_name ?? '',
+            $o->supplier?->company_name ?? '',
+            status_label($o->status, 'order'),
+            $o->order_date?->format('d.m.Y') ?? '',
+            $o->currency,
+            $o->purchase_total,
+            $o->total_amount,
+            $o->margin_total,
+        ]));
+    }
+
+    public function cancel(Order $order, OrderLifecycleService $lifecycle)
+    {
+        if ($order->status === 'cancelled') {
+            return back()->with('warning', __('orders.already_cancelled'));
+        }
+
+        $lifecycle->cancel($order);
+
+        return redirect()->route('orders.show', $order)
+            ->with('success', __('orders.cancelled'))
+            ->with('warning', __('orders.cancelled_finance_notice'));
+    }
+
+    public function duplicate(Order $order, OrderLifecycleService $lifecycle)
+    {
+        $copy = $lifecycle->duplicate($order);
+
+        return redirect()->route('orders.edit', $copy)->with('success', __('orders.duplicated'));
+    }
+
+    public function restore(int $orderId, OrderLifecycleService $lifecycle)
+    {
+        $order = Order::onlyTrashed()->findOrFail($orderId);
+        $lifecycle->restore($order);
+
+        return redirect()->route('orders.show', $order)->with('success', __('orders.restored'));
     }
 
     public function create(Request $request)
@@ -56,7 +115,7 @@ class OrderController extends Controller
             'order' => $order,
             'customers' => Customer::where('status', 'active')->orderBy('company_name')->get(),
             'suppliers' => Supplier::where('status', 'active')->orderBy('company_name')->get(),
-            'products' => Product::where('is_active', true)->orderBy('name')->get(),
+            'products' => Product::where('is_active', true)->orderBy('name')->get(['id', 'name', 'sku', 'unit_price', 'unit']),
         ]);
     }
 
@@ -92,12 +151,16 @@ class OrderController extends Controller
         $treasuryAccounts = company_treasury()->accounts();
         $collectionMethods = payment_methods()->forCollection();
         $paymentMethods = payment_methods()->forPayment();
-
         $fxRates = fx_snapshot_rates();
+        $orderExpenses = \App\Models\IncomeExpense::query()
+            ->where('reference_type', Order::class)
+            ->where('reference_id', $order->id)
+            ->latest('transaction_date')
+            ->get();
 
         return view('orders.show', compact(
             'order', 'finance', 'customerAccount', 'supplierAccount',
-            'treasuryAccounts', 'collectionMethods', 'paymentMethods', 'fxRates'
+            'treasuryAccounts', 'collectionMethods', 'paymentMethods', 'fxRates', 'orderExpenses'
         ));
     }
 
@@ -108,7 +171,7 @@ class OrderController extends Controller
             'order' => $order,
             'customers' => Customer::where('status', 'active')->orderBy('company_name')->get(),
             'suppliers' => Supplier::where('status', 'active')->orderBy('company_name')->get(),
-            'products' => Product::where('is_active', true)->orderBy('name')->get(),
+            'products' => Product::where('is_active', true)->orderBy('name')->get(['id', 'name', 'sku', 'unit_price', 'unit']),
         ]);
     }
 

@@ -1,4 +1,4 @@
-{{-- @include('partials.mobile-record-card', ['url' => ..., 'title' => ..., 'subtitle' => ..., 'meta' => ..., 'badge' => ..., 'editUrl' => ..., 'editPermission' => 'orders.edit']) --}}
+{{-- @include('partials.mobile-record-card', ['url' => ..., 'title' => ..., 'subtitle' => ..., 'meta' => ..., 'badge' => ..., 'editUrl' => ..., 'editPermission' => 'orders.edit', 'deleteUrl' => ..., 'deletePermission' => 'orders.delete', 'deleteConfirm' => __('orders.delete_confirm')]) --}}
 <div class="ef-mobile-card">
     <div class="ef-mobile-card-body">
         <div class="ef-mobile-card-main">
@@ -22,6 +22,15 @@
             <a href="{{ $editUrl }}" class="btn btn-sm btn-ghost-primary ef-mobile-card-edit" aria-label="{{ __('app.edit') }}">
                 <i class="ti ti-edit"></i>
             </a>
+            @endif
+            @if(!empty($deleteUrl) && (empty($deletePermission) || can_access($deletePermission)))
+            <form action="{{ $deleteUrl }}" method="POST" class="d-inline"
+                  onsubmit="return confirm(@json($deleteConfirm ?? __('app.confirm_delete')))">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-sm btn-ghost-danger ef-mobile-card-edit" aria-label="{{ __('app.delete') }}">
+                    <i class="ti ti-trash"></i>
+                </button>
+            </form>
             @endif
         </div>
     </div>

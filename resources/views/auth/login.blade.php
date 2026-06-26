@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.guest')
 
 @section('title', __('app.login'))
 
 @section('content')
-<div class="container-tight py-4" style="max-width:24rem;margin:4rem auto">
+<div class="container-tight py-4 ef-login-wrap">
     <div class="text-center mb-4 ef-login-brand">
         @if(site_branding()->hasLogo())
         <img src="{{ site_branding()->logoUrl() }}" alt="{{ app_brand() }}" class="ef-login-logo mb-3">
@@ -22,11 +22,16 @@
                 @csrf
                 <div class="mb-3">
                     <label class="form-label">E-posta</label>
-                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" required autofocus>
+                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" required autofocus autocomplete="username">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Şifre</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <div class="input-group">
+                        <input type="password" name="password" class="form-control" id="login-password" required autocomplete="current-password">
+                        <button type="button" class="btn btn-outline-secondary" id="toggle-login-password" aria-label="Şifreyi göster">
+                            <i class="ti ti-eye" id="toggle-login-password-icon"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-check">
@@ -43,3 +48,17 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.getElementById('toggle-login-password')?.addEventListener('click', function () {
+    const input = document.getElementById('login-password');
+    const icon = document.getElementById('toggle-login-password-icon');
+    if (!input || !icon) return;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    icon.classList.toggle('ti-eye', !show);
+    icon.classList.toggle('ti-eye-off', show);
+});
+</script>
+@endpush

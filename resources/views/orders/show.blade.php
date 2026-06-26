@@ -7,10 +7,40 @@
             <h2 class="page-title mb-0">{{ $order->order_number }}</h2>
             <div class="text-muted small">{{ $order->customer?->company_name ?? '—' }} · {{ format_money((float) $order->sale_total, $order->currency, 2) }}</div>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
+            @if($order->trashed() && can_access('orders.delete'))
+            <form action="{{ route('orders.restore', $order->id) }}" method="POST" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-outline-success btn-sm">
+                    <i class="ti ti-rotate me-1"></i>Geri yükle
+                </button>
+            </form>
+            @else
             @if(can_access('orders.edit'))
             <a href="{{ route('orders.edit', $order) }}" class="btn btn-primary btn-sm">
                 <i class="ti ti-edit me-1"></i>{{ __('orders.edit_order') }}
+            </a>
+            @endif
+            @if($order->status !== 'cancelled' && can_access('orders.edit'))
+            <form action="{{ route('orders.cancel', $order) }}" method="POST" class="d-inline"
+                  onsubmit="return confirm(@json(__('orders.cancel_confirm')))">
+                @csrf
+                <button type="submit" class="btn btn-outline-warning btn-sm">
+                    <i class="ti ti-ban me-1"></i>İptal et
+                </button>
+            </form>
+            @endif
+            @if(can_access('orders.create'))
+            <form action="{{ route('orders.duplicate', $order) }}" method="POST" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    <i class="ti ti-copy me-1"></i>Kopyala
+                </button>
+            </form>
+            @endif
+            @if(can_access('emails.create'))
+            <a href="{{ route('emails.compose', ['link_type' => 'order', 'link_id' => $order->id]) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="ti ti-mail me-1"></i>E-posta
             </a>
             @endif
             @if(can_access('orders.delete'))
@@ -21,6 +51,7 @@
                     <i class="ti ti-trash me-1"></i>{{ __('app.delete') }}
                 </button>
             </form>
+            @endif
             @endif
         </div>
     </div>
@@ -284,31 +315,64 @@
         </div>
         @endif
 
+        @if($orderExpenses->isNotEmpty() || can_access('finance.create'))
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">{{ __('orders.order_expenses') }}</h3>
+                @if(can_access('finance.create'))
+                <a href="{{ route('finance.income-expenses', ['order_id' => $order->id]) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="ti ti-plus me-1"></i>Gider ekle
+                </a>
+                @endif
+            </div>
+            <div class="list-group list-group-flush">
+                @forelse($orderExpenses as $expense)
+                <a href="{{ route('finance.income-expenses.edit', $expense) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
+                    <span>{{ $expense->displayTitle() }}</span>
+                    <span class="text-red">−{{ number_format($expense->amount, 2, ',', '.') }} {{ $expense->currency }}</span>
+                </a>
+                @empty
+                <div class="list-group-item text-muted small">Henüz gider kaydı yok.</div>
+                @endforelse
+            </div>
+        </div>
+        @endif
+
         @if($order->collections->isNotEmpty() || $order->payments->isNotEmpty())
         <div class="card">
             <div class="card-header"><h3 class="card-title mb-0">{{ __('orders.finance_movements') }}</h3></div>
             <div class="list-group list-group-flush">
                 @foreach($order->collections as $c)
-                <a href="{{ route('finance.collections.show', $c) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
-                    <span class="text-green"><i class="ti ti-arrow-down-left"></i> {{ $c->collection_number }}</span>
-                    <span class="text-end">
-                        <strong>+{{ number_format($c->amount, 2) }} {{ $c->currency }}</strong>
-                        @if($try = format_try_equivalent((float)$c->amount, $c->currency, (float)$c->exchange_rate))
-                        <div class="text-muted small">{{ $try }}</div>
-                        @endif
-                    </span>
-                </a>
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                    <a href="{{ route('finance.collections.show', $c) }}" class="flex-grow-1 text-decoration-none text-reset d-flex justify-content-between">
+                        <span class="text-green"><i class="ti ti-arrow-down-left"></i> {{ $c->collection_number }}</span>
+                        <span class="text-end">
+                            <strong>+{{ number_format($c->amount, 2) }} {{ $c->currency }}</strong>
+                            @if($try = format_try_equivalent((float)$c->amount, $c->currency, (float)$c->exchange_rate))
+                            <div class="text-muted small">{{ $try }}</div>
+                            @endif
+                        </span>
+                    </a>
+                    @if(can_access('finance.delete'))
+                    @include('partials.delete-form', ['action' => route('finance.collections.destroy', $c), 'confirm' => __('app.confirm_delete'), 'class' => 'btn-sm btn-ghost-danger', 'iconOnly' => true])
+                    @endif
+                </div>
                 @endforeach
                 @foreach($order->payments as $p)
-                <a href="{{ route('finance.payments.show', $p) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
-                    <span class="text-red"><i class="ti ti-arrow-up-right"></i> {{ $p->payment_number }}</span>
-                    <span class="text-end">
-                        <strong>-{{ number_format($p->amount, 2) }} {{ $p->currency }}</strong>
-                        @if($try = format_try_equivalent((float)$p->amount, $p->currency, (float)$p->exchange_rate))
-                        <div class="text-muted small">{{ $try }}</div>
-                        @endif
-                    </span>
-                </a>
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                    <a href="{{ route('finance.payments.show', $p) }}" class="flex-grow-1 text-decoration-none text-reset d-flex justify-content-between">
+                        <span class="text-red"><i class="ti ti-arrow-up-right"></i> {{ $p->payment_number }}</span>
+                        <span class="text-end">
+                            <strong>-{{ number_format($p->amount, 2) }} {{ $p->currency }}</strong>
+                            @if($try = format_try_equivalent((float)$p->amount, $p->currency, (float)$p->exchange_rate))
+                            <div class="text-muted small">{{ $try }}</div>
+                            @endif
+                        </span>
+                    </a>
+                    @if(can_access('finance.delete'))
+                    @include('partials.delete-form', ['action' => route('finance.payments.destroy', $p), 'confirm' => __('app.confirm_delete'), 'class' => 'btn-sm btn-ghost-danger', 'iconOnly' => true])
+                    @endif
+                </div>
                 @endforeach
             </div>
         </div>

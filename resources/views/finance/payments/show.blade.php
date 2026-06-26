@@ -17,8 +17,11 @@
             @if($payment->reference)<dt class="col-sm-4">Referans</dt><dd class="col-sm-8">{{ $payment->reference }}</dd>@endif
             @if($payment->notes)<dt class="col-sm-4">{{ __('app.description') }}</dt><dd class="col-sm-8">{{ $payment->notes }}</dd>@endif
         </dl>
-        <div class="mt-3 d-flex gap-2">
+        <div class="mt-3 d-flex flex-wrap gap-2">
             @if(can_access('finance.edit'))<a href="{{ route('finance.payments.edit', $payment) }}" class="btn btn-primary btn-sm"><i class="ti ti-edit"></i> Düzenle</a>@endif
+            @if(can_access('finance.delete'))
+            @include('partials.delete-form', ['action' => route('finance.payments.destroy', $payment), 'confirm' => __('app.confirm_delete')])
+            @endif
             <a href="{{ route('finance.payments') }}" class="btn btn-ghost-secondary btn-sm">Listeye dön</a>
         </div>
     </div>

@@ -48,5 +48,14 @@
             </div>
         </a>
     </div>
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ route('reports.exchange-rates') }}" class="card card-link h-100">
+            <div class="card-body text-center">
+                <i class="ti ti-currency-dollar fs-1 text-yellow"></i>
+                <h3 class="mt-2 h4">Döviz Kuru Raporu</h3>
+                <p class="text-muted small mb-0">Tahsilat ve ödemelerde kullanılan kurlar</p>
+            </div>
+        </a>
+    </div>
 </div>
 @endsection

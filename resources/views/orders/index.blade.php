@@ -15,8 +15,29 @@
             @endforeach
         </select>
     </div>
+    <div class="col-md-2">
+        <select name="status" class="form-select">
+            <option value="">{{ __('app.status') }}</option>
+            @foreach(config('ticari.order_statuses') as $st)
+            <option value="{{ $st }}" @selected(request('status') === $st)>{{ status_label($st, 'order') }}</option>
+            @endforeach
+        </select>
+    </div>
     <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">{{ __('app.filter') }}</button></div>
 </form>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    @if(can_access('orders.view'))
+    <a href="{{ route('orders.export', request()->query()) }}" class="btn btn-outline-secondary btn-sm">
+        <i class="ti ti-download me-1"></i>{{ __('app.export') }}
+    </a>
+    @endif
+    @if(request('trashed'))
+    <a href="{{ route('orders.index', request()->except('trashed')) }}" class="btn btn-ghost-secondary btn-sm">Aktif siparişler</a>
+    @else
+    <a href="{{ route('orders.index', array_merge(request()->query(), ['trashed' => 1])) }}" class="btn btn-ghost-secondary btn-sm">Silinen siparişler</a>
+    @endif
+</div>
 
 <div class="d-md-none ef-mobile-list mb-3">
     @forelse($orders as $o)
@@ -28,6 +49,9 @@
         'badge' => status_label($o->status, 'order'),
         'editUrl' => route('orders.edit', $o),
         'editPermission' => 'orders.edit',
+        'deleteUrl' => route('orders.destroy', $o),
+        'deletePermission' => 'orders.delete',
+        'deleteConfirm' => __('orders.delete_confirm'),
     ])
     @empty
     <div class="card"><div class="card-body text-muted">{{ __('app.no_records') }}</div></div>

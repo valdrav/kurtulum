@@ -33,6 +33,8 @@ return [
     'delete' => 'Sil',
     'search' => 'Ara',
     'filter' => 'Filtrele',
+    'from' => 'Başlangıç',
+    'to' => 'Bitiş',
     'actions' => 'İşlemler',
     'view' => 'Görüntüle',
     'back' => 'Geri',
