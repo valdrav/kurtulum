@@ -20,13 +20,15 @@
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">{{ __('orders.supplier_purchase') }}</label>
-                    <select name="supplier_id" class="form-select">
-                        <option value="">—</option>
+                    <label class="form-label">{{ __('orders.supplier_purchase') }} *</label>
+                    <select name="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror">
+                        <option value="">— {{ __('orders.supplier_purchase_hint') }}</option>
                         @foreach($suppliers as $s)
                         <option value="{{ $s->id }}" @selected(old('supplier_id', $order->supplier_id ?? '')==$s->id)>{{ $s->company_name }}</option>
                         @endforeach
                     </select>
+                    @error('supplier_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-hint">{{ __('orders.supplier_purchase_hint') }}</div>
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label">{{ __('app.date') }}</label>

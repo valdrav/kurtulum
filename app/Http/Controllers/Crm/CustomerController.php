@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Crm;
 use App\Http\Controllers\Concerns\RequiresPermissions;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Services\OrderFinanceService;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -45,10 +46,12 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', __('messages.created'));
     }
 
-    public function show(Customer $customer)
+    public function show(Customer $customer, OrderFinanceService $orderFinance)
     {
-        $customer->load(['contacts', 'activities.user', 'orders', 'shipments', 'documents']);
-        return view('crm.customers.show', compact('customer'));
+        $customer->load(['contacts', 'activities.user', 'orders', 'shipments', 'documents', 'account']);
+        $account = $customer->account ?? $orderFinance->ensureCustomerAccount($customer);
+
+        return view('crm.customers.show', compact('customer', 'account'));
     }
 
     public function edit(Customer $customer)

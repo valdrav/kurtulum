@@ -30,18 +30,26 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $orders = Order::with(['customer'])
+        $orders = Order::with(['customer', 'supplier'])
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->supplier, fn ($q, $id) => $q->where('supplier_id', $id))
             ->when($request->search, fn ($q, $s) => $q->where('order_number', 'like', "%{$s}%"))
             ->latest()->paginate(20);
 
-        return view('orders.index', compact('orders'));
+        $suppliers = Supplier::where('status', 'active')->orderBy('company_name')->get(['id', 'company_name']);
+
+        return view('orders.index', compact('orders', 'suppliers'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $order = new Order();
+        if ($request->filled('supplier_id')) {
+            $order->supplier_id = (int) $request->supplier_id;
+        }
+
         return view('orders.form', [
-            'order' => new Order(),
+            'order' => $order,
             'customers' => Customer::where('status', 'active')->orderBy('company_name')->get(),
             'suppliers' => Supplier::where('status', 'active')->orderBy('company_name')->get(),
             'products' => Product::where('is_active', true)->orderBy('name')->get(),
@@ -149,6 +157,17 @@ class OrderController extends Controller
         $validated['status'] = $validated['status'] ?? 'draft';
         $validated['currency'] = $validated['currency'] ?? 'USD';
         $validated['order_date'] = $validated['order_date'] ?? now()->toDateString();
+
+        $hasPurchase = collect($request->input('items', []))->contains(
+            fn ($item) => (float) ($item['purchase_unit_price'] ?? 0) > 0
+                || (float) ($item['purchase_total'] ?? 0) > 0
+        );
+
+        if ($hasPurchase && empty($validated['supplier_id'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'supplier_id' => [__('orders.supplier_required_for_purchase')],
+            ]);
+        }
 
         return $validated;
     }

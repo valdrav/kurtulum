@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Supplier;
 use App\Http\Controllers\Concerns\RequiresPermissions;
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
+use App\Services\OrderFinanceService;
+use App\Services\SupplierProfileService;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -16,15 +18,23 @@ class SupplierController extends Controller
         $this->registerPermissions([
             'index|show' => 'suppliers.view',
             'create|store' => 'suppliers.create',
-            'edit|update' => 'suppliers.edit',
+            'edit|update|backfillOrders' => 'suppliers.edit',
             'destroy' => 'suppliers.delete',
         ]);
     }
 
     public function index(Request $request)
     {
-        $suppliers = Supplier::when($request->search, fn ($q, $s) => $q->where('company_name', 'like', "%{$s}%"))
-            ->latest()->paginate(20);
+        $suppliers = Supplier::query()
+            ->with('account')
+            ->withCount(['orders' => fn ($q) => $q->whereNotIn('status', ['cancelled'])])
+            ->withSum(['orders as purchase_total_sum' => fn ($q) => $q->whereNotIn('status', ['cancelled'])], 'purchase_total')
+            ->when($request->search, fn ($q, $s) => $q->where('company_name', 'like', "%{$s}%"))
+            ->when($request->type, fn ($q, $t) => $q->where('type', $t))
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->orderBy('company_name')
+            ->paginate(20)
+            ->withQueryString();
 
         return view('suppliers.index', compact('suppliers'));
     }
@@ -42,10 +52,31 @@ class SupplierController extends Controller
         return redirect()->route('suppliers.show', $supplier)->with('success', __('messages.created'));
     }
 
-    public function show(Supplier $supplier)
+    public function show(Supplier $supplier, OrderFinanceService $orderFinance, SupplierProfileService $profile)
     {
-        $supplier->load(['contacts', 'orders', 'documents']);
-        return view('suppliers.show', compact('supplier'));
+        $supplier->load(['contacts', 'documents', 'account']);
+        $account = $supplier->account ?? $orderFinance->ensureSupplierAccount($supplier);
+        $summary = $profile->summary($supplier);
+        $unlinkedOrderCount = $profile->unlinkedOrderCount($supplier);
+        $orders = $profile->orders($supplier);
+        $products = $profile->aggregatedProducts($supplier);
+        $productLines = $profile->productLines($supplier);
+        $payments = $profile->payments($supplier);
+        $shipmentCosts = $profile->shipmentCosts($supplier);
+
+        return view('suppliers.show', compact(
+            'supplier', 'account', 'summary', 'unlinkedOrderCount', 'orders', 'products',
+            'productLines', 'payments', 'shipmentCosts'
+        ));
+    }
+
+    public function backfillOrders(Supplier $supplier, SupplierProfileService $profile)
+    {
+        $count = $profile->backfillOrderLinks($supplier);
+
+        return redirect()
+            ->route('suppliers.show', $supplier)
+            ->with('success', __('suppliers.backfill_done', ['count' => $count]));
     }
 
     public function edit(Supplier $supplier)

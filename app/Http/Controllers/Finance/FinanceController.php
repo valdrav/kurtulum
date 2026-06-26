@@ -8,6 +8,7 @@ use App\Models\AccountTransaction;
 use App\Models\Collection;
 use App\Models\Customer;
 use App\Models\IncomeExpense;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Supplier;
@@ -17,6 +18,7 @@ use App\Services\CompanyTreasuryService;
 use App\Services\ExchangeRateService;
 use App\Services\IncomeExpenseReportService;
 use App\Services\OrderFinanceService;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -214,10 +216,12 @@ class FinanceController extends Controller
             'customer',
             'supplier',
             'transactions' => fn ($q) => $q->with([
-                'reference.account.customer',
-                'reference.account.supplier',
-                'reference.customer',
-                'reference.supplier',
+                'reference' => fn (MorphTo $morphTo) => $morphTo->morphWith([
+                    Collection::class => ['customer', 'account.customer'],
+                    Payment::class => ['supplier', 'account.supplier'],
+                    Order::class => ['customer', 'supplier'],
+                    IncomeExpense::class => [],
+                ]),
             ])->latest()->limit(100),
         ]);
 

@@ -72,6 +72,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customers', CustomerController::class);
 
     // Suppliers
+    Route::post('/suppliers/{supplier}/backfill-orders', [SupplierController::class, 'backfillOrders'])->name('suppliers.backfill-orders');
     Route::resource('suppliers', SupplierController::class);
 
     // Orders

@@ -16,6 +16,16 @@
             </dl>
             <a href="{{ route('customers.edit', $customer) }}" class="btn btn-outline-primary btn-sm">{{ __('app.edit') }}</a>
         </div></div>
+        @if(isset($account) && can_access('finance.view'))
+        <div class="card mb-3"><div class="card-body">
+            <div class="subheader">{{ __('finance.cari_accounts') }}</div>
+            <div class="h2 mb-1 {{ $account->balance >= 0 ? 'text-green' : 'text-red' }}">{{ format_money($account->balance, $account->currency, 2) }}</div>
+            <div class="text-muted small mb-2">{{ __('finance.current_balance') }} · {{ $account->code }}</div>
+            <a href="{{ route('finance.accounts.show', $account) }}" class="btn btn-sm btn-outline-primary w-100">
+                <i class="ti ti-list-details me-1"></i>{{ __('finance.transactions') }}
+            </a>
+        </div></div>
+        @endif
     </div>
     <div class="col-lg-8">
         <div class="card mb-3"><div class="card-header"><h3 class="card-title">{{ __('app.orders') }} ({{ $customer->orders->count() }})</h3></div>

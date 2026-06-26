@@ -4,6 +4,8 @@ return [
     'delivery_type' => 'Teslimat Türü',
     'delivery_type_hint' => 'Incoterms teslimat ve risk devri koşullarını belirler',
     'supplier_purchase' => 'Tedarikçi (Alış)',
+    'supplier_purchase_hint' => 'Alış fiyatı girilen siparişlerde zorunludur — tedarikçi profilinde görünür.',
+    'supplier_required_for_purchase' => 'Alış kalemi varsa tedarikçi seçilmelidir.',
     'trade_items' => 'Ticari Kalemler',
     'trade_items_hint' => 'Alış ve satış fiyatları seçilen para biriminde girilir',
     'add_item' => 'Kalem Ekle',
