@@ -113,4 +113,16 @@ class Order extends Model
     {
         return $this->hasMany(Collection::class);
     }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $field = $field ?: $this->getRouteKeyName();
+        $query = static::query()->where($field, $value);
+
+        if (in_array(request()->route()?->getActionMethod(), ['show'], true)) {
+            $query->withTrashed();
+        }
+
+        return $query->firstOrFail();
+    }
 }

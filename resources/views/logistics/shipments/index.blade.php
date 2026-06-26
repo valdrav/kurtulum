@@ -6,7 +6,10 @@
 @if(can_access('shipments.create'))
 <div class="d-flex flex-wrap gap-2 mb-3">
     <form method="POST" action="{{ route('shipments.sync-from-orders') }}" class="d-inline"
-          onsubmit="return confirm(@json(__('orders.sync_shipments_hint')))">
+          data-confirm="{{ __('orders.sync_shipments_hint') }}"
+          data-confirm-title="{{ __('app.confirm_title') }}"
+          data-confirm-button="{{ __('app.confirm') }}"
+          data-confirm-danger="false">
         @csrf
         <button type="submit" class="btn btn-outline-primary btn-sm">
             <i class="ti ti-refresh me-1"></i>{{ __('orders.sync_shipments_from_orders') }}
@@ -79,13 +82,12 @@
                         <a href="{{ route('shipments.edit', $s) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
                         @endif
                         @if(can_access('shipments.delete'))
-                        <form action="{{ route('shipments.destroy', $s) }}" method="POST" class="d-inline"
-                              onsubmit="return confirm(@json(__('logistics.delete_confirm')))">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-ghost-danger" aria-label="{{ __('app.delete') }}">
-                                <i class="ti ti-trash"></i>
-                            </button>
-                        </form>
+                        @include('partials.delete-form', [
+                            'action' => route('shipments.destroy', $s),
+                            'confirm' => __('logistics.delete_confirm'),
+                            'class' => 'btn btn-sm btn-ghost-danger',
+                            'iconOnly' => true,
+                        ])
                         @endif
                     </td>
                 </tr>

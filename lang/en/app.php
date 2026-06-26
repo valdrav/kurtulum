@@ -17,4 +17,5 @@ return [
     'total' => 'Total', 'export' => 'Export', 'upload' => 'Upload', 'download' => 'Download',
     'light_theme' => 'Light Theme', 'dark_theme' => 'Dark Theme', 'welcome' => 'Welcome',
     'no_records' => 'No records found', 'confirm_delete' => 'Are you sure you want to delete?',
+    'confirm_title' => 'Confirm', 'close' => 'Close', 'confirm' => 'Confirm',
 ];

@@ -7,6 +7,7 @@
     $dest = $vp['next_port'] ?? port_display_label($meta['destination'] ?? null);
     $eta = $vp['ais_eta_label'] ?? $meta['eta'] ?? null;
     $navStatus = $vp['nav_status'] ?? $meta['status'] ?? null;
+    $navStatusDisplay = vessel_nav_status_display($navStatus);
     $isLive = in_array($source ?? '', ['marinesia', 'marinetraffic'], true);
     $isPublicMeta = ($source ?? '') === 'vesselfinder';
     $isEstimate = ($positionEstimated ?? false) || in_array($source ?? '', ['public_estimate', 'estimated'], true);
@@ -40,7 +41,8 @@
         <i class="ti ti-refresh"></i> {{ __('logistics.refresh_position') }}
     </a>
     @endif
-    <form method="POST" action="{{ route('vessels.track.destroy', $vessel) }}" class="d-inline" onsubmit="return confirm('{{ __('logistics.vessel_remove_confirm') }}')">
+    <form method="POST" action="{{ route('vessels.track.destroy', $vessel) }}" class="d-inline"
+          data-confirm="{{ __('logistics.vessel_remove_confirm') }}">
         @csrf
         @method('DELETE')
         <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i> {{ __('logistics.remove_vessel') }}</button>
@@ -103,11 +105,11 @@
             <div class="card-header"><h3 class="card-title mb-0"><i class="ti ti-id"></i> {{ __('logistics.vessel_identity') }}</h3></div>
             <div class="card-body">
                 <dl class="mb-0 small">
-                    <dt>{{ __('logistics.imo_number') }}</dt><dd class="fw-semibold">{{ $vessel->imo_number ?? '—' }}</dd>
-                    <dt>{{ __('logistics.mmsi_number') }}</dt><dd class="fw-semibold">{{ $vessel->mmsi ?? '—' }}</dd>
-                    <dt>{{ __('logistics.callsign') }}</dt><dd>{{ $vessel->callsign ?? '—' }}</dd>
-                    <dt>{{ __('logistics.flag') }}</dt><dd>{{ $vessel->flag_country ?? '—' }}</dd>
-                    <dt>{{ __('logistics.ship_type') }}</dt><dd>{{ $vessel->vessel_type ?? '—' }}</dd>
+                    <dt>{{ bilingual_field_label('logistics.imo_number', 'IMO') }}</dt><dd class="fw-semibold">{{ $vessel->imo_number ?? '—' }}</dd>
+                    <dt>{{ bilingual_field_label('logistics.mmsi_number', 'MMSI') }}</dt><dd class="fw-semibold">{{ $vessel->mmsi ?? '—' }}</dd>
+                    <dt>{{ bilingual_field_label('logistics.callsign', 'Call sign') }}</dt><dd>{{ $vessel->callsign ?? '—' }}</dd>
+                    <dt>{{ bilingual_field_label('logistics.flag', 'Flag') }}</dt><dd>{{ $vessel->flag_country ?? '—' }}</dd>
+                    <dt>{{ bilingual_field_label('logistics.ship_type', 'Ship type') }}</dt><dd>{{ $vessel->vessel_type ?? '—' }}</dd>
                 </dl>
             </div>
         </div>
@@ -137,7 +139,7 @@
                 </div>
                 @endif
                 <dl class="mb-0 small">
-                    @if($navStatus)<dt>{{ __('logistics.nav_status') }}</dt><dd>{{ $navStatus }}</dd>@endif
+                    @if($navStatus)<dt>{{ bilingual_field_label('logistics.nav_status', 'Nav status') }}</dt><dd>{{ $navStatusDisplay }}</dd>@endif
                     @if($vp['origin_port'] ?? null)<dt>{{ __('logistics.departure_port') }}</dt><dd>{{ $vp['origin_port'] }}</dd>@endif
                     @if($dest)<dt>{{ __('logistics.arrival_port') }}</dt><dd class="fw-semibold text-primary">{{ $dest }}</dd>@endif
                     @if(($vp['ais_destination'] ?? null) && ($vp['ais_destination'] !== $dest))<dt>{{ __('logistics.ais_destination') }}</dt><dd>{{ $vp['ais_destination'] }}</dd>@endif
@@ -166,7 +168,7 @@
             <div class="card-header"><h3 class="card-title mb-0"><i class="ti ti-antenna"></i> {{ __('logistics.vessel_live_ais') }}</h3></div>
             <div class="card-body">
                 <dl class="mb-0 small">
-                    @if($navStatus)<dt>{{ __('logistics.nav_status') }}</dt><dd>{{ $navStatus }}</dd>@endif
+                    @if($navStatus)<dt>{{ bilingual_field_label('logistics.nav_status', 'Nav status') }}</dt><dd>{{ $navStatusDisplay }}</dd>@endif
                     @if($meta['last_port'] ?? null)<dt>{{ __('logistics.last_port') }}</dt><dd>{{ port_display_label($meta['last_port']) }}</dd>@endif
                     @if($dest)<dt>{{ __('logistics.destination') }}</dt><dd>{{ $dest }}</dd>@endif
                     @if($eta)<dt>{{ __('logistics.ais_eta') }}</dt><dd>{{ $eta }}</dd>@endif
@@ -219,11 +221,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const lat = {{ $mapLat }};
     const lng = {{ $mapLng }};
     const zoom = {{ $mapZoom }};
+    const mapLocale = @json(app()->getLocale());
+    const attributions = {
+        tr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıda bulunanlar',
+        en: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        ar: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        de: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        fr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    };
 
-    const map = L.map('vesselMap').setView([lat, lng], zoom);
+    const map = L.map('vesselMap', { zoomControl: true }).setView([lat, lng], zoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıda bulunanlar'
+        maxZoom: 19,
+        attribution: attributions[mapLocale] || attributions.en
     }).addTo(map);
 
     if (hasPosition) {

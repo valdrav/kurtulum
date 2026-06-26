@@ -153,6 +153,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+    Route::delete('/documents/folder/{folder}', [DocumentController::class, 'destroyFolder'])->name('documents.folder.destroy')->where('folder', '[^/]+');
     Route::post('/documents/backup', [DocumentController::class, 'backup'])->name('documents.backup');
 
     Route::prefix('documents/tools')->name('documents.tools.')->group(function () {
@@ -213,6 +214,9 @@ Route::middleware(['auth'])->group(function () {
     // AI
     Route::prefix('ai')->name('ai.')->group(function () {
         Route::get('/', [AiController::class, 'index'])->name('index');
+        Route::post('/chat', [AiController::class, 'chat'])->name('chat');
+        Route::get('/conversations/{conversation}', [AiController::class, 'showConversation'])->name('conversations.show');
+        Route::delete('/conversations/{conversation}', [AiController::class, 'destroyConversation'])->name('conversations.destroy');
         Route::post('/email', [AiController::class, 'generateEmail'])->name('email');
         Route::post('/summarize', [AiController::class, 'summarizeReport'])->name('summarize');
         Route::post('/operations', [AiController::class, 'operationSuggestions'])->name('operations');

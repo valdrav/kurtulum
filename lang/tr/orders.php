@@ -56,6 +56,8 @@ return [
     'deleted_finance_notice' => 'İlişkili kayıtlar geri alındı: :collections tahsilat, :payments ödeme, :income_expenses gelir/gider, :shipments sevkiyat.:finance',
     'deleted_finance_reversed' => ' Cari sipariş kayıtları iptal edildi.',
     'cancel_confirm' => 'Bu siparişi iptal etmek istediğinize emin misiniz? Cari kayıtlar geri alınır; sipariş silinmez.',
+    'cancel_action' => 'İptal et',
+    'deleted_banner' => 'Bu sipariş silinmiş. Finans kayıtları geri alınmış olmalıdır. Geri yükleyebilir veya yalnızca görüntüleyebilirsiniz.',
     'cancelled' => 'Sipariş iptal edildi.',
     'cancelled_finance_notice' => 'Müşteri alacağı ve tedarikçi borcu cari hesaplardan geri alındı.',
     'already_cancelled' => 'Sipariş zaten iptal edilmiş.',

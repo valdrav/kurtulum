@@ -211,6 +211,27 @@ class DocumentController extends Controller
         return redirect($redirect)->with('success', __('messages.deleted'));
     }
 
+    public function destroyFolder(string $folder)
+    {
+        $folderName = $folder === '__default' ? '' : $folder;
+
+        $documents = Document::query()
+            ->when($folderName === '', fn ($q) => $q->where(fn ($q) => $q->whereNull('folder')->orWhere('folder', '')))
+            ->when($folderName !== '', fn ($q) => $q->where('folder', $folderName))
+            ->get();
+
+        if ($documents->isEmpty()) {
+            return redirect()->route('documents.index')->with('warning', __('documents.folder_empty'));
+        }
+
+        foreach ($documents as $document) {
+            Storage::disk($document->disk)->delete($document->path);
+            $document->delete();
+        }
+
+        return redirect()->route('documents.index')->with('success', __('documents.folder_deleted', ['count' => $documents->count()]));
+    }
+
     public function backup()
     {
         $backupDir = storage_path('app/backups/' . date('Y-m-d_His'));

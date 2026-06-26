@@ -1,10 +1,25 @@
 <?php
 
 return [
-    'not_configured' => 'AI özelliği yapılandırılmamış. Ayarlardan API anahtarınızı girin.',
+    'not_configured' => 'AI özelliği yapılandırılmamış. Ayarlardan Groq veya OpenAI API anahtarınızı girin.',
+    'request_failed' => 'AI isteği başarısız oldu. Lütfen tekrar deneyin.',
     'generate_email' => 'E-posta Oluştur',
     'summarize' => 'Rapor Özetle',
     'operations' => 'Operasyon Önerileri',
     'financial' => 'Finansal Analiz',
     'translate' => 'Çeviri',
+    'provider_label' => 'Sağlayıcı: :provider',
+    'conversations' => 'Sohbetlerim',
+    'new_chat' => 'Yeni sohbet',
+    'chat_placeholder' => 'Sipariş, sevkiyat veya finans hakkında sorun…',
+    'send' => 'Gönder',
+    'delete_conversation' => 'Sohbeti sil',
+    'delete_conversation_confirm' => 'Bu sohbet kalıcı olarak silinecek. Emin misiniz?',
+    'no_conversations' => 'Henüz sohbet yok',
+    'chat_intro' => 'ExportFlow asistanına soru sorun. Sohbetler yalnızca sizin hesabınızda görünür.',
+    'you' => 'Siz',
+    'assistant' => 'Asistan',
+    'tools' => 'Araçlar',
+    'tool_placeholder' => 'Metin veya bağlam girin…',
+    'run' => 'Çalıştır',
 ];

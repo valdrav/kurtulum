@@ -109,6 +109,78 @@ if (!function_exists('status_label')) {
     }
 }
 
+if (!function_exists('task_priority_label')) {
+    function task_priority_label(?string $code): string
+    {
+        if (! $code) {
+            return '—';
+        }
+
+        $key = "tasks.priorities.{$code}";
+        $label = __($key);
+
+        return $label !== $key ? $label : ucfirst($code);
+    }
+}
+
+if (!function_exists('task_status_label')) {
+    function task_status_label(?string $code): string
+    {
+        if (! $code) {
+            return '—';
+        }
+
+        $key = "tasks.statuses.{$code}";
+        $label = __($key);
+
+        return $label !== $key ? $label : ucfirst(str_replace('_', ' ', $code));
+    }
+}
+
+if (!function_exists('bilingual_field_label')) {
+    function bilingual_field_label(string $translationKey, string $englishLabel): string
+    {
+        $local = __($translationKey);
+
+        if (app()->getLocale() === 'en') {
+            return $englishLabel;
+        }
+
+        return $local . ' / ' . $englishLabel;
+    }
+}
+
+if (!function_exists('vessel_nav_status_display')) {
+    function vessel_nav_status_display(?string $status): string
+    {
+        if (! $status) {
+            return '—';
+        }
+
+        $normalized = strtolower(trim($status));
+        $map = [
+            'motorla seyir' => ['tr' => 'Motorla seyir', 'en' => 'Under way using engine'],
+            'under way using engine' => ['tr' => 'Motorla seyir', 'en' => 'Under way using engine'],
+            'demirde' => ['tr' => 'Demirde', 'en' => 'At anchor'],
+            'at anchor' => ['tr' => 'Demirde', 'en' => 'At anchor'],
+            'moored' => ['tr' => 'Bağlı', 'en' => 'Moored'],
+            'bağlı' => ['tr' => 'Bağlı', 'en' => 'Moored'],
+        ];
+
+        foreach ($map as $needle => $labels) {
+            if (str_contains($normalized, str_replace(' ', '', $needle)) || str_contains($normalized, $needle)) {
+                return $labels['tr'] . ' / ' . $labels['en'];
+            }
+        }
+
+        if (app()->getLocale() === 'en') {
+            return $status;
+        }
+
+        return $status . ' / ' . $status;
+    }
+}
+
 if (!function_exists('type_label')) {
     function type_label(?string $code, string $group): string
     {

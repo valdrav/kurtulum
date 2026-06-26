@@ -54,4 +54,7 @@ return [
     'welcome' => 'Hoş Geldiniz',
     'no_records' => 'Kayıt bulunamadı',
     'confirm_delete' => 'Bu kaydı silmek istediğinize emin misiniz?',
+    'confirm_title' => 'Onay',
+    'close' => 'Kapat',
+    'confirm' => 'Onayla',
 ];

@@ -94,13 +94,12 @@
                         <a href="{{ route('orders.edit', $o) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
                         @endif
                         @if(can_access('orders.delete'))
-                        <form action="{{ route('orders.destroy', $o) }}" method="POST" class="d-inline"
-                              onsubmit="return confirm(@json(__('orders.delete_confirm')))">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-ghost-danger" aria-label="{{ __('app.delete') }}">
-                                <i class="ti ti-trash"></i>
-                            </button>
-                        </form>
+                        @include('partials.delete-form', [
+                            'action' => route('orders.destroy', $o),
+                            'confirm' => __('orders.delete_confirm'),
+                            'class' => 'btn btn-sm btn-ghost-danger',
+                            'iconOnly' => true,
+                        ])
                         @endif
                     </td>
                 </tr>

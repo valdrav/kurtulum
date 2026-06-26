@@ -164,9 +164,11 @@ return [
     ],
 
     'ai' => [
-        'provider' => env('AI_PROVIDER', 'openai'),
+        'provider' => env('AI_PROVIDER', 'groq'),
         'api_key' => env('AI_API_KEY'),
         'model' => env('AI_MODEL', 'gpt-4o-mini'),
+        'groq_api_key' => env('GROQ_API_KEY'),
+        'groq_model' => env('GROQ_MODEL', 'llama-3.1-8b-instant'),
     ],
 
     'update' => [

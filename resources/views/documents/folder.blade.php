@@ -3,7 +3,20 @@
 @section('content')
 @include('partials.page-header', ['title' => $displayName, 'subtitle' => __('documents.folder_files')])
 
-<p class="mb-3"><a href="{{ route('documents.index') }}" class="text-muted"><i class="ti ti-arrow-left me-1"></i>{{ __('documents.back_folders') }}</a></p>
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <p class="mb-0"><a href="{{ route('documents.index') }}" class="text-muted"><i class="ti ti-arrow-left me-1"></i>{{ __('documents.back_folders') }}</a></p>
+    @if(can_access('documents.create'))
+    <form action="{{ route('documents.folder.destroy', $folderName !== '' ? $folderName : '__default') }}" method="POST" class="d-inline"
+          data-confirm="{{ __('documents.delete_folder_confirm') }}"
+          data-confirm-title="{{ __('app.confirm_title') }}"
+          data-confirm-button="{{ __('documents.delete_folder') }}">
+        @csrf @method('DELETE')
+        <button type="submit" class="btn btn-outline-danger btn-sm">
+            <i class="ti ti-folder-x me-1"></i>{{ __('documents.delete_folder') }}
+        </button>
+    </form>
+    @endif
+</div>
 
 @if(can_access('documents.create'))
 <div class="card mb-3">
@@ -53,7 +66,8 @@
         <div class="doc-tile-actions">
             <a href="{{ route('documents.download', $d) }}" class="btn btn-sm btn-ghost-secondary" title="{{ __('app.download') }}"><i class="ti ti-download"></i></a>
             @if(can_access('documents.create'))
-            <form method="POST" action="{{ route('documents.destroy', $d) }}" class="d-inline" onsubmit="return confirm('{{ __('app.confirm_delete') }}')">@csrf @method('DELETE')
+            <form method="POST" action="{{ route('documents.destroy', $d) }}" class="d-inline"
+                  data-confirm="{{ __('app.confirm_delete') }}">@csrf @method('DELETE')
                 <button type="submit" class="btn btn-sm btn-ghost-danger"><i class="ti ti-trash"></i></button>
             </form>
             @endif

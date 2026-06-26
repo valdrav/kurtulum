@@ -115,7 +115,7 @@ class OrderFinanceService
         $order->loadMissing(['customer', 'supplier']);
 
         DB::transaction(function () use ($order) {
-            $this->reverseOrderLedgerPostings($order);
+            $this->zeroAllOrderCariPostings($order, 'Sipariş güncelleme iptali');
 
             if ($order->status === 'cancelled') {
                 $order->update(['finance_posted_at' => null]);
@@ -128,34 +128,46 @@ class OrderFinanceService
         });
     }
 
-    protected function reverseOrderLedgerPostings(Order $order): void
+    /** Siparişe bağlı cari hesaplardaki net bakiye etkisini sıfırlar. */
+    public function zeroAllOrderCariPostings(Order $order, string $labelPrefix = 'Sipariş iptali'): void
     {
-        \App\Models\AccountTransaction::query()
+        $order->loadMissing(['customer', 'supplier']);
+
+        if ($order->customer) {
+            $account = $this->ensureCustomerAccount($order->customer);
+            $this->zeroOrderNetOnAccount($order, $account, $labelPrefix . ': ' . $order->order_number);
+        }
+
+        if ($order->supplier) {
+            $account = $this->ensureSupplierAccount($order->supplier);
+            $this->zeroOrderNetOnAccount($order, $account, $labelPrefix . ': ' . $order->order_number);
+        }
+    }
+
+    protected function zeroOrderNetOnAccount(Order $order, Account $account, string $label): void
+    {
+        $net = $this->netOrderLedgerDelta($account, $order);
+
+        if (abs($net) < 0.001) {
+            return;
+        }
+
+        $this->ledger->adjustBalance($account, -$net, $order, $label, now()->toDateString());
+    }
+
+    protected function netOrderLedgerDelta(Account $account, Order $order): float
+    {
+        return (float) \App\Models\AccountTransaction::query()
+            ->where('account_id', $account->id)
             ->where('reference_type', Order::class)
             ->where('reference_id', $order->id)
-            ->where(function ($q) {
-                $q->where('description', 'like', 'Sipariş alacağı:%')
-                    ->orWhere('description', 'like', 'Sipariş borcu:%');
-            })
-            ->with('account')
             ->get()
-            ->each(function ($tx) use ($order) {
-                if (! $tx->account) {
-                    return;
-                }
+            ->sum(fn ($tx) => $tx->type === 'credit' ? (float) $tx->amount : -(float) $tx->amount);
+    }
 
-                $delta = $tx->type === 'credit'
-                    ? -(float) $tx->amount
-                    : (float) $tx->amount;
-
-                $this->ledger->adjustBalance(
-                    $tx->account,
-                    $delta,
-                    $order,
-                    'Düzeltme (eski): ' . $tx->description,
-                    now()->toDateString()
-                );
-            });
+    protected function reverseOrderLedgerPostings(Order $order): void
+    {
+        $this->zeroAllOrderCariPostings($order, 'Sipariş cari düzeltme');
     }
 
     public function recordCollection(array $validated, PaymentMethod $method, float $fee, ?Order $order = null): Collection
@@ -394,7 +406,7 @@ class OrderFinanceService
                 });
 
             if ($order->finance_posted_at) {
-                $this->reverseOrderLedgerPostings($order);
+                $this->zeroAllOrderCariPostings($order, 'Sipariş silindi');
                 $order->update(['finance_posted_at' => null]);
                 $summary['finance_reversed'] = true;
             }

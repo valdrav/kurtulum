@@ -1,6 +1,12 @@
 @extends('layouts.app')
 @section('title', $order->order_number)
 @section('content')
+@if($order->trashed())
+<div class="alert alert-warning d-flex align-items-center gap-2">
+    <i class="ti ti-trash"></i>
+    <span>{{ __('orders.deleted_banner') }}</span>
+</div>
+@endif
 <div class="page-header d-print-none mb-3">
     <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
         <div>
@@ -23,10 +29,13 @@
             @endif
             @if($order->status !== 'cancelled' && can_access('orders.edit'))
             <form action="{{ route('orders.cancel', $order) }}" method="POST" class="d-inline"
-                  onsubmit="return confirm(@json(__('orders.cancel_confirm')))">
+                  data-confirm="{{ __('orders.cancel_confirm') }}"
+                  data-confirm-title="{{ __('app.confirm_title') }}"
+                  data-confirm-button="{{ __('orders.cancel_action') }}"
+                  data-confirm-danger="false">
                 @csrf
                 <button type="submit" class="btn btn-outline-warning btn-sm">
-                    <i class="ti ti-ban me-1"></i>İptal et
+                    <i class="ti ti-ban me-1"></i>{{ __('orders.cancel_action') }}
                 </button>
             </form>
             @endif
@@ -44,13 +53,11 @@
             </a>
             @endif
             @if(can_access('orders.delete'))
-            <form action="{{ route('orders.destroy', $order) }}" method="POST" class="d-inline"
-                  onsubmit="return confirm(@json(__('orders.delete_confirm')))">
-                @csrf @method('DELETE')
-                <button type="submit" class="btn btn-outline-danger btn-sm">
-                    <i class="ti ti-trash me-1"></i>{{ __('app.delete') }}
-                </button>
-            </form>
+            @include('partials.delete-form', [
+                'action' => route('orders.destroy', $order),
+                'confirm' => __('orders.delete_confirm'),
+                'class' => 'btn btn-outline-danger btn-sm',
+            ])
             @endif
             @endif
         </div>

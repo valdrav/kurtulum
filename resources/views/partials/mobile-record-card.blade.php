@@ -25,7 +25,9 @@
             @endif
             @if(!empty($deleteUrl) && (empty($deletePermission) || can_access($deletePermission)))
             <form action="{{ $deleteUrl }}" method="POST" class="d-inline"
-                  onsubmit="return confirm(@json($deleteConfirm ?? __('app.confirm_delete')))">
+                  data-confirm="{{ $deleteConfirm ?? __('app.confirm_delete') }}"
+                  data-confirm-title="{{ $deleteConfirmTitle ?? __('app.confirm_title') }}"
+                  data-confirm-button="{{ $deleteConfirmButton ?? __('app.delete') }}">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-sm btn-ghost-danger ef-mobile-card-edit" aria-label="{{ __('app.delete') }}">
                     <i class="ti ti-trash"></i>

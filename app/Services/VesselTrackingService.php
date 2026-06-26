@@ -197,6 +197,10 @@ class VesselTrackingService
         $lat = (float) $lat;
         $lon = (float) $lon;
 
+        if (! $this->isValidCoordinate($lat, $lon)) {
+            return null;
+        }
+
         $recent = $vessel->positions()
             ->where('source', $source)
             ->where('recorded_at', '>=', now()->subMinutes(30))
@@ -280,6 +284,15 @@ class VesselTrackingService
         };
     }
 
+    protected function isValidCoordinate(float $lat, float $lng): bool
+    {
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            return false;
+        }
+
+        return ! ($lat == 0.0 && $lng == 0.0);
+    }
+
     protected function estimateFromActiveShipment(Vessel $vessel): ?VesselPosition
     {
         $shipment = Shipment::query()
@@ -347,7 +360,7 @@ class VesselTrackingService
         } elseif (isset($snapshot['ship_lat'], $snapshot['ship_lon'])) {
             $lat = (float) $snapshot['ship_lat'];
             $lng = (float) $snapshot['ship_lon'];
-            if ($lat > 0 && $lat < 90 && $lng > 0 && $lng < 90 && fmod($lat, 1) === 0.0 && fmod($lng, 1) === 0.0) {
+            if (! $this->isValidCoordinate($lat, $lng)) {
                 return null;
             }
         } else {
