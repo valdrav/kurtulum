@@ -12,10 +12,10 @@ class AiController extends Controller
     public function __construct(protected AiService $ai)
     {
         $this->middleware('permission:ai.view')->only([
-            'index', 'showConversation', 'generateEmail', 'summarizeReport',
-            'operationSuggestions', 'financialAnalysis', 'translate',
+            'index', 'showConversation', 'chat', 'destroyConversation',
+            'generateEmail', 'summarizeReport', 'operationSuggestions',
+            'financialAnalysis', 'translate',
         ]);
-        $this->middleware('permission:ai.create')->only(['chat', 'destroyConversation']);
     }
 
     public function index()
@@ -26,6 +26,8 @@ class AiController extends Controller
             ->limit(30)
             ->get();
 
+        $conversationTemplate = route('ai.conversations.show', ['conversation' => '__UUID__']);
+
         return view('ai.index', [
             'configured' => $this->ai->isConfigured(),
             'provider' => $this->ai->activeProviderLabel(),
@@ -34,11 +36,32 @@ class AiController extends Controller
                 'chatUrl' => route('ai.chat'),
                 'csrf' => csrf_token(),
                 'configured' => $this->ai->isConfigured(),
-                'placeholder' => __('ai.chat_placeholder'),
-                'deleteConfirm' => __('ai.delete_conversation_confirm'),
+                'locale' => app()->getLocale(),
+                'conversationUrlTemplate' => $conversationTemplate,
+                'toolUrls' => [
+                    'email' => route('ai.email'),
+                    'translate' => route('ai.translate'),
+                    'summarize' => route('ai.summarize'),
+                ],
+                'toolTitles' => [
+                    'email' => __('ai.generate_email'),
+                    'translate' => __('ai.translate'),
+                    'summarize' => __('ai.summarize'),
+                ],
+                'labels' => [
+                    'placeholder' => __('ai.chat_placeholder'),
+                    'deleteConfirm' => __('ai.delete_conversation_confirm'),
+                    'newChat' => __('ai.new_chat'),
+                    'you' => __('ai.you'),
+                    'assistant' => __('ai.assistant'),
+                    'toolPlaceholder' => __('ai.tool_placeholder'),
+                    'loadFailed' => __('ai.load_failed'),
+                    'sendFailed' => __('ai.request_failed'),
+                    'deleteFailed' => __('ai.delete_failed'),
+                ],
                 'conversations' => $conversations->map(fn (AiConversation $c) => [
-                    'id' => $c->id,
-                    'title' => $c->title,
+                    'id' => $c->uuid,
+                    'title' => $c->title ?: __('ai.new_chat'),
                 ])->values()->all(),
             ],
         ]);
@@ -48,15 +71,18 @@ class AiController extends Controller
     {
         $validated = $request->validate([
             'message' => 'required|string|max:8000',
-            'conversation_id' => 'nullable|exists:ai_conversations,id',
+            'conversation_id' => 'nullable|string|max:36',
         ]);
 
         if (! $this->ai->isConfigured()) {
             return response()->json(['error' => __('ai.not_configured')], 422);
         }
 
-        $conversation = isset($validated['conversation_id'])
-            ? AiConversation::query()->where('user_id', auth()->id())->findOrFail($validated['conversation_id'])
+        $conversation = ! empty($validated['conversation_id'])
+            ? AiConversation::query()
+                ->where('user_id', auth()->id())
+                ->where('uuid', $validated['conversation_id'])
+                ->firstOrFail()
             : AiConversation::create([
                 'user_id' => auth()->id(),
                 'title' => str($validated['message'])->limit(60)->toString(),
@@ -92,7 +118,7 @@ class AiController extends Controller
         $conversation->touch();
 
         return response()->json([
-            'conversation_id' => $conversation->id,
+            'conversation_id' => $conversation->uuid,
             'reply' => $reply,
             'title' => $conversation->title,
         ]);
@@ -103,7 +129,7 @@ class AiController extends Controller
         abort_unless($conversation->user_id === auth()->id(), 403);
 
         return response()->json([
-            'id' => $conversation->id,
+            'id' => $conversation->uuid,
             'title' => $conversation->title,
             'messages' => $conversation->messages()->get(['role', 'content', 'created_at']),
         ]);
