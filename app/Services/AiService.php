@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Collection;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -16,20 +16,28 @@ class AiService
 
     public function __construct()
     {
-        $this->apiKey = config('ticari.ai.api_key');
-        $this->model = config('ticari.ai.model', 'gpt-4o-mini');
-        $this->provider = config('ticari.ai.provider', 'groq');
-        $this->groqApiKey = config('ticari.ai.groq_api_key');
-        $this->groqModel = config('ticari.ai.groq_model', 'llama-3.1-8b-instant');
+        $this->provider = Setting::get('ai_provider') ?: config('ticari.ai.provider', 'groq');
+        $this->apiKey = Setting::get('ai_api_key') ?: config('ticari.ai.api_key');
+        $this->model = Setting::get('ai_model') ?: config('ticari.ai.model', 'gpt-4o-mini');
+        $this->groqApiKey = Setting::get('groq_api_key') ?: config('ticari.ai.groq_api_key');
+        $this->groqModel = Setting::get('groq_model') ?: config('ticari.ai.groq_model', 'llama-3.1-8b-instant');
     }
 
     public function isConfigured(): bool
     {
+        if (Setting::get('ai_enabled', '1') !== '1') {
+            return false;
+        }
+
         return ! empty($this->apiKey) || ! empty($this->groqApiKey);
     }
 
     public function activeProviderLabel(): string
     {
+        if ($this->provider === 'groq' && ! empty($this->groqApiKey)) {
+            return 'Groq';
+        }
+
         if (! empty($this->apiKey)) {
             return 'OpenAI';
         }
@@ -97,6 +105,13 @@ class AiService
     /** @param  array<int, array{role: string, content: string}>  $messages */
     protected function requestChat(array $messages): ?string
     {
+        if ($this->provider === 'groq' && ! empty($this->groqApiKey)) {
+            $result = $this->postChat('https://api.groq.com/openai/v1/chat/completions', $this->groqApiKey, $this->groqModel, $messages);
+            if ($result !== null) {
+                return $result;
+            }
+        }
+
         if (! empty($this->apiKey)) {
             $result = $this->postChat('https://api.openai.com/v1/chat/completions', $this->apiKey, $this->model, $messages);
             if ($result !== null) {

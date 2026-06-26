@@ -7,17 +7,7 @@
 <div class="alert alert-warning">{{ __('ai.not_configured') }}</div>
 @endif
 
-<div class="row g-3" x-data="aiChatApp(@json([
-    'chatUrl' => route('ai.chat'),
-    'csrf' => csrf_token(),
-    'configured' => $configured,
-    'newChatLabel' => __('ai.new_chat'),
-    'placeholder' => __('ai.chat_placeholder'),
-    'sendLabel' => __('ai.send'),
-    'deleteLabel' => __('ai.delete_conversation'),
-    'deleteConfirm' => __('ai.delete_conversation_confirm'),
-    'conversations' => $conversations->map(fn ($c) => ['id' => $c->id, 'title' => $c->title])->values(),
-]))">
+<div class="row g-3" x-data="aiChatApp(@json($chatConfig))">
     <div class="col-lg-3">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center py-2">

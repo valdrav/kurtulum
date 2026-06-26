@@ -60,6 +60,7 @@ return [
 
     'ai_enabled' => 'AI özellikleri aktif',
     'ai_provider' => 'Sağlayıcı',
+    'ai_groq_hint' => 'Ücretsiz Groq için console.groq.com adresinden API anahtarı alın. Anahtarı buraya kaydedebilir veya sunucu .env dosyasına GROQ_API_KEY ekleyebilirsiniz.',
     'ai_model' => 'Model',
     'ai_api_key' => 'API Anahtarı',
 

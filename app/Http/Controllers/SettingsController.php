@@ -202,9 +202,11 @@ class SettingsController extends Controller
     {
         $settings = [
             'ai_enabled' => Setting::get('ai_enabled', '1'),
-            'ai_provider' => Setting::get('ai_provider', config('ticari.ai.provider')),
+            'ai_provider' => Setting::get('ai_provider', config('ticari.ai.provider', 'groq')),
             'ai_model' => Setting::get('ai_model', config('ticari.ai.model')),
             'ai_api_key' => Setting::get('ai_api_key') ? '********' : '',
+            'groq_api_key' => Setting::get('groq_api_key') ? '********' : '',
+            'groq_model' => Setting::get('groq_model', config('ticari.ai.groq_model', 'llama-3.1-8b-instant')),
         ];
 
         return view('settings.ai', compact('settings'));
@@ -213,17 +215,30 @@ class SettingsController extends Controller
     public function updateAi(Request $request)
     {
         $validated = $request->validate([
-            'ai_provider' => 'required|in:openai,anthropic,custom',
-            'ai_model' => 'required|string|max:100',
+            'ai_provider' => 'required|in:openai,groq,anthropic,custom',
+            'ai_model' => 'nullable|string|max:100',
             'ai_api_key' => 'nullable|string|max:500',
+            'groq_api_key' => 'nullable|string|max:500',
+            'groq_model' => 'nullable|string|max:100',
         ]);
 
         Setting::set('ai_enabled', $request->boolean('ai_enabled') ? '1' : '0', 'ai');
         Setting::set('ai_provider', $validated['ai_provider'], 'ai');
-        Setting::set('ai_model', $validated['ai_model'], 'ai');
+
+        if (! empty($validated['ai_model'])) {
+            Setting::set('ai_model', $validated['ai_model'], 'ai');
+        }
+
+        if (! empty($validated['groq_model'])) {
+            Setting::set('groq_model', $validated['groq_model'], 'ai');
+        }
 
         if ($request->filled('ai_api_key') && $validated['ai_api_key'] !== '********') {
             Setting::set('ai_api_key', $validated['ai_api_key'], 'ai');
+        }
+
+        if ($request->filled('groq_api_key') && $validated['groq_api_key'] !== '********') {
+            Setting::set('groq_api_key', $validated['groq_api_key'], 'ai');
         }
 
         return back()->with('success', __('messages.saved'));

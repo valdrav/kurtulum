@@ -30,6 +30,17 @@ class AiController extends Controller
             'configured' => $this->ai->isConfigured(),
             'provider' => $this->ai->activeProviderLabel(),
             'conversations' => $conversations,
+            'chatConfig' => [
+                'chatUrl' => route('ai.chat'),
+                'csrf' => csrf_token(),
+                'configured' => $this->ai->isConfigured(),
+                'placeholder' => __('ai.chat_placeholder'),
+                'deleteConfirm' => __('ai.delete_conversation_confirm'),
+                'conversations' => $conversations->map(fn (AiConversation $c) => [
+                    'id' => $c->id,
+                    'title' => $c->title,
+                ])->values()->all(),
+            ],
         ]);
     }
 
