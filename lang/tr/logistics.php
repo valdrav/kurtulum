@@ -157,4 +157,7 @@ return [
     'no_documents_for_pack' => 'Bu sevkiyat için indirilecek belge yok.',
     'documents_pack' => 'Belge paketi indir',
     'delayed_alert' => 'ETA geçmiş sevkiyatlar',
+    'already_deleted' => 'Bu sevkiyat zaten silinmiş.',
+    'delete_use_cancel_instead' => 'Taslak dışındaki sevkiyatlar silinemez. Durumu «İptal» yapın veya yalnızca taslak kayıtları silin.',
+    'delete_has_costs' => 'Maliyet kalemi olan sevkiyat silinemez. Önce masrafları kaldırın.',
 ];

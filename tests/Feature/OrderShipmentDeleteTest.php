@@ -50,7 +50,79 @@ class OrderShipmentDeleteTest extends FeatureTestCase
         return $order->fresh();
     }
 
-    public function test_order_delete_reverses_finance_and_related_records(): void
+    public function test_confirmed_order_delete_is_blocked_by_policy(): void
+    {
+        $this->actingAsAdmin();
+
+        $order = $this->createConfirmedOrder();
+
+        $response = $this->delete(route('orders.destroy', $order));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('warning');
+        $this->assertDatabaseHas('orders', ['id' => $order->id, 'deleted_at' => null]);
+    }
+
+    public function test_draft_order_without_finance_can_be_deleted(): void
+    {
+        $this->actingAsAdmin();
+
+        $order = Order::create([
+            'order_number' => 'ORD-DEL-DRAFT',
+            'customer_id' => Customer::create([
+                'company_name' => 'Taslak Müşteri',
+                'type' => 'buyer',
+                'status' => 'active',
+                'currency' => 'TRY',
+            ])->id,
+            'status' => 'draft',
+            'order_date' => now(),
+            'currency' => 'TRY',
+            'sale_total' => 1000,
+            'purchase_total' => 700,
+            'margin_total' => 300,
+            'total_amount' => 1000,
+        ]);
+
+        $response = $this->delete(route('orders.destroy', $order));
+
+        $response->assertRedirect(route('orders.index'));
+        $response->assertSessionHas('success');
+        $this->assertSoftDeleted('orders', ['id' => $order->id]);
+    }
+
+    public function test_draft_order_with_finance_is_blocked_from_delete(): void
+    {
+        $this->actingAsAdmin();
+        company_treasury()->ensureDefaults();
+
+        $order = Order::create([
+            'order_number' => 'ORD-DEL-FIN',
+            'customer_id' => Customer::create([
+                'company_name' => 'Silme Test Müşteri',
+                'type' => 'buyer',
+                'status' => 'active',
+                'currency' => 'TRY',
+            ])->id,
+            'status' => 'draft',
+            'order_date' => now(),
+            'currency' => 'TRY',
+            'sale_total' => 10000,
+            'purchase_total' => 7000,
+            'margin_total' => 3000,
+            'total_amount' => 10000,
+        ]);
+
+        app(OrderFinanceService::class)->postOrderLedger($order->fresh());
+
+        $response = $this->delete(route('orders.destroy', $order->fresh()));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('warning');
+        $this->assertDatabaseHas('orders', ['id' => $order->id, 'deleted_at' => null]);
+    }
+
+    public function test_order_finance_service_delete_reverses_related_records(): void
     {
         $this->actingAsAdmin();
         company_treasury()->ensureDefaults();
@@ -102,11 +174,7 @@ class OrderShipmentDeleteTest extends FeatureTestCase
             'currency' => 'TRY',
         ]);
 
-        $response = $this->delete(route('orders.destroy', $order));
-
-        $response->assertRedirect(route('orders.index'));
-        $response->assertSessionHas('success');
-        $response->assertSessionHas('warning');
+        app(OrderFinanceService::class)->deleteOrder($order->fresh());
 
         $this->assertSoftDeleted('orders', ['id' => $order->id]);
         $this->assertSoftDeleted('shipments', ['id' => $shipment->id]);
@@ -119,7 +187,33 @@ class OrderShipmentDeleteTest extends FeatureTestCase
         $this->assertEquals(0, (float) $customerAccount->current_balance);
     }
 
-    public function test_shipment_delete_removes_costs(): void
+    public function test_shipment_with_costs_cannot_be_deleted_via_http(): void
+    {
+        $this->actingAsAdmin();
+
+        $shipment = Shipment::create([
+            'shipment_number' => 'SHP-DEL-BLOCK',
+            'transport_mode' => 'sea',
+            'status' => 'draft',
+            'currency' => 'USD',
+        ]);
+
+        ShipmentCost::create([
+            'shipment_id' => $shipment->id,
+            'type' => 'freight',
+            'description' => 'Navlun',
+            'amount' => 500,
+            'currency' => 'USD',
+        ]);
+
+        $response = $this->delete(route('shipments.destroy', $shipment));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('warning');
+        $this->assertDatabaseHas('shipments', ['id' => $shipment->id, 'deleted_at' => null]);
+    }
+
+    public function test_draft_shipment_without_costs_can_be_deleted(): void
     {
         $this->actingAsAdmin();
 
@@ -130,21 +224,10 @@ class OrderShipmentDeleteTest extends FeatureTestCase
             'currency' => 'USD',
         ]);
 
-        $cost = ShipmentCost::create([
-            'shipment_id' => $shipment->id,
-            'type' => 'freight',
-            'description' => 'Navlun',
-            'amount' => 500,
-            'currency' => 'USD',
-        ]);
-
         $response = $this->delete(route('shipments.destroy', $shipment));
 
         $response->assertRedirect(route('shipments.index'));
         $response->assertSessionHas('success');
-        $response->assertSessionHas('warning');
-
         $this->assertSoftDeleted('shipments', ['id' => $shipment->id]);
-        $this->assertSoftDeleted('shipment_costs', ['id' => $cost->id]);
     }
 }

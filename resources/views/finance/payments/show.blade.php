@@ -20,7 +20,7 @@
         <div class="mt-3 d-flex flex-wrap gap-2">
             @if(can_access('finance.edit'))<a href="{{ route('finance.payments.edit', $payment) }}" class="btn btn-primary btn-sm"><i class="ti ti-edit"></i> Düzenle</a>@endif
             @if(can_access('finance.delete'))
-            @include('partials.delete-form', ['action' => route('finance.payments.destroy', $payment), 'confirm' => __('app.confirm_delete')])
+            @include('partials.delete-form', ['action' => route('finance.payments.destroy', $payment), 'confirm' => __('finance.delete_payment_confirm')])
             @endif
             <a href="{{ route('finance.payments') }}" class="btn btn-ghost-secondary btn-sm">Listeye dön</a>
         </div>

@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('rates:sync')->everySixHours();
 Schedule::command('emails:sync')->hourly();
+Schedule::command('tasks:send-reminders')->everyFiveMinutes();

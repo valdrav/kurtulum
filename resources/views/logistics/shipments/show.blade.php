@@ -21,9 +21,10 @@
                     @endif
                     <a href="{{ route('shipments.edit', $shipment) }}" class="btn btn-sm btn-primary">{{ __('app.edit') }}</a>
                     @if(can_access('shipments.delete'))
-                    @include('partials.delete-form', [
+                    @include('partials.policy-delete-form', [
                         'action' => route('shipments.destroy', $shipment),
                         'confirm' => __('logistics.delete_confirm'),
+                        'blockReason' => app(\App\Services\RecordDeletionPolicy::class)->shipmentDeleteBlockReason($shipment),
                         'class' => 'btn btn-sm btn-outline-danger ms-1',
                     ])
                     @endif

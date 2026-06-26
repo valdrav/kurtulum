@@ -13,6 +13,7 @@ use App\Services\CsvExportService;
 use App\Services\OrderFinanceService;
 use App\Services\OrderLifecycleService;
 use App\Services\OrderShipmentService;
+use App\Services\RecordDeletionPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -201,13 +202,16 @@ class OrderController extends Controller
         return redirect()->route('orders.show', $order)->with('success', __('messages.updated'));
     }
 
-    public function destroy(int $orderId)
+    public function destroy(Order $order)
     {
-        $order = Order::withTrashed()->findOrFail($orderId);
-
         if ($order->trashed()) {
             return redirect()->route('orders.index', ['trashed' => 1])
                 ->with('info', __('orders.already_deleted'));
+        }
+
+        $blockReason = app(RecordDeletionPolicy::class)->orderDeleteBlockReason($order);
+        if ($blockReason) {
+            return back()->with('warning', $blockReason);
         }
 
         $summary = app(OrderFinanceService::class)->deleteOrder($order);

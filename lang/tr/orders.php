@@ -67,4 +67,7 @@ return [
     'export' => 'Excel indir',
     'trashed' => 'Silinenler',
     'product_catalog' => 'Ürün kataloğu',
+    'delete_use_cancel_instead' => 'Onaylı veya finans hareketi olan siparişler silinemez. «İptal et» kullanın; cari kayıtlar geri alınır.',
+    'delete_has_finance_movements' => 'Tahsilat veya ödeme kaydı olan sipariş silinemez. Önce finans hareketlerini silin veya siparişi iptal edin.',
+    'delete_finance_still_open' => 'İptal edilmiş olsa bile cari kayıtları açık sipariş silinemez. Önce finans hareketlerini temizleyin.',
 ];

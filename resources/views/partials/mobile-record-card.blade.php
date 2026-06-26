@@ -23,6 +23,14 @@
                 <i class="ti ti-edit"></i>
             </a>
             @endif
+            @if(!empty($restoreUrl) && (empty($deletePermission) || can_access($deletePermission)))
+            <form action="{{ $restoreUrl }}" method="POST" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-ghost-success ef-mobile-card-edit" aria-label="{{ __('app.restore') }}">
+                    <i class="ti ti-rotate"></i>
+                </button>
+            </form>
+            @endif
             @if(!empty($deleteUrl) && (empty($deletePermission) || can_access($deletePermission)))
             <form action="{{ $deleteUrl }}" method="POST" class="d-inline"
                   data-confirm="{{ $deleteConfirm ?? __('app.confirm_delete') }}"

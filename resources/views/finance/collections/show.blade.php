@@ -18,7 +18,7 @@
         <div class="mt-3 d-flex flex-wrap gap-2">
             @if(can_access('finance.edit'))<a href="{{ route('finance.collections.edit', $collection) }}" class="btn btn-primary btn-sm"><i class="ti ti-edit"></i> Düzenle</a>@endif
             @if(can_access('finance.delete'))
-            @include('partials.delete-form', ['action' => route('finance.collections.destroy', $collection), 'confirm' => __('app.confirm_delete')])
+            @include('partials.delete-form', ['action' => route('finance.collections.destroy', $collection), 'confirm' => __('finance.delete_collection_confirm')])
             @endif
             <a href="{{ route('finance.collections') }}" class="btn btn-ghost-secondary btn-sm">Listeye dön</a>
         </div>

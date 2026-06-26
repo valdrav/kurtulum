@@ -50,7 +50,17 @@
                             <td>{{ $c->paymentMethod?->name ?? $c->collection_method }}</td>
                             <td>{{ number_format($c->amount, 2, ',', '.') }} {{ $c->currency }}</td>
                             <td class="text-muted small">{{ format_try_equivalent((float)$c->amount, $c->currency, (float)$c->exchange_rate) ?: '—' }}</td>
-                            <td>@if(can_access('finance.edit'))<a href="{{ route('finance.collections.edit', $c) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>@endif</td>
+                            <td class="text-end">
+                                @if(can_access('finance.edit'))<a href="{{ route('finance.collections.edit', $c) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>@endif
+                                @if(can_access('finance.delete') || can_access('finance.create'))
+                                @include('partials.delete-form', [
+                                    'action' => route('finance.collections.destroy', $c),
+                                    'confirm' => __('finance.delete_collection_confirm'),
+                                    'class' => 'btn btn-sm btn-ghost-danger',
+                                    'iconOnly' => true,
+                                ])
+                                @endif
+                            </td>
                         </tr>
                         @empty
                         <tr><td colspan="6" class="text-muted">{{ __('app.no_records') }}</td></tr>

@@ -15,6 +15,7 @@ use App\Models\Vehicle;
 use App\Models\Vessel;
 use App\Services\CsvExportService;
 use App\Services\OrderShipmentService;
+use App\Services\RecordDeletionPolicy;
 use App\Services\ShipmentDeletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -220,6 +221,16 @@ class ShipmentController extends Controller
 
     public function destroy(Shipment $shipment)
     {
+        if ($shipment->trashed()) {
+            return redirect()->route('shipments.index', ['trashed' => 1])
+                ->with('info', __('logistics.already_deleted'));
+        }
+
+        $blockReason = app(RecordDeletionPolicy::class)->shipmentDeleteBlockReason($shipment);
+        if ($blockReason) {
+            return back()->with('warning', $blockReason);
+        }
+
         $summary = app(ShipmentDeletionService::class)->deleteShipment($shipment);
 
         $redirect = redirect()->route('shipments.index')->with('success', __('messages.deleted'));

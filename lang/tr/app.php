@@ -57,4 +57,5 @@ return [
     'confirm_title' => 'Onay',
     'close' => 'Kapat',
     'confirm' => 'Onayla',
+    'restore' => 'Geri yükle',
 ];

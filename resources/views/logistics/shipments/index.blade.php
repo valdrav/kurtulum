@@ -44,17 +44,20 @@
 
 <div class="d-md-none ef-mobile-list mb-3">
     @forelse($shipments as $s)
+    @php $shipmentDeleteBlock = request('trashed') ? null : app(\App\Services\RecordDeletionPolicy::class)->shipmentDeleteBlockReason($s); @endphp
     @include('partials.mobile-record-card', [
         'url' => route('shipments.show', $s),
         'title' => $s->shipment_number,
         'subtitle' => $s->customer?->company_name ?? ($s->order?->order_number ?? '—'),
         'meta' => __('logistics.'.$s->transport_mode).' · ETA: '.($s->eta?->format('d.m.Y') ?? '—'),
         'badge' => $s->statusDisplay(),
-        'editUrl' => route('shipments.edit', $s),
+        'editUrl' => request('trashed') ? null : route('shipments.edit', $s),
         'editPermission' => 'shipments.edit',
-        'deleteUrl' => route('shipments.destroy', $s),
+        'deleteUrl' => request('trashed') ? null : route('shipments.destroy', $s),
         'deletePermission' => 'shipments.delete',
         'deleteConfirm' => __('logistics.delete_confirm'),
+        'deleteBlockReason' => $shipmentDeleteBlock,
+        'restoreUrl' => request('trashed') && can_access('shipments.delete') ? route('shipments.restore', $s->id) : null,
     ])
     @empty
     <div class="card"><div class="card-body text-muted">{{ __('app.no_records') }}</div></div>
@@ -78,16 +81,23 @@
                     <td>{{ $s->eta?->format('d.m.Y H:i') ?? '-' }}</td>
                     <td><span class="badge">{{ $s->statusDisplay() }}</span></td>
                     <td>
-                        @if(can_access('shipments.edit'))
-                        <a href="{{ route('shipments.edit', $s) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
-                        @endif
-                        @if(can_access('shipments.delete'))
-                        @include('partials.delete-form', [
-                            'action' => route('shipments.destroy', $s),
-                            'confirm' => __('logistics.delete_confirm'),
-                            'class' => 'btn btn-sm btn-ghost-danger',
-                            'iconOnly' => true,
-                        ])
+                        @if(request('trashed'))
+                            @if(can_access('shipments.delete'))
+                            @include('partials.restore-form', ['action' => route('shipments.restore', $s->id), 'class' => 'btn btn-sm btn-outline-success', 'iconOnly' => true])
+                            @endif
+                        @else
+                            @if(can_access('shipments.edit'))
+                            <a href="{{ route('shipments.edit', $s) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
+                            @endif
+                            @if(can_access('shipments.delete'))
+                            @include('partials.policy-delete-form', [
+                                'action' => route('shipments.destroy', $s),
+                                'confirm' => __('logistics.delete_confirm'),
+                                'blockReason' => app(\App\Services\RecordDeletionPolicy::class)->shipmentDeleteBlockReason($s),
+                                'class' => 'btn btn-sm btn-ghost-danger',
+                                'iconOnly' => true,
+                            ])
+                            @endif
                         @endif
                     </td>
                 </tr>

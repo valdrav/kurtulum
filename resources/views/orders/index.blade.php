@@ -41,17 +41,20 @@
 
 <div class="d-md-none ef-mobile-list mb-3">
     @forelse($orders as $o)
+    @php $orderDeleteBlock = request('trashed') ? null : app(\App\Services\RecordDeletionPolicy::class)->orderDeleteBlockReason($o); @endphp
     @include('partials.mobile-record-card', [
         'url' => route('orders.show', $o),
         'title' => $o->order_number,
         'subtitle' => $o->customer?->company_name,
         'meta' => ($o->supplier?->company_name ? 'Alış: '.$o->supplier->company_name.' · ' : '') . $o->order_date->format('d.m.Y'),
         'badge' => status_label($o->status, 'order'),
-        'editUrl' => route('orders.edit', $o),
+        'editUrl' => request('trashed') ? null : route('orders.edit', $o),
         'editPermission' => 'orders.edit',
-        'deleteUrl' => route('orders.destroy', $o),
+        'deleteUrl' => request('trashed') ? null : route('orders.destroy', $o),
         'deletePermission' => 'orders.delete',
         'deleteConfirm' => __('orders.delete_confirm'),
+        'deleteBlockReason' => $orderDeleteBlock,
+        'restoreUrl' => request('trashed') && can_access('orders.delete') ? route('orders.restore', $o->id) : null,
     ])
     @empty
     <div class="card"><div class="card-body text-muted">{{ __('app.no_records') }}</div></div>
@@ -90,16 +93,23 @@
                     <td class="text-end">{{ format_money((float) $o->total_amount, $o->currency, 2) }}</td>
                     <td>{{ status_label($o->status, 'order') }}</td>
                     <td>
-                        @if(can_access('orders.edit'))
-                        <a href="{{ route('orders.edit', $o) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
-                        @endif
-                        @if(can_access('orders.delete'))
-                        @include('partials.delete-form', [
-                            'action' => route('orders.destroy', $o),
-                            'confirm' => __('orders.delete_confirm'),
-                            'class' => 'btn btn-sm btn-ghost-danger',
-                            'iconOnly' => true,
-                        ])
+                        @if(request('trashed'))
+                            @if(can_access('orders.delete'))
+                            @include('partials.restore-form', ['action' => route('orders.restore', $o->id), 'class' => 'btn btn-sm btn-outline-success', 'iconOnly' => true])
+                            @endif
+                        @else
+                            @if(can_access('orders.edit'))
+                            <a href="{{ route('orders.edit', $o) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
+                            @endif
+                            @if(can_access('orders.delete'))
+                            @include('partials.policy-delete-form', [
+                                'action' => route('orders.destroy', $o),
+                                'confirm' => __('orders.delete_confirm'),
+                                'blockReason' => app(\App\Services\RecordDeletionPolicy::class)->orderDeleteBlockReason($o),
+                                'class' => 'btn btn-sm btn-ghost-danger',
+                                'iconOnly' => true,
+                            ])
+                            @endif
                         @endif
                     </td>
                 </tr>

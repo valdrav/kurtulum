@@ -28,4 +28,5 @@ return [
         'completed' => 'Tamamlandı',
         'cancelled' => 'İptal',
     ],
+    'reminder_notification' => 'Görev hatırlatması: :title',
 ];

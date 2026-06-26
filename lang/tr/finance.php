@@ -355,7 +355,8 @@ return [
         ],
     ],
 
-    // Geriye dönük uyumluluk (eski kayıtlar)
+    'delete_collection_confirm' => 'Bu tahsilatı silmek istediğinize emin misiniz? Müşteri cari bakiyesi ve kasa hareketi geri alınır.',
+    'delete_payment_confirm' => 'Bu ödemeyi silmek istediğinize emin misiniz? Tedarikçi cari bakiyesi ve kasa hareketi geri alınır.',
     'legacy_categories' => [
         'sales' => 'Satış Geliri',
         'service' => 'Hizmet Geliri',

@@ -15,12 +15,7 @@
         </div>
         <div class="d-flex gap-2 flex-wrap">
             @if($order->trashed() && can_access('orders.delete'))
-            <form action="{{ route('orders.restore', $order->id) }}" method="POST" class="d-inline">
-                @csrf
-                <button type="submit" class="btn btn-outline-success btn-sm">
-                    <i class="ti ti-rotate me-1"></i>Geri yükle
-                </button>
-            </form>
+            @include('partials.restore-form', ['action' => route('orders.restore', $order->id), 'class' => 'btn btn-outline-success btn-sm'])
             @else
             @if(can_access('orders.edit'))
             <a href="{{ route('orders.edit', $order) }}" class="btn btn-primary btn-sm">
@@ -53,9 +48,10 @@
             </a>
             @endif
             @if(can_access('orders.delete'))
-            @include('partials.delete-form', [
+            @include('partials.policy-delete-form', [
                 'action' => route('orders.destroy', $order),
                 'confirm' => __('orders.delete_confirm'),
+                'blockReason' => app(\App\Services\RecordDeletionPolicy::class)->orderDeleteBlockReason($order),
                 'class' => 'btn btn-outline-danger btn-sm',
             ])
             @endif
@@ -361,7 +357,7 @@
                         </span>
                     </a>
                     @if(can_access('finance.delete'))
-                    @include('partials.delete-form', ['action' => route('finance.collections.destroy', $c), 'confirm' => __('app.confirm_delete'), 'class' => 'btn-sm btn-ghost-danger', 'iconOnly' => true])
+                    @include('partials.delete-form', ['action' => route('finance.collections.destroy', $c), 'confirm' => __('finance.delete_collection_confirm'), 'class' => 'btn-sm btn-ghost-danger', 'iconOnly' => true])
                     @endif
                 </div>
                 @endforeach
@@ -377,7 +373,7 @@
                         </span>
                     </a>
                     @if(can_access('finance.delete'))
-                    @include('partials.delete-form', ['action' => route('finance.payments.destroy', $p), 'confirm' => __('app.confirm_delete'), 'class' => 'btn-sm btn-ghost-danger', 'iconOnly' => true])
+                    @include('partials.delete-form', ['action' => route('finance.payments.destroy', $p), 'confirm' => __('finance.delete_payment_confirm'), 'class' => 'btn-sm btn-ghost-danger', 'iconOnly' => true])
                     @endif
                 </div>
                 @endforeach
