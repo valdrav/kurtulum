@@ -13,6 +13,8 @@ return [
     'net_margin' => 'Net Marj',
     'order_expense_breakdown' => 'Gider detayı',
     'trade_currency_note' => 'Sipariş bazlı tutarlar :currency cinsinden',
+    'dual_currency_hint' => 'USD + TL (güncel kur)',
+    'edit_order' => 'Siparişi Düzenle',
     'trade_items' => 'Ticari Kalemler',
     'trade_items_hint' => 'Alış ve satış fiyatları seçilen para biriminde girilir',
     'add_item' => 'Kalem Ekle',

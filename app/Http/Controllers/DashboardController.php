@@ -20,7 +20,6 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $tradeCurrency = $this->tradeFinance->tradeCurrency();
         $defaultCurrency = registry()->defaultCurrency()?->code ?? 'TRY';
 
         $monthlyIncome = (float) IncomeExpense::where('type', 'income')
@@ -32,19 +31,23 @@ class DashboardController extends Controller
             ->whereYear('transaction_date', now()->year)
             ->sum('amount_base');
 
+        $receivablesDual = $this->tradeFinance->dualReceivables();
+        $payablesDual = $this->tradeFinance->dualPayables();
+        $marginDual = $this->tradeFinance->dualMargin();
+        $monthlyMarginDual = $this->tradeFinance->dualMonthlyMargin();
+
         $stats = [
-            'currency' => $tradeCurrency,
             'treasury_currency' => $defaultCurrency,
             'customers' => Customer::count(),
             'orders' => Order::whereNotIn('status', ['cancelled'])->count(),
             'shipments_active' => Shipment::whereIn('status', ['booked', 'in_transit', 'at_port', 'customs'])->count(),
             'tasks_pending' => Task::where('status', 'pending')->count(),
-            'receivables' => $this->tradeFinance->totalReceivables(),
-            'payables' => $this->tradeFinance->totalPayables(),
+            'receivables_dual' => $receivablesDual,
+            'payables_dual' => $payablesDual,
+            'margin_dual' => $marginDual,
+            'monthly_margin_dual' => $monthlyMarginDual,
             'monthly_income' => $monthlyIncome,
             'monthly_expense' => $monthlyExpense,
-            'monthly_margin' => $this->tradeFinance->monthlyMargin(),
-            'total_margin' => $this->tradeFinance->totalMargin(),
         ];
 
         $stats['monthly_profit'] = $stats['monthly_income'] - $stats['monthly_expense'];
@@ -73,15 +76,28 @@ class DashboardController extends Controller
                 ->whereYear('transaction_date', $d->year)
                 ->whereMonth('transaction_date', $d->month)
                 ->sum('amount_base'))->values(),
-            'margin' => $chartMonths->map(fn ($d) => (float) Order::whereYear('order_date', $d->year)
-                ->whereMonth('order_date', $d->month)
-                ->whereNotIn('status', ['cancelled'])
-                ->get()
-                ->sum(fn (Order $order) => $this->tradeFinance->toTradeCurrency(
-                    (float) ($order->margin_total ?? 0),
-                    $order->currency ?? $tradeCurrency
-                )))->values(),
-            'currency' => $tradeCurrency,
+            'margin' => $chartMonths->map(function ($d) {
+                $dual = $this->tradeFinance->dualTotals(
+                    fn (Order $order) => (float) ($order->margin_total ?? 0),
+                    Order::query()
+                        ->whereYear('order_date', $d->year)
+                        ->whereMonth('order_date', $d->month)
+                        ->whereNotIn('status', ['cancelled'])
+                );
+
+                return $dual['USD'];
+            })->values(),
+            'margin_try' => $chartMonths->map(function ($d) {
+                $dual = $this->tradeFinance->dualTotals(
+                    fn (Order $order) => (float) ($order->margin_total ?? 0),
+                    Order::query()
+                        ->whereYear('order_date', $d->year)
+                        ->whereMonth('order_date', $d->month)
+                        ->whereNotIn('status', ['cancelled'])
+                );
+
+                return $dual['TRY'];
+            })->values(),
         ];
 
         return view('dashboard.index', compact(

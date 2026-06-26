@@ -56,7 +56,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'dashboard.view',
             'customers.view', 'customers.export',
             'suppliers.view', 'suppliers.export',
-            'orders.view', 'orders.export',
+            'orders.view', 'orders.edit', 'orders.export',
             'shipments.view', 'shipments.edit', 'shipments.export',
             'finance.view', 'finance.export',
             'documents.view', 'documents.export',

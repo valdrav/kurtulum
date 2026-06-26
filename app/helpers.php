@@ -414,6 +414,17 @@ if (!function_exists('trade_currency')) {
     }
 }
 
+if (!function_exists('format_money_dual')) {
+    /** USD + TRY birlikte göster (kur otomatik). */
+    function format_money_dual(float $usd, float $try, int $decimals = 0): string
+    {
+        $primary = format_money($usd, 'USD', $decimals);
+        $secondary = format_money($try, 'TRY', $decimals);
+
+        return $primary . '<span class="dual-money-sep"> · </span><span class="text-muted">' . $secondary . '</span>';
+    }
+}
+
 if (!function_exists('format_money')) {
     function format_money(float $amount, ?string $currency = null, int $decimals = 0): string
     {

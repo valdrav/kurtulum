@@ -1,7 +1,10 @@
 @extends('layouts.app')
-@section('title', $order->exists ? $order->order_number : __('app.create'))
+@section('title', $order->exists ? __('orders.edit_order') . ': ' . $order->order_number : __('app.create'))
 @section('content')
-@include('partials.page-header', ['title' => __('app.orders')])
+@include('partials.page-header', [
+    'title' => $order->exists ? __('orders.edit_order') : __('app.create'),
+    'subtitle' => $order->exists ? $order->order_number : __('app.orders'),
+])
 
 <div class="card" x-data="orderTradeForm('{{ old('currency', $order->currency ?? 'USD') }}')">
     <div class="card-body">
@@ -122,6 +125,9 @@
             </div>
 
             <button type="submit" class="btn btn-primary mt-3 w-100 w-md-auto">{{ __('app.save') }}</button>
+            @if($order->exists)
+            <a href="{{ route('orders.show', $order) }}" class="btn btn-link mt-3">{{ __('app.cancel') }}</a>
+            @endif
         </form>
     </div>
 </div>

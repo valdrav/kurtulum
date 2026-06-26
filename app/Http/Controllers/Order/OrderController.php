@@ -122,11 +122,15 @@ class OrderController extends Controller
             $this->syncItems($order, $request->input('items', []));
             $this->recalculateTotal($order);
 
-            if ($order->fresh()->status === 'confirmed' && $oldStatus !== 'confirmed') {
-                app(OrderFinanceService::class)->postOrderLedger($order->fresh());
+            $fresh = $order->fresh();
+
+            if ($fresh->status === 'confirmed' && $oldStatus !== 'confirmed') {
+                app(OrderFinanceService::class)->postOrderLedger($fresh);
+            } elseif ($fresh->finance_posted_at || $oldStatus === 'confirmed') {
+                app(OrderFinanceService::class)->resyncOrderLedger($fresh);
             }
 
-            app(OrderShipmentService::class)->ensureShipmentForOrder($order->fresh());
+            app(OrderShipmentService::class)->ensureShipmentForOrder($fresh);
         });
 
         return redirect()->route('orders.show', $order)->with('success', __('messages.updated'));

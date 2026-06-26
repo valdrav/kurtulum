@@ -66,9 +66,14 @@ class OrderFinanceService
         DB::transaction(function () use ($order, $saleTotal, $purchaseTotal) {
             if ($order->customer && $saleTotal > 0) {
                 $customerAccount = $this->ensureCustomerAccount($order->customer);
+                $customerAmount = $this->rates->amountForAccount(
+                    $saleTotal,
+                    $order->currency ?? 'USD',
+                    $customerAccount
+                );
                 $this->ledger->adjustBalance(
                     $customerAccount,
-                    $saleTotal,
+                    $customerAmount,
                     $order,
                     'Sipariş alacağı: ' . $order->order_number,
                     $order->order_date?->toDateString()
@@ -77,9 +82,14 @@ class OrderFinanceService
 
             if ($order->supplier && $purchaseTotal > 0) {
                 $supplierAccount = $this->ensureSupplierAccount($order->supplier);
+                $supplierAmount = $this->rates->amountForAccount(
+                    $purchaseTotal,
+                    $order->currency ?? 'USD',
+                    $supplierAccount
+                );
                 $this->ledger->adjustBalance(
                     $supplierAccount,
-                    $purchaseTotal,
+                    $supplierAmount,
                     $order,
                     'Sipariş borcu: ' . $order->order_number,
                     $order->order_date?->toDateString()
@@ -88,6 +98,63 @@ class OrderFinanceService
 
             $order->update(['finance_posted_at' => now()]);
         });
+    }
+
+    /** Onaylı sipariş düzenlendiğinde cari kayıtları günceller. */
+    public function resyncOrderLedger(Order $order): void
+    {
+        if (! $order->finance_posted_at) {
+            if ($order->status === 'confirmed') {
+                $this->postOrderLedger($order);
+            }
+
+            return;
+        }
+
+        $order->loadMissing(['customer', 'supplier']);
+
+        DB::transaction(function () use ($order) {
+            $this->reverseOrderLedgerPostings($order);
+
+            if ($order->status === 'cancelled') {
+                $order->update(['finance_posted_at' => null]);
+
+                return;
+            }
+
+            $order->update(['finance_posted_at' => null]);
+            $this->postOrderLedger($order->fresh());
+        });
+    }
+
+    protected function reverseOrderLedgerPostings(Order $order): void
+    {
+        \App\Models\AccountTransaction::query()
+            ->where('reference_type', Order::class)
+            ->where('reference_id', $order->id)
+            ->where(function ($q) {
+                $q->where('description', 'like', 'Sipariş alacağı:%')
+                    ->orWhere('description', 'like', 'Sipariş borcu:%');
+            })
+            ->with('account')
+            ->get()
+            ->each(function ($tx) use ($order) {
+                if (! $tx->account) {
+                    return;
+                }
+
+                $delta = $tx->type === 'credit'
+                    ? -(float) $tx->amount
+                    : (float) $tx->amount;
+
+                $this->ledger->adjustBalance(
+                    $tx->account,
+                    $delta,
+                    $order,
+                    'Düzeltme (eski): ' . $tx->description,
+                    now()->toDateString()
+                );
+            });
     }
 
     public function recordCollection(array $validated, PaymentMethod $method, float $fee, ?Order $order = null): Collection

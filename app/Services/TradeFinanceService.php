@@ -17,16 +17,16 @@ class TradeFinanceService
         return trade_currency();
     }
 
-    public function toTradeCurrency(float $amount, string $fromCurrency, ?float $exchangeRate = null): float
+    public function toCurrency(float $amount, string $fromCurrency, string $toCurrency, ?float $exchangeRate = null): float
     {
-        $target = $this->tradeCurrency();
         $fromCurrency = strtoupper($fromCurrency);
+        $toCurrency = strtoupper($toCurrency);
 
-        if ($fromCurrency === $target) {
+        if ($fromCurrency === $toCurrency) {
             return round($amount, 2);
         }
 
-        $converted = $this->rates->convert($amount, $fromCurrency, $target);
+        $converted = $this->rates->convert($amount, $fromCurrency, $toCurrency);
 
         if ($converted !== null) {
             return round($converted, 2);
@@ -35,12 +35,74 @@ class TradeFinanceService
         if ($exchangeRate !== null && $exchangeRate > 0) {
             $default = registry()->defaultCurrency()?->code ?? 'TRY';
 
-            if ($fromCurrency !== $default && $target === $default) {
+            if ($fromCurrency !== $default && $toCurrency === $default) {
                 return round($amount * $exchangeRate, 2);
+            }
+
+            if ($fromCurrency === $default && $toCurrency !== $default) {
+                return round($amount / $exchangeRate, 2);
             }
         }
 
         return round($amount, 2);
+    }
+
+    public function toTradeCurrency(float $amount, string $fromCurrency, ?float $exchangeRate = null): float
+    {
+        return $this->toCurrency($amount, $fromCurrency, $this->tradeCurrency(), $exchangeRate);
+    }
+
+    public function dualReceivables(): array
+    {
+        return $this->dualTotals(fn (Order $order) => max(0, (float) $order->sale_total - (float) $order->amount_collected));
+    }
+
+    public function dualPayables(): array
+    {
+        return $this->dualTotals(fn (Order $order) => max(0, (float) $order->purchase_total - (float) $order->amount_paid));
+    }
+
+    public function dualMargin(): array
+    {
+        return $this->dualTotals(fn (Order $order) => (float) ($order->margin_total ?? 0));
+    }
+
+    public function dualMonthlyMargin(?int $month = null, ?int $year = null): array
+    {
+        $month ??= (int) now()->month;
+        $year ??= (int) now()->year;
+
+        return $this->dualTotals(
+            fn (Order $order) => (float) ($order->margin_total ?? 0),
+            Order::query()
+                ->whereMonth('order_date', $month)
+                ->whereYear('order_date', $year)
+                ->whereNotIn('status', ['cancelled'])
+        );
+    }
+
+    public function dualTotals(callable $amountResolver, $query = null): array
+    {
+        $query ??= Order::query()->whereNotIn('status', ['cancelled', 'draft']);
+
+        $native = ['USD' => 0.0, 'TRY' => 0.0];
+
+        $query->get()->each(function (Order $order) use ($amountResolver, &$native) {
+            $amount = (float) $amountResolver($order);
+
+            if ($amount <= 0) {
+                return;
+            }
+
+            $currency = strtoupper($order->currency ?? $this->tradeCurrency());
+            $native[$currency] = ($native[$currency] ?? 0) + $amount;
+        });
+
+        return [
+            'USD' => round($native['USD'] + $this->toCurrency($native['TRY'], 'TRY', 'USD'), 2),
+            'TRY' => round($native['TRY'] + $this->toCurrency($native['USD'], 'USD', 'TRY'), 2),
+            'native' => $native,
+        ];
     }
 
     public function totalReceivables(): float
@@ -105,7 +167,7 @@ class TradeFinanceService
             return round($converted, 2);
         }
 
-        return $this->toTradeCurrency($amount, $fromCurrency, $exchangeRate);
+        return $this->toCurrency($amount, $fromCurrency, $orderCurrency, $exchangeRate);
     }
 
     /** Siparişe bağlı lojistik masrafları ve gider kayıtları. */

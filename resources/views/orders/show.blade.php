@@ -1,7 +1,21 @@
 @extends('layouts.app')
 @section('title', $order->order_number)
 @section('content')
-@include('partials.page-header', ['title' => $order->order_number])
+<div class="page-header d-print-none mb-3">
+    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+        <div>
+            <h2 class="page-title mb-0">{{ $order->order_number }}</h2>
+            <div class="text-muted small">{{ $order->customer?->company_name ?? '—' }} · {{ format_money((float) $order->sale_total, $order->currency, 2) }}</div>
+        </div>
+        <div class="d-flex gap-2">
+            @if(can_access('orders.edit'))
+            <a href="{{ route('orders.edit', $order) }}" class="btn btn-primary btn-sm">
+                <i class="ti ti-edit me-1"></i>{{ __('orders.edit_order') }}
+            </a>
+            @endif
+        </div>
+    </div>
+</div>
 
 <div class="row g-3">
     <div class="col-lg-8">

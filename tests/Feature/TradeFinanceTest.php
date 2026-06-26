@@ -59,13 +59,15 @@ class TradeFinanceTest extends FeatureTestCase
             'amount_collected' => 2000,
         ]);
 
-        $receivables = app(TradeFinanceService::class)->totalReceivables();
+        $receivables = app(TradeFinanceService::class)->dualReceivables();
 
-        $this->assertEquals(8000.0, $receivables);
+        $this->assertEquals(8000.0, $receivables['USD']);
+        $this->assertGreaterThan(8000.0, $receivables['TRY']);
 
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('8.000 USD');
+            ->assertSee('8.000 USD')
+            ->assertSee('₺');
     }
 
     public function test_order_expenses_reduce_net_margin(): void
