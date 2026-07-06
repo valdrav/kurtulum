@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Services\ActivityLogService;
+use App\Services\NavbarConfigService;
 use App\Services\SiteBrandingService;
 use App\Services\UpdateService;
 use Illuminate\Http\Request;
@@ -108,6 +109,84 @@ class SettingsController extends Controller
         }
 
         $branding->saveTextSettings($validated);
+
+        return back()->with('success', __('messages.saved'));
+    }
+
+    public function navbar(NavbarConfigService $navbar)
+    {
+        abort_unless(auth()->user()?->hasRole('super-admin'), 403);
+
+        return view('settings.navbar', [
+            'config' => $navbar->all(),
+            'catalog' => $navbar->catalog(),
+        ]);
+    }
+
+    public function updateNavbar(Request $request, NavbarConfigService $navbar)
+    {
+        abort_unless(auth()->user()?->hasRole('super-admin'), 403);
+
+        $validated = $request->validate([
+            'desktop.sidebar_width' => 'nullable|string|max:12',
+            'desktop.sidebar_bg_start' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'desktop.sidebar_bg_mid' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'desktop.sidebar_bg_end' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'desktop.sidebar_text' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'desktop.sidebar_active_rgb' => ['nullable', 'regex:/^\\d{1,3},\\s*\\d{1,3},\\s*\\d{1,3}$/'],
+            'desktop.show_brand_text' => 'nullable|boolean',
+            'desktop.show_user_footer' => 'nullable|boolean',
+            'mobile.bottom_height' => 'nullable|string|max:12',
+            'mobile.show_currency_bar' => 'nullable|boolean',
+            'mobile.show_bottom_nav' => 'nullable|boolean',
+            'mobile.bottom_items' => 'nullable|array',
+            'mobile.bottom_items.*' => 'string|max:40',
+            'mobile.more_items' => 'nullable|array',
+            'mobile.more_items.*' => 'string|max:40',
+            'topbar.height' => 'nullable|string|max:12',
+            'topbar.show_locale' => 'nullable|boolean',
+            'topbar.show_theme_toggle' => 'nullable|boolean',
+            'topbar.show_brand_desktop' => 'nullable|boolean',
+            'topbar.show_profile_menu' => 'nullable|boolean',
+            'desktop_items' => 'nullable|array',
+            'desktop_items.*' => 'nullable|boolean',
+        ]);
+
+        $current = $navbar->all();
+        $catalogIds = array_column($navbar->catalog(), 'id');
+
+        foreach ($catalogIds as $id) {
+            $current['desktop']['items'][$id]['enabled'] = $request->boolean("desktop_items.{$id}");
+        }
+
+        $current['desktop'] = array_replace_recursive($current['desktop'], array_filter([
+            'sidebar_width' => $validated['desktop']['sidebar_width'] ?? null,
+            'sidebar_bg_start' => $validated['desktop']['sidebar_bg_start'] ?? null,
+            'sidebar_bg_mid' => $validated['desktop']['sidebar_bg_mid'] ?? null,
+            'sidebar_bg_end' => $validated['desktop']['sidebar_bg_end'] ?? null,
+            'sidebar_text' => $validated['desktop']['sidebar_text'] ?? null,
+            'sidebar_active_rgb' => $validated['desktop']['sidebar_active_rgb'] ?? null,
+            'show_brand_text' => $request->boolean('desktop.show_brand_text'),
+            'show_user_footer' => $request->boolean('desktop.show_user_footer'),
+        ], fn ($v) => $v !== null));
+
+        $current['mobile'] = array_replace_recursive($current['mobile'], [
+            'bottom_height' => $validated['mobile']['bottom_height'] ?? $current['mobile']['bottom_height'],
+            'show_currency_bar' => $request->boolean('mobile.show_currency_bar'),
+            'show_bottom_nav' => $request->boolean('mobile.show_bottom_nav'),
+            'bottom_items' => array_values(array_filter($validated['mobile']['bottom_items'] ?? [], fn ($id) => in_array($id, $catalogIds, true))),
+            'more_items' => array_values(array_filter($validated['mobile']['more_items'] ?? [], fn ($id) => in_array($id, $catalogIds, true))),
+        ]);
+
+        $current['topbar'] = array_replace_recursive($current['topbar'], [
+            'height' => $validated['topbar']['height'] ?? $current['topbar']['height'],
+            'show_locale' => $request->boolean('topbar.show_locale'),
+            'show_theme_toggle' => $request->boolean('topbar.show_theme_toggle'),
+            'show_brand_desktop' => $request->boolean('topbar.show_brand_desktop'),
+            'show_profile_menu' => $request->boolean('topbar.show_profile_menu'),
+        ]);
+
+        $navbar->save($current);
 
         return back()->with('success', __('messages.saved'));
     }

@@ -14,6 +14,11 @@
             <a href="{{ route('settings.branding') }}" class="list-group-item list-group-item-action {{ request()->routeIs('settings.branding*') ? 'active' : '' }}">
                 <i class="ti ti-palette me-2"></i>{{ __('settings.branding') }}
             </a>
+            @if(is_super_admin())
+            <a href="{{ route('settings.navbar') }}" class="list-group-item list-group-item-action {{ request()->routeIs('settings.navbar*') ? 'active' : '' }}">
+                <i class="ti ti-layout-navbar me-2"></i>{{ __('settings.navbar') }}
+            </a>
+            @endif
             @endif
             @if(can_access('settings.edit'))
             <a href="{{ route('settings.departments.index') }}" class="list-group-item list-group-item-action {{ request()->routeIs('settings.departments.*') ? 'active' : '' }}">

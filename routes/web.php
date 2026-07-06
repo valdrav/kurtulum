@@ -53,7 +53,7 @@ Route::prefix('install')->name('install.')->group(function () {
 // Auth
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/manifest.webmanifest', ManifestController::class)->name('manifest');
 Route::get('/media/{path}', [PublicMediaController::class, 'show'])
     ->where('path', '.*')
@@ -231,6 +231,10 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/company', [SettingsController::class, 'update'])->middleware('permission:settings.edit')->name('company.update');
         Route::get('/branding', [SettingsController::class, 'branding'])->name('branding');
         Route::put('/branding', [SettingsController::class, 'updateBranding'])->middleware('permission:settings.edit')->name('branding.update');
+        Route::middleware('role:super-admin')->group(function () {
+            Route::get('/navbar', [SettingsController::class, 'navbar'])->name('navbar');
+            Route::put('/navbar', [SettingsController::class, 'updateNavbar'])->name('navbar.update');
+        });
         Route::get('/security', [SettingsController::class, 'security'])->name('security');
         Route::put('/security', [SettingsController::class, 'updateSecurity'])->middleware('permission:settings.edit')->name('security.update');
         Route::get('/mail', [SettingsController::class, 'mail'])->name('mail');

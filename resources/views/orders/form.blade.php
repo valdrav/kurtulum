@@ -87,7 +87,7 @@ $items = old('items', $order->exists ? $order->items->map(fn($i) => [
             </div>
             <p class="text-muted small">{{ __('orders.trade_items_hint') }}</p>
 
-            <div id="items">
+            <div id="items" class="ef-form-scroll">
                 <datalist id="product-catalog">
                     @foreach($products ?? [] as $p)
                     <option value="{{ $p->name }}">{{ $p->sku ? $p->sku.' — ' : '' }}{{ $p->name }}</option>
