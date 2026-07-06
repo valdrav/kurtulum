@@ -251,15 +251,15 @@ class ShipmentController extends Controller
             ->latest()->get();
 
         return $csv->download('sevkiyatlar-' . now()->format('Y-m-d') . '.csv', [
-            'Sevkiyat No', 'Sipariş', 'Müşteri', 'Mod', 'Durum', 'ETD', 'ETA', 'Maliyet',
+            'Sevkiyat No', 'Sipariş', 'Müşteri', 'Mod', 'Durum', 'ATD', 'ATA', 'Maliyet',
         ], $shipments->map(fn (Shipment $s) => [
             $s->shipment_number,
             $s->order?->order_number ?? '',
             $s->customer?->company_name ?? '',
             __('logistics.' . $s->transport_mode),
             $s->statusDisplay(),
-            $s->etd?->format('d.m.Y') ?? '',
-            $s->eta?->format('d.m.Y') ?? '',
+            $s->atd?->format('d.m.Y') ?? '',
+            $s->ata?->format('d.m.Y') ?? '',
             $s->total_cost,
         ]));
     }

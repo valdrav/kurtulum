@@ -23,6 +23,8 @@ class NavbarConfigService
             ['id' => 'finance', 'route' => 'finance.index', 'icon' => 'ti-currency-lira', 'label' => 'app.finance', 'perm' => 'finance.view', 'mobile_label' => 'Finans'],
             ['id' => 'documents', 'route' => 'documents.index', 'icon' => 'ti-files', 'label' => 'app.documents', 'perm' => 'documents.view'],
             ['id' => 'tasks', 'route' => 'tasks.index', 'icon' => 'ti-checklist', 'label' => 'app.tasks', 'perm' => 'tasks.view', 'mobile_label' => 'Görev'],
+            ['id' => 'schedules', 'route' => 'schedules.index', 'icon' => 'ti-calendar-week', 'label' => 'schedules.title', 'perm' => 'schedules.access'],
+            ['id' => 'hr', 'route' => 'hr.index', 'icon' => 'ti-id-badge-2', 'label' => 'hr.title', 'perm' => 'hr.access'],
             ['id' => 'reports', 'route' => 'reports.index', 'icon' => 'ti-chart-bar', 'label' => 'app.reports', 'perm' => 'reports.view'],
             ['id' => 'emails', 'route' => 'emails.index', 'icon' => 'ti-mail', 'label' => 'app.emails', 'perm' => 'emails.view'],
             ['id' => 'doc_tools', 'route' => 'documents.tools.index', 'icon' => 'ti-file-settings', 'label' => 'documents.tools.title', 'perm' => 'documents.view'],

@@ -55,10 +55,8 @@
                     </div>
                     <div class="col-md-6">
                         <div class="row g-2">
-                            <div class="col-6"><div class="border rounded p-2 text-center"><div class="text-muted small">{{ __('logistics.etd') }}</div><strong>{{ $shipment->etd?->format('d.m.Y') ?? '-' }}</strong></div></div>
-                            <div class="col-6"><div class="border rounded p-2 text-center"><div class="text-muted small">{{ __('logistics.eta') }}</div><strong>{{ $shipment->eta?->format('d.m.Y') ?? '-' }}</strong></div></div>
-                            <div class="col-6"><div class="border rounded p-2 text-center"><div class="text-muted small">{{ __('logistics.atd') }}</div><strong>{{ $shipment->atd?->format('d.m.Y') ?? '-' }}</strong></div></div>
-                            <div class="col-6"><div class="border rounded p-2 text-center"><div class="text-muted small">{{ __('logistics.ata') }}</div><strong>{{ $shipment->ata?->format('d.m.Y') ?? '-' }}</strong></div></div>
+                            <div class="col-6"><div class="border rounded p-2 text-center"><div class="text-muted small">{{ __('logistics.atd') }}</div><strong>{{ $shipment->atd?->format('d.m.Y H:i') ?? '-' }}</strong></div></div>
+                            <div class="col-6"><div class="border rounded p-2 text-center"><div class="text-muted small">{{ __('logistics.ata') }}</div><strong>{{ $shipment->ata?->format('d.m.Y H:i') ?? '-' }}</strong></div></div>
                         </div>
                     </div>
                 </div>
@@ -70,7 +68,7 @@
             <div class="card-header"><h3 class="card-title">Multimodal</h3></div>
             <div class="table-responsive">
                 <table class="table table-vcenter card-table table-modern">
-                    <thead><tr><th>#</th><th>Mod</th><th>{{ __('logistics.origin') }}</th><th>{{ __('logistics.destination') }}</th><th>{{ __('logistics.eta') }}</th><th>{{ __('app.status') }}</th></tr></thead>
+                    <thead><tr><th>#</th><th>Mod</th><th>{{ __('logistics.origin') }}</th><th>{{ __('logistics.destination') }}</th><th>{{ __('logistics.ata') }}</th><th>{{ __('app.status') }}</th></tr></thead>
                     <tbody>
                         @foreach($shipment->legs as $leg)
                         <tr>
@@ -78,7 +76,7 @@
                             <td>{{ __('logistics.'.$leg->transport_mode) }}</td>
                             <td>{{ $leg->origin }}</td>
                             <td>{{ $leg->destination }}</td>
-                            <td>{{ $leg->eta?->format('d.m.Y') ?? '-' }}</td>
+                            <td>{{ $leg->ata?->format('d.m.Y') ?? ($leg->atd?->format('d.m.Y') ?? '-') }}</td>
                             <td>{{ status_label($leg->status ?? 'pending', 'leg') }}</td>
                         </tr>
                         @endforeach

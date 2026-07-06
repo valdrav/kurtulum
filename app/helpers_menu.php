@@ -1,5 +1,14 @@
 <?php
 
+if (! function_exists('is_patron_or_super_admin')) {
+    function is_patron_or_super_admin(): bool
+    {
+        $user = auth()->user();
+
+        return $user && ($user->hasRole('patron') || $user->hasRole('super-admin'));
+    }
+}
+
 if (!function_exists('can_access')) {
     function can_access(string $permission): bool
     {
@@ -10,6 +19,14 @@ if (!function_exists('can_access')) {
         }
 
         if ($user->hasRole('super-admin')) {
+            return true;
+        }
+
+        if ($permission === 'hr.access') {
+            return $user->hasRole('patron');
+        }
+
+        if ($permission === 'schedules.access') {
             return true;
         }
 

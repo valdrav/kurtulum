@@ -49,7 +49,7 @@
         'url' => route('shipments.show', $s),
         'title' => $s->shipment_number,
         'subtitle' => $s->customer?->company_name ?? ($s->order?->order_number ?? '—'),
-        'meta' => __('logistics.'.$s->transport_mode).' · ETA: '.($s->eta?->format('d.m.Y') ?? '—'),
+        'meta' => __('logistics.'.$s->transport_mode).' · '.(__('logistics.atd').': '.($s->atd?->format('d.m.Y') ?? '—')),
         'badge' => $s->statusDisplay(),
         'editUrl' => request('trashed') ? null : route('shipments.edit', $s),
         'editPermission' => 'shipments.edit',
@@ -67,7 +67,7 @@
 <div class="card hide-mobile">
     <div class="table-responsive">
         <table class="table table-vcenter card-table table-striped table-modern">
-            <thead><tr><th>No</th><th>{{ __('app.orders') }}</th><th>Mod</th><th>{{ __('app.customers') }}</th><th>{{ __('logistics.etd') }}</th><th>{{ __('logistics.eta') }}</th><th>{{ __('app.status') }}</th><th class="ef-table-actions"></th></tr></thead>
+            <thead><tr><th>No</th><th>{{ __('app.orders') }}</th><th>Mod</th><th>{{ __('app.customers') }}</th><th>{{ __('logistics.atd') }}</th><th>{{ __('logistics.ata') }}</th><th>{{ __('app.status') }}</th><th class="ef-table-actions"></th></tr></thead>
             <tbody>
                 @forelse($shipments as $s)
                 <tr>
@@ -77,8 +77,8 @@
                     <td>@if($s->order)<a href="{{ route('orders.show', $s->order) }}">{{ $s->order->order_number }}</a>@else — @endif</td>
                     <td><span class="badge bg-{{ config('ticari.transport_modes.'.$s->transport_mode.'.color') }}-lt">{{ __('logistics.'.$s->transport_mode) }}</span></td>
                     <td>{{ $s->customer?->company_name ?? '-' }}</td>
-                    <td>{{ $s->etd?->format('d.m.Y H:i') ?? '-' }}</td>
-                    <td>{{ $s->eta?->format('d.m.Y H:i') ?? '-' }}</td>
+                    <td>{{ $s->atd?->format('d.m.Y H:i') ?? '-' }}</td>
+                    <td>{{ $s->ata?->format('d.m.Y H:i') ?? '-' }}</td>
                     <td><span class="badge">{{ $s->statusDisplay() }}</span></td>
                     <td class="ef-table-actions text-nowrap text-end">
                         @if(request('trashed'))

@@ -58,8 +58,6 @@
             </button>
         </div>
     </div>
-    <div class="col-md-3 mb-3"><label class="form-label">{{ __('logistics.etd') }}</label><input type="datetime-local" name="etd" class="form-control" value="{{ old('etd', $shipment->etd?->format('Y-m-d\TH:i')) }}"></div>
-    <div class="col-md-3 mb-3"><label class="form-label">{{ __('logistics.eta') }}</label><input type="datetime-local" name="eta" class="form-control" value="{{ old('eta', $shipment->eta?->format('Y-m-d\TH:i')) }}"></div>
     <div class="col-md-3 mb-3"><label class="form-label">{{ __('logistics.atd') }}</label><input type="datetime-local" name="atd" class="form-control" value="{{ old('atd', $shipment->atd?->format('Y-m-d\TH:i')) }}"></div>
     <div class="col-md-3 mb-3"><label class="form-label">{{ __('logistics.ata') }}</label><input type="datetime-local" name="ata" class="form-control" value="{{ old('ata', $shipment->ata?->format('Y-m-d\TH:i')) }}"></div>
     <div class="col-md-4 mb-3 sea-field"><label class="form-label">{{ __('logistics.bl_number') }}</label><input type="text" name="bl_number" class="form-control" value="{{ old('bl_number', $shipment->bl_number) }}"></div>

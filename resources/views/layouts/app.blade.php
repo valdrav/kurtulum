@@ -73,6 +73,9 @@
                     <div class="text-muted small text-truncate">{{ auth()->user()->email }}</div>
                 </div>
             </div>
+            <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-light w-100 mt-2">
+                <i class="ti ti-user me-1"></i>{{ __('app.profile') }}
+            </a>
             <form action="{{ route('logout') }}" method="POST" class="mt-2">
                 @csrf
                 <button type="submit" class="btn btn-sm btn-outline-light w-100">
@@ -137,19 +140,19 @@
                     <i class="ti ti-{{ ($currentTheme ?? 'light') === 'light' ? 'moon' : 'sun' }}"></i>
                 </a>
                 @endif
-                @if(navbar()->showTopbarFlag('show_profile_menu'))
                 <div class="dropdown">
-                    <button class="ef-avatar-btn" data-bs-toggle="dropdown">
+                    <button class="ef-avatar-btn" data-bs-toggle="dropdown" aria-label="{{ __('app.profile') }}">
                         @include('partials.user-avatar', ['user' => auth()->user(), 'size' => 'sm'])
                     </button>
                     <div class="dropdown-menu dropdown-menu-end">
                         <a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="ti ti-user me-2"></i>{{ __('app.profile') }}</a>
+                        @if(navbar()->showTopbarFlag('show_profile_menu'))
                         <a class="dropdown-item" href="{{ route('emails.accounts') }}"><i class="ti ti-mail me-2"></i>E-posta Hesaplarım</a>
+                        @endif
                         <div class="dropdown-divider"></div>
                         <form action="{{ route('logout') }}" method="POST">@csrf<button type="submit" class="dropdown-item text-danger"><i class="ti ti-logout me-2"></i>{{ __('app.logout') }}</button></form>
                     </div>
                 </div>
-                @endif
             </div>
         </header>
         @endauth

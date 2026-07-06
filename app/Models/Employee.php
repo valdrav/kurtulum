@@ -6,6 +6,8 @@ use App\Traits\HasUuid;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
@@ -40,6 +42,21 @@ class Employee extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function hrDetail(): HasOne
+    {
+        return $this->hasOne(EmployeeHrDetail::class);
+    }
+
+    public function hrDocuments(): HasMany
+    {
+        return $this->hasMany(EmployeeHrDocument::class);
+    }
+
+    public function compensations(): HasMany
+    {
+        return $this->hasMany(EmployeeCompensation::class)->latest('payment_date');
     }
 
     public function getFullNameAttribute(): string

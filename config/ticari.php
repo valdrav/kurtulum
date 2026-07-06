@@ -174,4 +174,18 @@ return [
     'update' => [
         'check_url' => env('UPDATE_CHECK_URL', 'https://api.exportflow.app/updates/check'),
     ],
+
+    /** Haftalık / aylık operasyon programı sütunları */
+    'schedule_columns' => [
+        'entry_date' => ['label' => 'Tarih', 'type' => 'date', 'width' => '7%'],
+        'customer' => ['label' => 'Müşteri', 'type' => 'text', 'width' => '12%'],
+        'cargo' => ['label' => 'Yük / Mal', 'type' => 'text', 'width' => '12%'],
+        'tonnage' => ['label' => 'Tonaj', 'type' => 'text', 'width' => '6%'],
+        'origin' => ['label' => 'Çıkış', 'type' => 'text', 'width' => '10%'],
+        'destination' => ['label' => 'Varış', 'type' => 'text', 'width' => '10%'],
+        'carrier' => ['label' => 'Taşıyıcı', 'type' => 'text', 'width' => '10%'],
+        'vehicle' => ['label' => 'Plaka / Gemi', 'type' => 'text', 'width' => '10%'],
+        'status' => ['label' => 'Durum', 'type' => 'text', 'width' => '8%'],
+        'notes' => ['label' => 'Not', 'type' => 'text', 'width' => '15%'],
+    ],
 ];

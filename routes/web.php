@@ -8,6 +8,8 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentToolsController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\HrController;
+use App\Http\Controllers\ScheduleProgramController;
 use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Finance\WalletController;
 use App\Http\Controllers\Install\InstallController;
@@ -180,8 +182,32 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/calendar', [TaskController::class, 'calendar'])->name('calendar.index');
     Route::post('/calendar/events', [TaskController::class, 'storeEvent'])->name('calendar.events.store');
 
-    // Employees
-    Route::resource('employees', EmployeeController::class);
+    // Employees (patron only — use HR module)
+    Route::middleware('role:patron|super-admin')->group(function () {
+        Route::resource('employees', EmployeeController::class);
+    });
+
+    // Personel / İK (patron only)
+    Route::prefix('hr')->name('hr.')->middleware('role:patron|super-admin')->group(function () {
+        Route::get('/', [HrController::class, 'index'])->name('index');
+        Route::get('/create', [HrController::class, 'create'])->name('create');
+        Route::post('/', [HrController::class, 'store'])->name('store');
+        Route::get('/{employee}', [HrController::class, 'show'])->name('show');
+        Route::get('/{employee}/edit', [HrController::class, 'edit'])->name('edit');
+        Route::put('/{employee}', [HrController::class, 'update'])->name('update');
+        Route::delete('/{employee}', [HrController::class, 'destroy'])->name('destroy');
+        Route::post('/{employee}/documents', [HrController::class, 'storeDocument'])->name('documents.store');
+        Route::get('/{employee}/documents/{document}/download', [HrController::class, 'downloadDocument'])->name('documents.download');
+        Route::delete('/{employee}/documents/{document}', [HrController::class, 'destroyDocument'])->name('documents.destroy');
+        Route::post('/{employee}/compensations', [HrController::class, 'storeCompensation'])->name('compensations.store');
+        Route::delete('/{employee}/compensations/{compensation}', [HrController::class, 'destroyCompensation'])->name('compensations.destroy');
+        Route::put('/{employee}/cv', [HrController::class, 'updateCv'])->name('cv.update');
+        Route::get('/{employee}/cv/print', [HrController::class, 'cvPrint'])->name('cv.print');
+    });
+
+    // Haftalık / aylık program (tüm kullanıcılar)
+    Route::get('/schedules/{schedule}/export', [ScheduleProgramController::class, 'export'])->name('schedules.export');
+    Route::resource('schedules', ScheduleProgramController::class);
 
     // Reports
     Route::prefix('reports')->name('reports.')->group(function () {

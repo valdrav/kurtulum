@@ -360,8 +360,8 @@ body.ef-app {
 
 .ef-container {
     width: 100%;
-    max-width: min(1320px, 100%);
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
     padding: 0 1rem;
 }
 
@@ -1777,9 +1777,7 @@ body.ef-app {
     max-width: 100%;
 }
 
-.ef-container {
-    max-width: min(1320px, 100%);
-}
+/* duplicate ef-container rule removed — full width on desktop */
 
 /* Mobile: fixed topbar + bottom dock stay in place while scrolling */
 @media (max-width: 991.98px) {
