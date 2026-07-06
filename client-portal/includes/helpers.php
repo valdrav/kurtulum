@@ -101,7 +101,7 @@ function describe_api_failure(ApiClient $api, array $response): string
         $hint = api_url_hint($api->baseUrl());
 
         return 'Yanlış API adresi (HTTP '.$response['status'].' yönlendirme). '
-            .'api_base_url ana sistemin domain\'i olmalı (ör. https://log.kurtulum.com/api/v1), '
+            .'api_base_url ana sistemin domain\'i olmalı (ör. https://log.kurtulum.com/api), '
             .'portal subdomain\'i veya /ticari/public yolu değil.'
             .($to !== '' ? ' Yönlendirme: '.$to : '')
             .($hint !== '' ? ' '.$hint : '');
@@ -117,7 +117,7 @@ function describe_api_failure(ApiClient $api, array $response): string
 
     if ($response['status'] === 404) {
         return 'API adresi bulunamadı (404): '.$url
-            .'. XAMPP için genelde: http://localhost/ticari/public/api/v1';
+            .'. XAMPP için genelde: http://localhost/ticari/public/api';
     }
 
     if ($response['status'] >= 500) {
@@ -165,7 +165,7 @@ function api_url_hint(string $base): string
     }
 
     if (str_contains($lower, '/ticari/public') || str_contains($lower, '/public/api')) {
-        return 'Canlı sunucuda genelde https://log.kurtulum.com/api/v1 yeterli (/ticari/public gerekmez).';
+        return 'Canlı sunucuda genelde https://log.kurtulum.com/api yeterli (/ticari/public gerekmez).';
     }
 
     if (str_starts_with($lower, 'http://') && ! str_contains($host, 'localhost')) {

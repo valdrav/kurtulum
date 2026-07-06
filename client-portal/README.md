@@ -15,7 +15,7 @@ Ana Ticari sistemine **HTTP API** ile bağlanır. Kendi veritabanı ve migration
 
 2. `includes/config.php` düzenleyin:
    ```php
-   'api_base_url' => 'https://ANA-SISTEM.com/api/v1',  // ana siteniz
+   'api_base_url' => 'https://log.kurtulum.com/api',  // ana siteniz — klasör değil, URL
    'api_token'    => 'ef_...',  // Ayarlar → Harici Sistem API
    ```
 

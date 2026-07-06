@@ -3,8 +3,8 @@
 return [
     'app_name' => 'Müşteri Portalı',
 
-    /** Ana Ticari sistemi — portal subdomain DEĞİL. Canlı: https://log.kurtulum.com/api/v1 */
-    'api_base_url' => 'https://log.kurtulum.com/api/v1',
+    /** Ana Ticari sistemi — portal subdomain DEĞİL. Canlı: https://log.kurtulum.com/api */
+    'api_base_url' => 'https://log.kurtulum.com/api',
 
     /** Ayarlar → Harici Sistem API → bağlantı anahtarını buraya yapıştırın */
     'api_token' => 'ef_BURAYA_ANAHTARINIZ',

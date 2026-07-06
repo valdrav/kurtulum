@@ -39,7 +39,7 @@ class ExternalApiController extends Controller
             ->orderBy('company_name')
             ->get(['id', 'company_name']);
 
-        $baseUrl = url('/api/v1');
+        $baseUrl = url('/api');
 
         return view('settings.external-api', compact('settings', 'connections', 'customers', 'baseUrl'));
     }

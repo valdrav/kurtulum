@@ -7,7 +7,11 @@ use App\Http\Controllers\Api\External\OrderController;
 use App\Http\Controllers\Api\External\ShipmentController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->middleware('external.api')->group(function () {
+/*
+| Harici sistem API — fiziksel klasör yok, Laravel route.
+| Örnek: https://log.kurtulum.com/api/me
+*/
+Route::middleware('external.api')->group(function () {
     Route::get('/me', MeController::class);
     Route::get('/customer', [CustomerController::class, 'show']);
     Route::patch('/customer', [CustomerController::class, 'update']);
