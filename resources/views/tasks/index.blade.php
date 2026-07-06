@@ -82,7 +82,7 @@
     </div>
 </form>
 
-<div class="card d-md-none">
+<div class="card d-lg-none">
     @forelse($tasks as $t)
     @php $prog = $t->checklistProgress(); @endphp
     <div class="card-body border-bottom">
@@ -104,7 +104,7 @@
 <div class="card hide-mobile">
     <div class="table-responsive">
         <table class="table table-vcenter card-table table-modern">
-            <thead><tr><th>{{ __('tasks.title') }}</th><th>{{ __('tasks.description') }}</th><th>{{ __('tasks.priority') }}</th><th>{{ __('app.status') }}</th><th>{{ __('tasks.due_date') }}</th><th>{{ __('tasks.assigned_to') }}</th><th></th></tr></thead>
+            <thead><tr><th>{{ __('tasks.title') }}</th><th>{{ __('tasks.description') }}</th><th>{{ __('tasks.priority') }}</th><th>{{ __('app.status') }}</th><th>{{ __('tasks.due_date') }}</th><th>{{ __('tasks.assigned_to') }}</th><th class="ef-table-actions"></th></tr></thead>
             <tbody>
                 @forelse($tasks as $t)
                 <tr>
@@ -117,9 +117,9 @@
                     <td>{{ task_status_label($t->status) }}</td>
                     <td>{{ $t->due_date?->format('d.m.Y') ?? '-' }}</td>
                     <td>{{ $t->assignee?->name ?? '-' }}</td>
-                    <td>
+                    <td class="ef-table-actions text-nowrap text-end">
                         @if(can_access('tasks.edit'))
-                        <button type="button" class="btn btn-sm btn-ghost-primary" data-bs-toggle="modal" data-bs-target="#taskEdit{{ $t->id }}"><i class="ti ti-edit"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#taskEdit{{ $t->id }}"><i class="ti ti-edit"></i></button>
                         @endif
                     </td>
                 </tr>

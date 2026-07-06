@@ -27,7 +27,7 @@
     </div>
 </div>
 
-<div class="d-md-none ef-mobile-list mb-3">
+<div class="d-lg-none ef-mobile-list mb-3">
     @forelse($employees as $e)
     @include('partials.mobile-record-card', [
         'url' => route('employees.show', $e),
@@ -54,7 +54,7 @@
                     <th>{{ __('settings.departments') }}</th>
                     <th>{{ __('settings.system_access') }}</th>
                     <th>{{ __('app.status') }}</th>
-                    <th></th>
+                    <th class="ef-table-actions"></th>
                 </tr>
             </thead>
             <tbody>
@@ -75,7 +75,7 @@
                         @endif
                     </td>
                     <td><span class="badge badge-status-{{ $e->status }}">{{ __("settings.{$e->status}") ?? $e->status }}</span></td>
-                    <td>
+                    <td class="ef-table-actions text-nowrap text-end">
                         @if(can_access('employees.edit'))
                         <a href="{{ route('employees.edit', $e) }}" class="btn btn-sm btn-outline-primary">{{ __('app.edit') }}</a>
                         @endif
@@ -89,5 +89,5 @@
     </div>
     @if($employees->hasPages())<div class="card-footer">{{ $employees->links() }}</div>@endif
 </div>
-@if($employees->hasPages())<div class="d-md-none mt-2">{{ $employees->links() }}</div>@endif
+@if($employees->hasPages())<div class="d-lg-none mt-2">{{ $employees->links() }}</div>@endif
 @endsection

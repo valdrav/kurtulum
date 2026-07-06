@@ -39,7 +39,7 @@
     @endif
 </div>
 
-<div class="d-md-none ef-mobile-list mb-3">
+<div class="d-lg-none ef-mobile-list mb-3">
     @forelse($orders as $o)
     @php $orderDeleteBlock = request('trashed') ? null : app(\App\Services\RecordDeletionPolicy::class)->orderDeleteBlockReason($o); @endphp
     @include('partials.mobile-record-card', [
@@ -73,7 +73,7 @@
                     <th class="text-end">{{ __('orders.total_purchase') }}</th>
                     <th class="text-end">{{ __('orders.total_sale') }}</th>
                     <th>{{ __('app.status') }}</th>
-                    <th></th>
+                    <th class="ef-table-actions"></th>
                 </tr>
             </thead>
             <tbody>
@@ -92,21 +92,21 @@
                     <td class="text-end">{{ format_money((float) $o->purchase_total, $o->currency, 2) }}</td>
                     <td class="text-end">{{ format_money((float) $o->total_amount, $o->currency, 2) }}</td>
                     <td>{{ status_label($o->status, 'order') }}</td>
-                    <td>
+                    <td class="ef-table-actions text-nowrap text-end">
                         @if(request('trashed'))
                             @if(can_access('orders.delete'))
                             @include('partials.restore-form', ['action' => route('orders.restore', $o->id), 'class' => 'btn btn-sm btn-outline-success', 'iconOnly' => true])
                             @endif
                         @else
                             @if(can_access('orders.edit'))
-                            <a href="{{ route('orders.edit', $o) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
+                            <a href="{{ route('orders.edit', $o) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-edit"></i></a>
                             @endif
                             @if(can_access('orders.delete'))
                             @include('partials.policy-delete-form', [
                                 'action' => route('orders.destroy', $o),
                                 'confirm' => __('orders.delete_confirm'),
                                 'blockReason' => app(\App\Services\RecordDeletionPolicy::class)->orderDeleteBlockReason($o),
-                                'class' => 'btn btn-sm btn-ghost-danger',
+                                'class' => 'btn btn-sm btn-outline-danger',
                                 'iconOnly' => true,
                             ])
                             @endif
@@ -121,5 +121,5 @@
     </div>
     @if($orders->hasPages())<div class="card-footer">{{ $orders->links() }}</div>@endif
 </div>
-@if($orders->hasPages())<div class="d-md-none mt-2">{{ $orders->links() }}</div>@endif
+@if($orders->hasPages())<div class="d-lg-none mt-2">{{ $orders->links() }}</div>@endif
 @endsection

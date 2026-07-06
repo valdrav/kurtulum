@@ -42,7 +42,7 @@
     @endif
 </div>
 
-<div class="d-md-none ef-mobile-list mb-3">
+<div class="d-lg-none ef-mobile-list mb-3">
     @forelse($shipments as $s)
     @php $shipmentDeleteBlock = request('trashed') ? null : app(\App\Services\RecordDeletionPolicy::class)->shipmentDeleteBlockReason($s); @endphp
     @include('partials.mobile-record-card', [
@@ -67,7 +67,7 @@
 <div class="card hide-mobile">
     <div class="table-responsive">
         <table class="table table-vcenter card-table table-striped table-modern">
-            <thead><tr><th>No</th><th>{{ __('app.orders') }}</th><th>Mod</th><th>{{ __('app.customers') }}</th><th>{{ __('logistics.etd') }}</th><th>{{ __('logistics.eta') }}</th><th>{{ __('app.status') }}</th><th></th></tr></thead>
+            <thead><tr><th>No</th><th>{{ __('app.orders') }}</th><th>Mod</th><th>{{ __('app.customers') }}</th><th>{{ __('logistics.etd') }}</th><th>{{ __('logistics.eta') }}</th><th>{{ __('app.status') }}</th><th class="ef-table-actions"></th></tr></thead>
             <tbody>
                 @forelse($shipments as $s)
                 <tr>
@@ -80,21 +80,21 @@
                     <td>{{ $s->etd?->format('d.m.Y H:i') ?? '-' }}</td>
                     <td>{{ $s->eta?->format('d.m.Y H:i') ?? '-' }}</td>
                     <td><span class="badge">{{ $s->statusDisplay() }}</span></td>
-                    <td>
+                    <td class="ef-table-actions text-nowrap text-end">
                         @if(request('trashed'))
                             @if(can_access('shipments.delete'))
                             @include('partials.restore-form', ['action' => route('shipments.restore', $s->id), 'class' => 'btn btn-sm btn-outline-success', 'iconOnly' => true])
                             @endif
                         @else
                             @if(can_access('shipments.edit'))
-                            <a href="{{ route('shipments.edit', $s) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
+                            <a href="{{ route('shipments.edit', $s) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-edit"></i></a>
                             @endif
                             @if(can_access('shipments.delete'))
                             @include('partials.policy-delete-form', [
                                 'action' => route('shipments.destroy', $s),
                                 'confirm' => __('logistics.delete_confirm'),
                                 'blockReason' => app(\App\Services\RecordDeletionPolicy::class)->shipmentDeleteBlockReason($s),
-                                'class' => 'btn btn-sm btn-ghost-danger',
+                                'class' => 'btn btn-sm btn-outline-danger',
                                 'iconOnly' => true,
                             ])
                             @endif
@@ -109,5 +109,5 @@
     </div>
     @if($shipments->hasPages())<div class="card-footer d-flex justify-content-center">{{ $shipments->links() }}</div>@endif
 </div>
-@if($shipments->hasPages())<div class="d-md-none mt-2">{{ $shipments->links() }}</div>@endif
+@if($shipments->hasPages())<div class="d-lg-none mt-2">{{ $shipments->links() }}</div>@endif
 @endsection

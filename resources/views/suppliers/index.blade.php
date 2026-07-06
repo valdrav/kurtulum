@@ -27,7 +27,7 @@
     </div>
 </form>
 
-<div class="d-md-none ef-mobile-list mb-3">
+<div class="d-lg-none ef-mobile-list mb-3">
     @forelse($suppliers as $s)
     @include('partials.mobile-record-card', [
         'url' => route('suppliers.show', $s),
@@ -59,7 +59,7 @@
                     <th class="text-end">{{ __('suppliers.purchase_total') }}</th>
                     <th class="text-end">{{ __('finance.current_balance') }}</th>
                     <th>{{ __('app.status') }}</th>
-                    <th></th>
+                    <th class="ef-table-actions"></th>
                 </tr>
             </thead>
             <tbody>
@@ -76,16 +76,16 @@
                         @else — @endif
                     </td>
                     <td>{{ type_label($s->status, 'suppliers') }}</td>
-                    <td>
+                    <td class="ef-table-actions text-nowrap text-end">
                         @if(can_access('suppliers.edit'))
-                        <a href="{{ route('suppliers.edit', $s) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
+                        <a href="{{ route('suppliers.edit', $s) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-edit"></i></a>
                         @endif
                         @include('partials.crm-delete-button', [
                             'destroyRoute' => route('suppliers.destroy', $s),
                             'confirm' => __('suppliers.delete_confirm'),
                             'blockReason' => $s->deletion_block_reason ?? null,
                             'permission' => 'suppliers.delete',
-                            'class' => 'btn btn-sm btn-ghost-danger',
+                            'class' => 'btn btn-sm btn-outline-danger',
                             'iconOnly' => true,
                         ])
                     </td>
@@ -98,5 +98,5 @@
     </div>
     @if($suppliers->hasPages())<div class="card-footer">{{ $suppliers->links() }}</div>@endif
 </div>
-@if($suppliers->hasPages())<div class="d-md-none mt-2">{{ $suppliers->links() }}</div>@endif
+@if($suppliers->hasPages())<div class="d-lg-none mt-2">{{ $suppliers->links() }}</div>@endif
 @endsection

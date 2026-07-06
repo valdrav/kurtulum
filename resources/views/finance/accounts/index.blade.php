@@ -12,7 +12,7 @@
     @endif
 </div>
 
-<div class="d-md-none ef-mobile-list mb-3">
+<div class="d-lg-none ef-mobile-list mb-3">
     @forelse($accounts as $a)
     @include('partials.mobile-record-card', [
         'url' => route('finance.accounts.show', $a),
@@ -32,7 +32,7 @@
 <div class="card hide-mobile">
     <div class="table-responsive">
         <table class="table table-vcenter card-table table-modern">
-            <thead><tr><th>Kod</th><th>Ad</th><th>Tip</th><th>Para Birimi</th><th>Bakiye</th><th></th></tr></thead>
+            <thead><tr><th>Kod</th><th>Ad</th><th>Tip</th><th>Para Birimi</th><th>Bakiye</th><th class="ef-table-actions"></th></tr></thead>
             <tbody>
                 @forelse($accounts as $a)
                 <tr>
@@ -41,9 +41,9 @@
                     <td>{{ $a->typeLabel() }}</td>
                     <td>{{ $a->currency }}</td>
                     <td class="{{ $a->balance >= 0 ? 'text-green' : 'text-red' }}">{{ number_format($a->balance, 2, ',', '.') }}</td>
-                    <td class="text-end">
+                    <td class="ef-table-actions text-nowrap text-end">
                         @if(can_access('finance.edit'))
-                        <a href="{{ route('finance.accounts.edit', $a) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
+                        <a href="{{ route('finance.accounts.edit', $a) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-edit"></i></a>
                         @endif
                     </td>
                 </tr>
@@ -55,5 +55,5 @@
     </div>
     @if($accounts->hasPages())<div class="card-footer">{{ $accounts->links() }}</div>@endif
 </div>
-@if($accounts->hasPages())<div class="d-md-none mt-2">{{ $accounts->links() }}</div>@endif
+@if($accounts->hasPages())<div class="d-lg-none mt-2">{{ $accounts->links() }}</div>@endif
 @endsection

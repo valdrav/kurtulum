@@ -50,13 +50,13 @@
                             <td>{{ $p->paymentMethod?->name ?? $p->payment_method }}</td>
                             <td>{{ number_format($p->amount, 2, ',', '.') }} {{ $p->currency }}</td>
                             <td class="text-muted small">{{ format_try_equivalent((float)$p->amount, $p->currency, (float)$p->exchange_rate) ?: '—' }}</td>
-                            <td class="text-end">
-                                @if(can_access('finance.edit'))<a href="{{ route('finance.payments.edit', $p) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>@endif
+                            <td class="text-end ef-table-actions text-nowrap">
+                                @if(can_access('finance.edit'))<a href="{{ route('finance.payments.edit', $p) }}" class="btn btn-sm btn-outline-primary ef-table-action-btn"><i class="ti ti-edit"></i></a>@endif
                                 @if(can_access('finance.delete') || can_access('finance.create'))
                                 @include('partials.delete-form', [
                                     'action' => route('finance.payments.destroy', $p),
                                     'confirm' => __('finance.delete_payment_confirm'),
-                                    'class' => 'btn btn-sm btn-ghost-danger',
+                                    'class' => 'btn btn-sm btn-outline-danger ef-table-action-btn',
                                     'iconOnly' => true,
                                 ])
                                 @endif

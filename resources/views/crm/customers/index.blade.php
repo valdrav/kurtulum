@@ -20,7 +20,7 @@
     </div>
 </form>
 
-<div class="d-md-none ef-mobile-list mb-3">
+<div class="d-lg-none ef-mobile-list mb-3">
     @forelse($customers as $c)
     @include('partials.mobile-record-card', [
         'url' => route('customers.show', $c),
@@ -53,7 +53,7 @@
                     <th class="text-end">{{ __('customers.sale_total') }}</th>
                     <th class="text-end">{{ __('finance.current_balance') }}</th>
                     <th>{{ __('app.status') }}</th>
-                    <th></th>
+                    <th class="ef-table-actions"></th>
                 </tr>
             </thead>
             <tbody>
@@ -70,16 +70,16 @@
                         @else — @endif
                     </td>
                     <td>{{ type_label($c->status, 'customers') }}</td>
-                    <td>
+                    <td class="ef-table-actions text-nowrap text-end">
                         @if(can_access('customers.edit'))
-                        <a href="{{ route('customers.edit', $c) }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
+                        <a href="{{ route('customers.edit', $c) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-edit"></i></a>
                         @endif
                         @include('partials.crm-delete-button', [
                             'destroyRoute' => route('customers.destroy', $c),
                             'confirm' => __('customers.delete_confirm'),
                             'blockReason' => $c->deletion_block_reason ?? null,
                             'permission' => 'customers.delete',
-                            'class' => 'btn btn-sm btn-ghost-danger',
+                            'class' => 'btn btn-sm btn-outline-danger',
                             'iconOnly' => true,
                         ])
                     </td>
@@ -92,5 +92,5 @@
     </div>
     @if($customers->hasPages())<div class="card-footer">{{ $customers->links() }}</div>@endif
 </div>
-@if($customers->hasPages())<div class="d-md-none mt-2">{{ $customers->links() }}</div>@endif
+@if($customers->hasPages())<div class="d-lg-none mt-2">{{ $customers->links() }}</div>@endif
 @endsection
