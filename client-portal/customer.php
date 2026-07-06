@@ -12,22 +12,18 @@ $canEdit = can('edit_customer');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit) {
     verify_csrf();
-    $payload = [
+    $response = $api->patch('/customer', [
         'contact_person' => trim((string) ($_POST['contact_person'] ?? '')),
         'email' => trim((string) ($_POST['email'] ?? '')),
         'phone' => trim((string) ($_POST['phone'] ?? '')),
         'city' => trim((string) ($_POST['city'] ?? '')),
         'address' => trim((string) ($_POST['address'] ?? '')),
-    ];
-
-    $response = $api->patch('/customer', $payload);
+    ]);
     if ($response['status'] === 200) {
         flash('success', 'Müşteri bilgileri kaydedildi.');
         redirect('customer.php');
     }
-
-    $message = is_array($response['body']) ? ($response['body']['message'] ?? null) : null;
-    flash('error', $message ?: 'Kayıt başarısız (HTTP '.$response['status'].').');
+    flash('error', api_error_message($response, 'Kayıt başarısız'));
     redirect('customer.php');
 }
 
@@ -43,48 +39,28 @@ $pageTitle = 'Müşteri — '.app_name($config);
 
 ob_start();
 ?>
-<h1>Müşteri bilgileri</h1>
+<?= page_actions('Müşteri bilgileri') ?>
 
 <form method="post">
     <?= csrf_field() ?>
-
-    <div class="field">
-        <label>Firma adı</label>
-        <input type="text" value="<?= e($customer['company_name'] ?? '') ?>" class="readonly" readonly>
-    </div>
-    <div class="field">
-        <label for="contact_person">Yetkili kişi</label>
-        <input type="text" id="contact_person" name="contact_person" value="<?= e($customer['contact_person'] ?? '') ?>" <?= $canEdit ? '' : 'readonly class="readonly"' ?>>
-    </div>
-    <div class="field">
-        <label for="email">E-posta</label>
-        <input type="email" id="email" name="email" value="<?= e($customer['email'] ?? '') ?>" <?= $canEdit ? '' : 'readonly class="readonly"' ?>>
-    </div>
-    <div class="field">
-        <label for="phone">Telefon</label>
-        <input type="text" id="phone" name="phone" value="<?= e($customer['phone'] ?? '') ?>" <?= $canEdit ? '' : 'readonly class="readonly"' ?>>
-    </div>
-    <div class="field">
-        <label for="city">Şehir</label>
-        <input type="text" id="city" name="city" value="<?= e($customer['city'] ?? '') ?>" <?= $canEdit ? '' : 'readonly class="readonly"' ?>>
-    </div>
-    <div class="field">
-        <label for="address">Adres</label>
-        <textarea id="address" name="address" <?= $canEdit ? '' : 'readonly class="readonly"' ?>><?= e($customer['address'] ?? '') ?></textarea>
-    </div>
-
-    <div class="field">
-        <label>Durum / Para birimi</label>
-        <input type="text" value="<?= e(($customer['status'] ?? '').' · '.($customer['currency'] ?? '')) ?>" class="readonly" readonly>
-    </div>
-
-    <div class="actions">
-        <?php if ($canEdit): ?>
-        <button type="submit" class="btn">Kaydet</button>
-        <?php else: ?>
-        <p class="meta">Bu bağlantıda düzenleme izni kapalı — salt okunur.</p>
-        <?php endif; ?>
-        <a href="dashboard.php" class="btn secondary">Geri</a>
+    <div class="card mb-3"><div class="card-body">
+        <dl class="row detail-grid mb-3">
+            <dt class="col-sm-3">Firma</dt><dd class="col-sm-9 fw-semibold"><?= e($customer['company_name'] ?? '') ?></dd>
+            <dt class="col-sm-3">Tip / Durum</dt><dd class="col-sm-9"><?= e(($customer['type'] ?? '—').' · '.($customer['status'] ?? '')) ?></dd>
+            <dt class="col-sm-3">Ülke / Vergi no</dt><dd class="col-sm-9"><?= e(($customer['country'] ?? '—').' · '.($customer['tax_number'] ?? '—')) ?></dd>
+            <dt class="col-sm-3">Para birimi</dt><dd class="col-sm-9"><?= e($customer['currency'] ?? '') ?></dd>
+        </dl>
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Yetkili kişi</label><input type="text" name="contact_person" class="form-control" value="<?= e($customer['contact_person'] ?? '') ?>" <?= $canEdit ? '' : 'readonly' ?>></div>
+            <div class="col-md-6"><label class="form-label">E-posta</label><input type="email" name="email" class="form-control" value="<?= e($customer['email'] ?? '') ?>" <?= $canEdit ? '' : 'readonly' ?>></div>
+            <div class="col-md-6"><label class="form-label">Telefon</label><input type="text" name="phone" class="form-control" value="<?= e($customer['phone'] ?? '') ?>" <?= $canEdit ? '' : 'readonly' ?>></div>
+            <div class="col-md-6"><label class="form-label">Şehir</label><input type="text" name="city" class="form-control" value="<?= e($customer['city'] ?? '') ?>" <?= $canEdit ? '' : 'readonly' ?>></div>
+            <div class="col-12"><label class="form-label">Adres</label><textarea name="address" class="form-control" rows="3" <?= $canEdit ? '' : 'readonly' ?>><?= e($customer['address'] ?? '') ?></textarea></div>
+        </div>
+    </div></div>
+    <div class="d-flex gap-2">
+        <?php if ($canEdit): ?><button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>Kaydet</button><?php else: ?><span class="text-muted">Salt okunur</span><?php endif; ?>
+        <a href="dashboard.php" class="btn btn-outline-secondary">Geri</a>
     </div>
 </form>
 <?php

@@ -31,3 +31,11 @@ require __DIR__.'/Auth.php';
 require __DIR__.'/ApiClient.php';
 
 $api = new ApiClient($config['api_base_url'], $config['api_token']);
+
+if (! empty($_SESSION['user'])) {
+    $lastRefresh = (int) ($_SESSION['api_me_refreshed_at'] ?? 0);
+    if ($lastRefresh === 0 || (time() - $lastRefresh) > 60) {
+        refresh_api_context($api);
+        $_SESSION['api_me_refreshed_at'] = time();
+    }
+}

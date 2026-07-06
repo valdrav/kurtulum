@@ -9,49 +9,79 @@ $pageTitle = $pageTitle ?? app_name($config);
 $activeNav = $activeNav ?? '';
 $user = Auth::user();
 $me = $_SESSION['api_me'] ?? null;
+$companyName = is_array($me) ? ($me['customer']['company_name'] ?? '') : '';
+
+$navItems = [];
+if ($user) {
+    $navItems[] = ['id' => 'dashboard', 'href' => 'dashboard.php', 'icon' => 'ti-dashboard', 'label' => 'Panel'];
+    if (can('customer')) {
+        $navItems[] = ['id' => 'customer', 'href' => 'customer.php', 'icon' => 'ti-building', 'label' => 'Müşteri'];
+    }
+    if (can('orders')) {
+        $navItems[] = ['id' => 'orders', 'href' => 'orders.php', 'icon' => 'ti-shopping-cart', 'label' => 'Siparişler'];
+    }
+    if (can('shipments')) {
+        $navItems[] = ['id' => 'shipments', 'href' => 'shipments.php', 'icon' => 'ti-truck-delivery', 'label' => 'Sevkiyatlar'];
+    }
+    if (can('directory')) {
+        $navItems[] = ['id' => 'directory', 'href' => 'directory.php', 'icon' => 'ti-address-book', 'label' => 'Rehber'];
+    }
+}
 ?>
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-bs-theme="light">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title><?= e($pageTitle) ?></title>
-    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css" rel="stylesheet">
+    <link href="assets/style.css" rel="stylesheet">
 </head>
-<body>
-<div class="wrap">
-    <?php if ($user): ?>
-    <header class="topbar">
-        <div class="brand"><?= e(app_name($config)) ?></div>
-        <nav class="nav">
-            <a href="dashboard.php" class="<?= $activeNav === 'dashboard' ? 'active' : '' ?>">Panel</a>
-            <?php if (can('customer')): ?>
-            <a href="customer.php" class="<?= $activeNav === 'customer' ? 'active' : '' ?>">Müşteri</a>
-            <?php endif; ?>
-            <?php if (can('directory')): ?>
-            <a href="directory.php" class="<?= $activeNav === 'directory' ? 'active' : '' ?>">Rehber</a>
-            <?php endif; ?>
-        </nav>
-        <div class="user">
-            <?php if (is_array($me) && ! empty($me['customer']['company_name'])): ?>
-            <span class="muted"><?= e($me['customer']['company_name']) ?></span>
-            <?php endif; ?>
-            <span><?= e($user) ?></span>
-            <a href="logout.php">Çıkış</a>
+<body class="ef-app">
+<?php if ($user): ?>
+<div class="ef-portal-shell">
+    <aside class="ef-portal-sidebar d-none d-lg-block">
+        <div class="brand-block">
+            <div class="company"><?= e($companyName ?: app_name($config)) ?></div>
+            <div class="subtitle"><?= e(app_name($config)) ?></div>
         </div>
-    </header>
-    <?php endif; ?>
-
-    <main class="main">
-        <?php if ($msg = flash('success')): ?>
-        <div class="alert ok"><?= e($msg) ?></div>
-        <?php endif; ?>
-        <?php if ($msg = flash('error')): ?>
-        <div class="alert err"><?= e($msg) ?></div>
-        <?php endif; ?>
-
-        <?= $content ?? '' ?>
-    </main>
+        <nav class="nav flex-column">
+            <?php foreach ($navItems as $item): ?>
+            <a class="nav-link <?= $activeNav === $item['id'] ? 'active' : '' ?>" href="<?= e($item['href']) ?>">
+                <i class="ti <?= e($item['icon']) ?>"></i> <?= e($item['label']) ?>
+            </a>
+            <?php endforeach; ?>
+        </nav>
+    </aside>
+    <div class="ef-portal-main">
+        <header class="ef-portal-topbar">
+            <div class="fw-semibold text-truncate"><?= e($pageTitle) ?></div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small d-none d-md-inline"><?= e($user) ?></span>
+                <a href="logout.php" class="btn btn-sm btn-outline-secondary"><i class="ti ti-logout me-1"></i>Çıkış</a>
+            </div>
+        </header>
+        <nav class="ef-portal-mobile-nav">
+            <?php foreach ($navItems as $item): ?>
+            <a class="btn btn-sm <?= $activeNav === $item['id'] ? 'btn-primary' : 'btn-ghost-secondary' ?>" href="<?= e($item['href']) ?>"><?= e($item['label']) ?></a>
+            <?php endforeach; ?>
+        </nav>
+        <main class="ef-portal-content">
+            <?php if ($msg = flash('success')): ?><div class="alert alert-success"><?= e($msg) ?></div><?php endif; ?>
+            <?php if ($msg = flash('error')): ?><div class="alert alert-danger"><?= e($msg) ?></div><?php endif; ?>
+            <?= $content ?? '' ?>
+        </main>
+    </div>
 </div>
+<?php else: ?>
+<main>
+    <?php if ($msg = flash('success')): ?><div class="alert alert-success m-3"><?= e($msg) ?></div><?php endif; ?>
+    <?php if ($msg = flash('error')): ?><div class="alert alert-danger m-3"><?= e($msg) ?></div><?php endif; ?>
+    <?= $content ?? '' ?>
+</main>
+<?php endif; ?>
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+<?= $pageScripts ?? '' ?>
 </body>
 </html>

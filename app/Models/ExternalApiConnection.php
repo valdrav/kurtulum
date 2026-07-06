@@ -18,8 +18,11 @@ class ExternalApiConnection extends Model
         'view_directory',
         'edit_directory',
         'view_orders',
+        'edit_orders',
         'view_shipments',
+        'edit_shipments',
         'view_shipment_costs',
+        'edit_shipment_costs',
         'last_used_at',
         'created_by',
     ];
@@ -33,8 +36,11 @@ class ExternalApiConnection extends Model
             'view_directory' => 'boolean',
             'edit_directory' => 'boolean',
             'view_orders' => 'boolean',
+            'edit_orders' => 'boolean',
             'view_shipments' => 'boolean',
+            'edit_shipments' => 'boolean',
             'view_shipment_costs' => 'boolean',
+            'edit_shipment_costs' => 'boolean',
             'last_used_at' => 'datetime',
         ];
     }
@@ -57,8 +63,11 @@ class ExternalApiConnection extends Model
             'directory' => $this->view_directory,
             'edit_directory' => $this->edit_directory,
             'orders' => $this->view_orders,
+            'edit_orders' => $this->edit_orders,
             'shipments' => $this->view_shipments,
+            'edit_shipments' => $this->edit_shipments,
             'shipment_costs' => $this->view_shipment_costs,
+            'edit_shipment_costs' => $this->edit_shipment_costs,
             default => false,
         };
     }
@@ -72,8 +81,11 @@ class ExternalApiConnection extends Model
             'directory' => $this->view_directory,
             'edit_directory' => $this->edit_directory,
             'orders' => $this->view_orders,
+            'edit_orders' => $this->edit_orders,
             'shipments' => $this->view_shipments,
+            'edit_shipments' => $this->edit_shipments,
             'shipment_costs' => $this->view_shipment_costs,
+            'edit_shipment_costs' => $this->edit_shipment_costs,
         ];
     }
 }

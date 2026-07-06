@@ -15,6 +15,10 @@ class MeController extends Controller
             'connection' => $ctx->connection->name,
             'customer' => $this->customerPayload($ctx->customer()),
             'permissions' => $ctx->connection->permissionsSummary(),
+            'stats' => [
+                'orders' => $ctx->allows('orders') ? $ctx->ordersQuery()->count() : 0,
+                'shipments' => $ctx->allows('shipments') ? $ctx->shipmentsQuery()->count() : 0,
+            ],
         ]);
     }
 

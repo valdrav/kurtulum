@@ -34,22 +34,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = 'Giriş — '.app_name($config);
 ob_start();
 ?>
-<div class="login-box">
-    <h1><?= e(app_name($config)) ?></h1>
-    <p class="meta" style="text-align:center;margin-bottom:1.25rem">Güvenli giriş</p>
-    <?php if ($error): ?><div class="alert err"><?= e($error) ?></div><?php endif; ?>
-    <form method="post">
-        <?= csrf_field() ?>
-        <div class="field">
-            <label for="username">Kullanıcı adı</label>
-            <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+<div class="login-page">
+    <div class="card login-card shadow-sm">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <div class="avatar avatar-lg bg-primary-lt text-primary mb-2 mx-auto"><i class="ti ti-building-store fs-2"></i></div>
+                <h1 class="h3 mb-1"><?= e(app_name($config)) ?></h1>
+                <p class="text-muted mb-0">Müşteri portalına giriş</p>
+            </div>
+            <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
+            <form method="post">
+                <?= csrf_field() ?>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Kullanıcı adı</label>
+                    <input type="text" id="username" name="username" class="form-control" autocomplete="username" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Şifre</label>
+                    <input type="password" id="password" name="password" class="form-control" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Giriş yap</button>
+            </form>
         </div>
-        <div class="field">
-            <label for="password">Şifre</label>
-            <input type="password" id="password" name="password" autocomplete="current-password" required>
-        </div>
-        <button type="submit" class="btn" style="width:100%">Giriş yap</button>
-    </form>
+    </div>
 </div>
 <?php
 $content = ob_get_clean();

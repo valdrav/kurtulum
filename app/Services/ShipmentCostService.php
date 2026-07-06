@@ -62,6 +62,10 @@ class ShipmentCostService
         $data['shipment_id'] = $shipment->id;
         $data['user_id'] = auth()->id();
 
+        if ($data['user_id'] === null && app()->bound(ExternalApiContextService::class)) {
+            $data['user_id'] = app(ExternalApiContextService::class)->connection->created_by;
+        }
+
         $cost = ShipmentCost::create($data);
         $this->syncShipmentTotal($shipment);
 

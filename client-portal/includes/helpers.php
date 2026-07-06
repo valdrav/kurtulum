@@ -101,8 +101,8 @@ function describe_api_failure(ApiClient $api, array $response): string
         $hint = api_url_hint($api->baseUrl());
 
         return 'Yanlış API adresi (HTTP '.$response['status'].' yönlendirme). '
-            .'api_base_url ana sistemin domain\'i olmalı (ör. https://log.kurtulum.com/api), '
-            .'portal subdomain\'i veya /ticari/public yolu değil.'
+            .'api_base_url Laravel ana sisteminiz olmalı (ör. https://portal.kurtulum.com/api), '
+            .'log.kurtulum.com (panel) değil.'
             .($to !== '' ? ' Yönlendirme: '.$to : '')
             .($hint !== '' ? ' '.$hint : '');
     }
@@ -155,17 +155,38 @@ function api_url_looks_invalid(array $config): ?string
     return api_url_hint($base);
 }
 
+function api_error_message(array $response, string $fallback): string
+{
+    if (is_array($response['body'] ?? null)) {
+        $msg = $response['body']['message'] ?? null;
+        if (is_string($msg) && $msg !== '') {
+            return $msg;
+        }
+    }
+
+    return $fallback.' (HTTP '.(int) ($response['status'] ?? 0).')';
+}
+
+function fmt_money($amount, string $currency = 'TRY'): string
+{
+    return number_format((float) $amount, 2, ',', '.').' '.$currency;
+}
+
 function api_url_hint(string $base): string
 {
     $host = parse_url($base, PHP_URL_HOST) ?: '';
     $lower = strtolower($base);
 
-    if (str_contains($host, 'portal.')) {
-        return 'portal.* subdomain\'ine değil, ana sisteme (log.kurtulum.com) işaret edin.';
+    if (str_contains($host, 'portal.') && str_contains($lower, '/api')) {
+        return '';
+    }
+
+    if (str_contains($host, 'log.') && str_contains($lower, '/api')) {
+        return 'log.* üzerinde Laravel yok; api_base_url Laravel domain\'ine işaret etmeli (ör. portal.kurtulum.com/api).';
     }
 
     if (str_contains($lower, '/ticari/public') || str_contains($lower, '/public/api')) {
-        return 'Canlı sunucuda genelde https://log.kurtulum.com/api yeterli (/ticari/public gerekmez).';
+        return 'Canlı sunucuda genelde https://portal.kurtulum.com/api yeterli (/ticari/public gerekmez).';
     }
 
     if (str_starts_with($lower, 'http://') && ! str_contains($host, 'localhost')) {
@@ -173,4 +194,129 @@ function api_url_hint(string $base): string
     }
 
     return '';
+}
+
+function fmt_date(?string $value, bool $withTime = false): string
+{
+    if ($value === null || $value === '') {
+        return '—';
+    }
+
+    try {
+        $dt = new DateTimeImmutable($value);
+
+        return $dt->format($withTime ? 'd.m.Y H:i' : 'd.m.Y');
+    } catch (Throwable) {
+        return $value;
+    }
+}
+
+function order_status_label(?string $status): string
+{
+    return match ($status) {
+        'draft' => 'Taslak',
+        'confirmed' => 'Onaylandı',
+        'production' => 'Üretimde',
+        'ready' => 'Hazır',
+        'shipped' => 'Sevk edildi',
+        'delivered' => 'Teslim edildi',
+        'cancelled' => 'İptal',
+        default => $status ?: '—',
+    };
+}
+
+function shipment_status_label(?string $status): string
+{
+    return match ($status) {
+        'draft' => 'Taslak',
+        'booked' => 'Rezerve',
+        'in_transit' => 'Yolda',
+        'at_port' => 'Limanda',
+        'customs' => 'Gümrükte',
+        'delivered' => 'Teslim',
+        'cancelled' => 'İptal',
+        default => $status ?: '—',
+    };
+}
+
+function transport_label(?string $mode): string
+{
+    return match ($mode) {
+        'road' => 'Kara',
+        'sea' => 'Deniz',
+        'air' => 'Hava',
+        'rail' => 'Demiryolu',
+        'multimodal' => 'Multimodal',
+        default => $mode ?: '—',
+    };
+}
+
+function cost_status_label(?string $status): string
+{
+    return match ($status) {
+        'pending' => 'Bekliyor',
+        'paid' => 'Ödendi',
+        'delivered' => 'Teslim',
+        default => $status ?: '—',
+    };
+}
+
+function status_badge(?string $status, string $type = 'order'): string
+{
+    $label = $type === 'shipment' ? shipment_status_label($status) : order_status_label($status);
+    $class = match ($status) {
+        'confirmed', 'delivered', 'paid' => 'bg-success',
+        'cancelled' => 'bg-danger',
+        'draft' => 'bg-secondary',
+        'in_transit', 'production', 'ready', 'shipped', 'pending' => 'bg-primary',
+        default => 'bg-azure',
+    };
+
+    return '<span class="badge '.$class.'">'.$label.'</span>';
+}
+
+function whatsapp_url(?string $phone): ?string
+{
+    if ($phone === null || trim($phone) === '') {
+        return null;
+    }
+
+    $digits = preg_replace('/\D+/', '', $phone);
+
+    return $digits !== '' ? 'https://wa.me/'.$digits : null;
+}
+
+/** @param array<string, mixed> $meta */
+function pagination_html(array $meta, array $query = []): string
+{
+    $current = (int) ($meta['current_page'] ?? 1);
+    $last = (int) ($meta['last_page'] ?? 1);
+
+    if ($last <= 1) {
+        return '';
+    }
+
+    $build = static function (int $page) use ($query): string {
+        $query['page'] = $page;
+        $qs = http_build_query($query);
+
+        return '?'.$qs;
+    };
+
+    $html = '<nav class="mt-3"><ul class="pagination pagination-sm mb-0">';
+    if ($current > 1) {
+        $html .= '<li class="page-item"><a class="page-link" href="'.e($build($current - 1)).'">Önceki</a></li>';
+    }
+    $html .= '<li class="page-item disabled"><span class="page-link">Sayfa '.$current.' / '.$last.'</span></li>';
+    if ($current < $last) {
+        $html .= '<li class="page-item"><a class="page-link" href="'.e($build($current + 1)).'">Sonraki</a></li>';
+    }
+    $html .= '</ul></nav>';
+
+    return $html;
+}
+
+function page_actions(string $html): string
+{
+    return '<div class="page-header d-print-none mb-3"><div class="row align-items-center"><div class="col"><h2 class="page-title mb-0">'.$html.'</h2></div></div></div>';
 }

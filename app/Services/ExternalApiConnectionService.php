@@ -22,9 +22,12 @@ class ExternalApiConnectionService
             'edit_customer' => $data['edit_customer'] ?? false,
             'view_directory' => $data['view_directory'] ?? false,
             'edit_directory' => $data['edit_directory'] ?? false,
-            'view_orders' => $data['view_orders'] ?? false,
-            'view_shipments' => $data['view_shipments'] ?? false,
-            'view_shipment_costs' => $data['view_shipment_costs'] ?? false,
+            'view_orders' => $data['view_orders'] ?? true,
+            'edit_orders' => $data['edit_orders'] ?? false,
+            'view_shipments' => $data['view_shipments'] ?? true,
+            'edit_shipments' => $data['edit_shipments'] ?? false,
+            'view_shipment_costs' => $data['view_shipment_costs'] ?? true,
+            'edit_shipment_costs' => $data['edit_shipment_costs'] ?? false,
             'created_by' => $createdBy,
         ]);
 
@@ -44,9 +47,12 @@ class ExternalApiConnectionService
             'edit_customer' => $data['edit_customer'] ?? false,
             'view_directory' => $data['view_directory'] ?? false,
             'edit_directory' => $data['edit_directory'] ?? false,
-            'view_orders' => $data['view_orders'] ?? false,
-            'view_shipments' => $data['view_shipments'] ?? false,
-            'view_shipment_costs' => $data['view_shipment_costs'] ?? false,
+            'view_orders' => $data['view_orders'] ?? true,
+            'edit_orders' => $data['edit_orders'] ?? false,
+            'view_shipments' => $data['view_shipments'] ?? true,
+            'edit_shipments' => $data['edit_shipments'] ?? false,
+            'view_shipment_costs' => $data['view_shipment_costs'] ?? true,
+            'edit_shipment_costs' => $data['edit_shipment_costs'] ?? false,
         ]);
 
         return $connection->fresh('customer');

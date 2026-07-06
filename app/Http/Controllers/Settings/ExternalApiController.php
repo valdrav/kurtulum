@@ -100,21 +100,27 @@ class ExternalApiController extends Controller
             'view_directory' => 'nullable|boolean',
             'edit_directory' => 'nullable|boolean',
             'view_orders' => 'nullable|boolean',
+            'edit_orders' => 'nullable|boolean',
             'view_shipments' => 'nullable|boolean',
+            'edit_shipments' => 'nullable|boolean',
             'view_shipment_costs' => 'nullable|boolean',
+            'edit_shipment_costs' => 'nullable|boolean',
         ]);
 
         return [
             'name' => $validated['name'],
             'customer_id' => (int) $validated['customer_id'],
             'is_active' => $request->boolean('is_active', true),
-            'view_customer' => $request->boolean('view_customer', true),
-            'edit_customer' => $request->boolean('edit_customer', false),
-            'view_directory' => $request->boolean('view_directory', false),
-            'edit_directory' => $request->boolean('edit_directory', false),
-            'view_orders' => $request->boolean('view_orders', false),
-            'view_shipments' => $request->boolean('view_shipments', false),
-            'view_shipment_costs' => $request->boolean('view_shipment_costs', false),
+            'view_customer' => $request->boolean('view_customer'),
+            'edit_customer' => $request->boolean('edit_customer'),
+            'view_directory' => $request->boolean('view_directory'),
+            'edit_directory' => $request->boolean('edit_directory'),
+            'view_orders' => $request->boolean('view_orders'),
+            'edit_orders' => $request->boolean('edit_orders'),
+            'view_shipments' => $request->boolean('view_shipments'),
+            'edit_shipments' => $request->boolean('edit_shipments'),
+            'view_shipment_costs' => $request->boolean('view_shipment_costs'),
+            'edit_shipment_costs' => $request->boolean('edit_shipment_costs'),
         ];
     }
 }

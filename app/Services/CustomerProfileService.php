@@ -74,7 +74,7 @@ class CustomerProfileService
             ->get();
     }
 
-    protected function ordersQuery(Customer $customer)
+    public function ordersQueryForCustomer(Customer $customer): Builder
     {
         return Order::query()
             ->where(function (Builder $q) use ($customer) {
@@ -83,7 +83,12 @@ class CustomerProfileService
             ->whereNotIn('status', ['cancelled']);
     }
 
-    protected function applyCustomerOrderScope(Builder $query, Customer $customer): void
+    protected function ordersQuery(Customer $customer)
+    {
+        return $this->ordersQueryForCustomer($customer);
+    }
+
+    public function applyCustomerOrderScope(Builder $query, Customer $customer): void
     {
         $query->where(function (Builder $q) use ($customer) {
             $q->where('customer_id', $customer->id)

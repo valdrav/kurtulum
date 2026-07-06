@@ -48,20 +48,38 @@
     </div>
     <div class="col-md-4">
         <label class="form-check">
-            <input type="checkbox" name="view_orders" class="form-check-input" value="1" @checked(old('view_orders', $connection?->view_orders ?? false))>
+            <input type="checkbox" name="view_orders" class="form-check-input" value="1" @checked(old('view_orders', $connection?->view_orders ?? true))>
             <span class="form-check-label">{{ __('external_api.perm_orders') }}</span>
         </label>
     </div>
     <div class="col-md-4">
         <label class="form-check">
-            <input type="checkbox" name="view_shipments" class="form-check-input" value="1" @checked(old('view_shipments', $connection?->view_shipments ?? false))>
+            <input type="checkbox" name="edit_orders" class="form-check-input" value="1" @checked(old('edit_orders', $connection?->edit_orders ?? false))>
+            <span class="form-check-label">{{ __('external_api.perm_edit_orders') }}</span>
+        </label>
+    </div>
+    <div class="col-md-4">
+        <label class="form-check">
+            <input type="checkbox" name="view_shipments" class="form-check-input" value="1" @checked(old('view_shipments', $connection?->view_shipments ?? true))>
             <span class="form-check-label">{{ __('external_api.perm_shipments') }}</span>
         </label>
     </div>
     <div class="col-md-4">
         <label class="form-check">
-            <input type="checkbox" name="view_shipment_costs" class="form-check-input" value="1" @checked(old('view_shipment_costs', $connection?->view_shipment_costs ?? false))>
+            <input type="checkbox" name="edit_shipments" class="form-check-input" value="1" @checked(old('edit_shipments', $connection?->edit_shipments ?? false))>
+            <span class="form-check-label">{{ __('external_api.perm_edit_shipments') }}</span>
+        </label>
+    </div>
+    <div class="col-md-4">
+        <label class="form-check">
+            <input type="checkbox" name="view_shipment_costs" class="form-check-input" value="1" @checked(old('view_shipment_costs', $connection?->view_shipment_costs ?? true))>
             <span class="form-check-label">{{ __('external_api.perm_shipment_costs') }}</span>
+        </label>
+    </div>
+    <div class="col-md-4">
+        <label class="form-check">
+            <input type="checkbox" name="edit_shipment_costs" class="form-check-input" value="1" @checked(old('edit_shipment_costs', $connection?->edit_shipment_costs ?? false))>
+            <span class="form-check-label">{{ __('external_api.perm_edit_shipment_costs') }}</span>
         </label>
     </div>
 </div>

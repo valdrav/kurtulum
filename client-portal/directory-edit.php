@@ -10,12 +10,7 @@ if (! can('edit_directory')) {
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $isEdit = $id > 0;
-$contact = [
-    'first_name' => '',
-    'last_name' => '',
-    'phone' => '',
-    'description' => '',
-];
+$contact = ['first_name' => '', 'last_name' => '', 'phone' => '', 'description' => ''];
 
 if ($isEdit) {
     $response = $api->get('/directory/'.$id);
@@ -40,47 +35,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('directory-edit.php'.($isEdit ? '?id='.$id : ''));
     }
 
-    $response = $isEdit
-        ? $api->put('/directory/'.$id, $payload)
-        : $api->post('/directory', $payload);
+    $response = $isEdit ? $api->put('/directory/'.$id, $payload) : $api->post('/directory', $payload);
 
     if (in_array($response['status'], [200, 201], true)) {
         flash('success', $isEdit ? 'Kayıt güncellendi.' : 'Kayıt eklendi.');
         redirect('directory.php');
     }
-
-    flash('error', 'Kayıt başarısız (HTTP '.$response['status'].').');
+    flash('error', api_error_message($response, 'Kayıt başarısız'));
     redirect('directory-edit.php'.($isEdit ? '?id='.$id : ''));
 }
 
 $activeNav = 'directory';
-$pageTitle = ($isEdit ? 'Düzenle' : 'Yeni kişi').' — '.app_name($config);
+$pageTitle = ($isEdit ? 'Kişi düzenle' : 'Yeni kişi').' — '.app_name($config);
 
 ob_start();
 ?>
-<h1><?= $isEdit ? 'Kişi düzenle' : 'Yeni kişi' ?></h1>
+<?= page_actions($isEdit ? 'Kişi düzenle' : 'Yeni kişi') ?>
 
 <form method="post">
     <?= csrf_field() ?>
-    <div class="field">
-        <label for="first_name">Ad *</label>
-        <input type="text" id="first_name" name="first_name" value="<?= e($contact['first_name'] ?? '') ?>" required>
-    </div>
-    <div class="field">
-        <label for="last_name">Soyad *</label>
-        <input type="text" id="last_name" name="last_name" value="<?= e($contact['last_name'] ?? '') ?>" required>
-    </div>
-    <div class="field">
-        <label for="phone">Telefon *</label>
-        <input type="text" id="phone" name="phone" value="<?= e($contact['phone'] ?? '') ?>" required>
-    </div>
-    <div class="field">
-        <label for="description">Açıklama</label>
-        <textarea id="description" name="description"><?= e($contact['description'] ?? '') ?></textarea>
-    </div>
-    <div class="actions">
-        <button type="submit" class="btn">Kaydet</button>
-        <a href="directory.php" class="btn secondary">İptal</a>
+    <div class="card mb-3"><div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Ad *</label><input type="text" name="first_name" class="form-control" value="<?= e($contact['first_name'] ?? '') ?>" required></div>
+            <div class="col-md-6"><label class="form-label">Soyad *</label><input type="text" name="last_name" class="form-control" value="<?= e($contact['last_name'] ?? '') ?>" required></div>
+            <div class="col-md-6"><label class="form-label">Telefon *</label><input type="text" name="phone" class="form-control" value="<?= e($contact['phone'] ?? '') ?>" required></div>
+            <div class="col-12"><label class="form-label">Açıklama</label><textarea name="description" class="form-control" rows="3"><?= e($contact['description'] ?? '') ?></textarea></div>
+        </div>
+    </div></div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>Kaydet</button>
+        <a href="directory.php" class="btn btn-outline-secondary">İptal</a>
     </div>
 </form>
 <?php
