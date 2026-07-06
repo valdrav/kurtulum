@@ -27,6 +27,8 @@ class User extends Authenticatable
         'phone',
         'avatar',
         'is_active',
+        'user_type',
+        'customer_id',
         'department_id',
     ];
 
@@ -47,6 +49,26 @@ class User extends Authenticatable
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function portalCustomer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
+    public function portalAccess(): HasOne
+    {
+        return $this->hasOne(CustomerPortalAccess::class);
+    }
+
+    public function isPortalUser(): bool
+    {
+        return $this->user_type === 'portal';
+    }
+
+    public function isStaffUser(): bool
+    {
+        return $this->user_type !== 'portal';
     }
 
     public function employee(): HasOne

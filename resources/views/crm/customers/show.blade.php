@@ -39,6 +39,7 @@
 
 <div class="row g-3">
     <div class="col-lg-4">
+        @include('crm.customers._portal-access')
         <div class="card mb-3"><div class="card-body">
             <h3 class="h4 mb-2">{{ $customer->company_name }}</h3>
             @if($customer->contact_person)<p class="text-muted mb-2">{{ $customer->contact_person }}</p>@endif

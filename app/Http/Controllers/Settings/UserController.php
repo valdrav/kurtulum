@@ -23,6 +23,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $users = User::with(['roles', 'department'])
+            ->where('user_type', 'staff')
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")->orWhere('email', 'like', "%{$s}%");
             }))
@@ -31,14 +32,14 @@ class UserController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::where('name', '!=', 'portal-customer')->orderBy('name')->get();
 
         return view('settings.users.index', compact('users', 'roles'));
     }
 
     public function create()
     {
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::where('name', '!=', 'portal-customer')->orderBy('name')->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
 
         return view('settings.users.form', [
@@ -61,6 +62,7 @@ class UserController extends Controller
             'locale' => $validated['locale'] ?? 'tr',
             'theme' => $validated['theme'] ?? 'light',
             'is_active' => $request->boolean('is_active', true),
+            'user_type' => 'staff',
             'email_verified_at' => now(),
         ]);
 
@@ -71,7 +73,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::where('name', '!=', 'portal-customer')->orderBy('name')->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
 
         return view('settings.users.form', compact('user', 'roles', 'departments'));

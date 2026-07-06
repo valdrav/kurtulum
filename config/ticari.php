@@ -175,6 +175,11 @@ return [
         'check_url' => env('UPDATE_CHECK_URL', 'https://api.exportflow.app/updates/check'),
     ],
 
+    'portal' => [
+        /** Opsiyonel müşteri portalı alt alan adı (ör. musteri.kurtulum.com) */
+        'host' => env('PORTAL_HOST'),
+    ],
+
     /** Haftalık / aylık operasyon programı sütunları */
     'schedule_columns' => [
         'entry_date' => ['label' => 'Tarih', 'type' => 'date', 'width' => '7%'],

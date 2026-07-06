@@ -61,7 +61,7 @@ class CustomerController extends Controller
 
     public function show(Customer $customer, OrderFinanceService $orderFinance, CustomerProfileService $profile, CrmDeletionService $deletion)
     {
-        $customer->load(['contacts', 'activities.user', 'documents', 'account']);
+        $customer->load(['contacts', 'activities.user', 'documents', 'account', 'portalAccess.user']);
         $account = $customer->account ?? $orderFinance->ensureCustomerAccount($customer);
         $summary = $profile->summary($customer);
         $orders = $profile->orders($customer);

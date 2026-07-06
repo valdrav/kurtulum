@@ -24,6 +24,7 @@ class NavbarConfigService
             ['id' => 'documents', 'route' => 'documents.index', 'icon' => 'ti-files', 'label' => 'app.documents', 'perm' => 'documents.view'],
             ['id' => 'tasks', 'route' => 'tasks.index', 'icon' => 'ti-checklist', 'label' => 'app.tasks', 'perm' => 'tasks.view', 'mobile_label' => 'Görev'],
             ['id' => 'schedules', 'route' => 'schedules.index', 'icon' => 'ti-calendar-week', 'label' => 'schedules.title', 'perm' => 'schedules.access'],
+            ['id' => 'directory', 'route' => 'directory.index', 'icon' => 'ti-address-book', 'label' => 'directory.title', 'perm' => 'directory.view'],
             ['id' => 'hr', 'route' => 'hr.index', 'icon' => 'ti-id-badge-2', 'label' => 'hr.title', 'perm' => 'hr.access'],
             ['id' => 'reports', 'route' => 'reports.index', 'icon' => 'ti-chart-bar', 'label' => 'app.reports', 'perm' => 'reports.view'],
             ['id' => 'emails', 'route' => 'emails.index', 'icon' => 'ti-mail', 'label' => 'app.emails', 'perm' => 'emails.view'],

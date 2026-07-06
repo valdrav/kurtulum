@@ -33,7 +33,12 @@ class LoginController extends Controller
                 return back()->withErrors(['email' => __('auth.inactive')]);
             }
             $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'));
+
+            $home = $user->isPortalUser()
+                ? route('portal.dashboard')
+                : route('dashboard');
+
+            return redirect()->intended($home);
         }
 
         return back()->withErrors(['email' => __('auth.failed')])->onlyInput('email');

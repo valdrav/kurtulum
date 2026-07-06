@@ -94,4 +94,9 @@ class Customer extends Model
     {
         return $this->morphMany(Task::class, 'taskable');
     }
+
+    public function portalAccess(): HasOne
+    {
+        return $this->hasOne(CustomerPortalAccess::class);
+    }
 }

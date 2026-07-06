@@ -3,7 +3,9 @@
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Crm\CustomerController;
+use App\Http\Controllers\Crm\CustomerPortalController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentToolsController;
 use App\Http\Controllers\EmailController;
@@ -62,16 +64,30 @@ Route::get('/media/{path}', [PublicMediaController::class, 'show'])
     ->name('media.show');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
     Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
     Route::get('/theme/{theme}', [ThemeController::class, 'switch'])->name('theme.switch');
+
+    Route::middleware('portal')->prefix('portal')->name('portal.')->group(function () {
+        require __DIR__.'/portal.php';
+    });
+
+    Route::middleware('staff')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // CRM
     Route::resource('customers', CustomerController::class);
+    Route::post('/customers/{customer}/portal', [CustomerPortalController::class, 'store'])->name('customers.portal.store');
+    Route::put('/customers/{customer}/portal', [CustomerPortalController::class, 'update'])->name('customers.portal.update');
+    Route::delete('/customers/{customer}/portal', [CustomerPortalController::class, 'destroy'])->name('customers.portal.destroy');
+
+    // Rehber
+    Route::get('/directory/export', [DirectoryController::class, 'export'])->middleware('permission:directory.view')->name('directory.export');
+    Route::get('/directory/import', [DirectoryController::class, 'importForm'])->middleware('permission:directory.import')->name('directory.import');
+    Route::post('/directory/import', [DirectoryController::class, 'import'])->middleware('permission:directory.import')->name('directory.import.store');
+    Route::resource('directory', DirectoryController::class)->except(['show'])->parameters(['directory' => 'directory']);
 
     // Suppliers
     Route::post('/suppliers/{supplier}/backfill-orders', [SupplierController::class, 'backfillOrders'])->name('suppliers.backfill-orders');
@@ -319,5 +335,6 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/lookups/{lookupType}/values', [ModuleController::class, 'storeLookupValue'])->name('lookups.values.store');
             Route::delete('/lookups/values/{lookupValue}', [ModuleController::class, 'destroyLookupValue'])->name('lookups.values.destroy');
         });
+    });
     });
 });

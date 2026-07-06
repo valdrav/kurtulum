@@ -15,7 +15,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $modules = [
             'dashboard', 'customers', 'suppliers', 'orders', 'shipments',
             'finance', 'documents', 'tasks', 'employees', 'reports',
-            'notifications', 'emails', 'settings', 'users', 'ai',
+            'notifications', 'emails', 'settings', 'users', 'ai', 'directory',
         ];
 
         $actions = ['view', 'create', 'edit', 'delete', 'export'];
@@ -64,6 +64,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'reports.view', 'reports.export',
             'emails.view',
             'notifications.view',
+            'directory.view', 'directory.create', 'directory.edit', 'directory.delete', 'directory.import', 'directory.export',
         ]);
+
+        Role::firstOrCreate(['name' => 'portal-customer']);
     }
 }

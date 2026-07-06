@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Müşteri Portalı',
+    'dashboard' => 'Panel',
+    'my_orders' => 'Siparişlerim',
+    'my_shipments' => 'Sevkiyatlarım',
+    'shipment_costs' => 'Sevkiyat Masrafları',
+    'my_profile' => 'Bilgilerim',
+    'directory' => 'Rehber',
+    'access_title' => 'Portal Erişimi',
+    'access_saved' => 'Portal erişim ayarları kaydedildi.',
+    'access_revoked' => 'Portal erişimi kapatıldı.',
+    'access_active' => 'Portal aktif',
+    'access_inactive' => 'Portal kapalı',
+    'portal_email' => 'Portal giriş e-postası',
+    'portal_password' => 'Portal şifresi',
+    'portal_password_hint' => 'Boş bırakırsanız mevcut şifre korunur.',
+    'permissions' => 'Görüntüleme izinleri',
+    'perm_orders' => 'Kendi siparişlerini görebilir',
+    'perm_shipments' => 'Kendi sevkiyatlarını görebilir',
+    'perm_shipment_costs' => 'Kendi sevkiyat masraflarını görebilir',
+    'perm_directory' => 'Rehberi görebilir',
+    'perm_edit_profile' => 'Kendi bilgilerini düzenleyebilir',
+    'security_note' => 'Müşteri yalnızca kendi verilerini görür. Finans, diğer müşteriler ve sistem ayarlarına erişemez.',
+    'total_cost' => 'Toplam masraf',
+    'no_costs' => 'Masraf kaydı yok.',
+];
