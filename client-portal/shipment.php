@@ -76,7 +76,11 @@ ob_start();
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h3 class="card-title mb-0">Masraflar</h3>
-        <?php if ($canEditCosts): ?><a href="cost-edit.php?shipment_id=<?= urlencode($id) ?>" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>Yeni masraf</a><?php endif; ?>
+        <?php if ($canEditCosts): ?>
+        <a href="cost-edit.php?shipment_id=<?= urlencode($id) ?>" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>Yeni masraf</a>
+        <?php elseif ($showCosts): ?>
+        <span class="text-muted small">Masraf ekleme izni kapalı</span>
+        <?php endif; ?>
     </div>
     <div class="table-responsive">
         <table class="table table-vcenter card-table mb-0">

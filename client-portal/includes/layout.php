@@ -36,35 +36,39 @@ if ($user) {
     <title><?= e($pageTitle) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css" rel="stylesheet">
-    <link href="assets/style.css" rel="stylesheet">
+    <link href="assets/style.css?v=2" rel="stylesheet">
 </head>
 <body class="ef-app">
 <?php if ($user): ?>
 <div class="ef-portal-shell">
-    <aside class="ef-portal-sidebar d-none d-lg-block">
+    <aside class="ef-portal-sidebar">
         <div class="brand-block">
             <div class="company"><?= e($companyName ?: app_name($config)) ?></div>
             <div class="subtitle"><?= e(app_name($config)) ?></div>
         </div>
-        <nav class="nav flex-column">
+        <nav class="ef-sidebar-nav">
             <?php foreach ($navItems as $item): ?>
-            <a class="nav-link <?= $activeNav === $item['id'] ? 'active' : '' ?>" href="<?= e($item['href']) ?>">
-                <i class="ti <?= e($item['icon']) ?>"></i> <?= e($item['label']) ?>
+            <a class="ef-sidebar-link <?= $activeNav === $item['id'] ? 'active' : '' ?>" href="<?= e($item['href']) ?>">
+                <i class="ti <?= e($item['icon']) ?>"></i>
+                <span><?= e($item['label']) ?></span>
             </a>
             <?php endforeach; ?>
         </nav>
     </aside>
     <div class="ef-portal-main">
         <header class="ef-portal-topbar">
-            <div class="fw-semibold text-truncate"><?= e($pageTitle) ?></div>
-            <div class="d-flex align-items-center gap-2">
+            <div class="text-truncate">
+                <span class="fw-semibold d-lg-none"><?= e(app_name($config)) ?></span>
+                <span class="text-muted small d-none d-lg-inline"><?= e($companyName) ?></span>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
                 <span class="text-muted small d-none d-md-inline"><?= e($user) ?></span>
-                <a href="logout.php" class="btn btn-sm btn-outline-secondary"><i class="ti ti-logout me-1"></i>Çıkış</a>
+                <a href="logout.php" class="btn btn-sm btn-outline-secondary"><i class="ti ti-logout"></i><span class="d-none d-sm-inline ms-1">Çıkış</span></a>
             </div>
         </header>
-        <nav class="ef-portal-mobile-nav">
+        <nav class="ef-portal-mobile-nav" aria-label="Mobil menü">
             <?php foreach ($navItems as $item): ?>
-            <a class="btn btn-sm <?= $activeNav === $item['id'] ? 'btn-primary' : 'btn-ghost-secondary' ?>" href="<?= e($item['href']) ?>"><?= e($item['label']) ?></a>
+            <a class="btn btn-sm <?= $activeNav === $item['id'] ? 'btn-primary' : 'btn-outline-secondary' ?>" href="<?= e($item['href']) ?>"><?= e($item['label']) ?></a>
             <?php endforeach; ?>
         </nav>
         <main class="ef-portal-content">

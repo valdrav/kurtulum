@@ -70,7 +70,13 @@ class ShipmentCostService
         $this->syncShipmentTotal($shipment);
 
         if ($cost->status === 'paid') {
-            app(ShipmentCostTreasuryService::class)->syncPaidStatus($cost->fresh(), 'pending');
+            try {
+                app(ShipmentCostTreasuryService::class)->syncPaidStatus($cost->fresh(), 'pending');
+            } catch (\Throwable) {
+                if (! app()->bound(ExternalApiContextService::class)) {
+                    throw;
+                }
+            }
         }
 
         return $cost;
@@ -82,7 +88,13 @@ class ShipmentCostService
         $data = $this->normalizePayload($data);
         $cost->update($data);
         $cost->refresh();
-        app(ShipmentCostTreasuryService::class)->syncPaidStatus($cost, $previousStatus);
+        try {
+            app(ShipmentCostTreasuryService::class)->syncPaidStatus($cost, $previousStatus);
+        } catch (\Throwable) {
+            if (! app()->bound(ExternalApiContextService::class)) {
+                throw;
+            }
+        }
         $this->syncShipmentTotal($cost->shipment);
 
         return $cost->fresh();

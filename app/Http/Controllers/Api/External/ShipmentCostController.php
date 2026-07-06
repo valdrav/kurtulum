@@ -50,7 +50,14 @@ class ShipmentCostController extends Controller
 
     protected function validateCost(Request $request): array
     {
-        return $request->validate([
+        $request->merge([
+            'expense_date' => $request->input('expense_date') ?: null,
+            'description' => $request->input('description') ?: null,
+            'notes' => $request->input('notes') ?: null,
+            'type' => $request->input('type') ?: 'expense',
+        ]);
+
+        $validated = $request->validate([
             'item_name' => 'required|string|max:255',
             'description' => 'nullable|string|max:2000',
             'amount' => 'required|numeric|min:0',
@@ -60,6 +67,12 @@ class ShipmentCostController extends Controller
             'type' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:5000',
         ]);
+
+        if (empty($validated['expense_date'])) {
+            $validated['expense_date'] = now()->toDateString();
+        }
+
+        return $validated;
     }
 
     protected function payload(ShipmentCost $cost): array

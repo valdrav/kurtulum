@@ -158,13 +158,33 @@ function api_url_looks_invalid(array $config): ?string
 function api_error_message(array $response, string $fallback): string
 {
     if (is_array($response['body'] ?? null)) {
-        $msg = $response['body']['message'] ?? null;
+        $body = $response['body'];
+        $errors = $body['errors'] ?? null;
+        if (is_array($errors) && $errors !== []) {
+            $parts = [];
+            foreach ($errors as $field => $messages) {
+                if (is_array($messages)) {
+                    foreach ($messages as $m) {
+                        $parts[] = is_string($m) ? $m : (string) $field;
+                    }
+                }
+            }
+            if ($parts !== []) {
+                return implode(' ', $parts);
+            }
+        }
+        $msg = $body['message'] ?? null;
         if (is_string($msg) && $msg !== '') {
             return $msg;
         }
     }
 
-    return $fallback.' (HTTP '.(int) ($response['status'] ?? 0).')';
+    $status = (int) ($response['status'] ?? 0);
+    if ($status === 403) {
+        return 'İzin reddedildi. Ana sistemde API bağlantısında ilgili düzenleme izni açık mı?';
+    }
+
+    return $fallback.' (HTTP '.$status.')';
 }
 
 function fmt_money($amount, string $currency = 'TRY'): string

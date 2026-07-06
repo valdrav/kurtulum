@@ -56,20 +56,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'currency' => strtoupper(trim((string) ($_POST['currency'] ?? 'USD'))),
         'expense_date' => trim((string) ($_POST['expense_date'] ?? '')),
         'status' => trim((string) ($_POST['status'] ?? 'pending')),
-        'type' => trim((string) ($_POST['type'] ?? '')),
+        'type' => 'expense',
         'notes' => trim((string) ($_POST['notes'] ?? '')),
     ];
 
-    $response = $isEdit
-        ? $api->patch('/shipment-costs/'.$costId, $payload)
-        : $api->post('/shipments/'.$shipmentId.'/costs', $payload);
+    if ($payload['item_name'] === '') {
+        $formError = 'Kalem adı zorunludur.';
+    } elseif ($payload['amount'] <= 0) {
+        $formError = 'Tutar sıfırdan büyük olmalıdır.';
+    } elseif (strlen($payload['currency']) !== 3) {
+        $formError = 'Para birimi 3 harf olmalıdır (ör. USD, TRY).';
+    } else {
+        if ($payload['expense_date'] === '') {
+            unset($payload['expense_date']);
+        }
+        if ($payload['description'] === '') {
+            unset($payload['description']);
+        }
+        if ($payload['notes'] === '') {
+            unset($payload['notes']);
+        }
 
-    if (in_array($response['status'], [200, 201], true)) {
-        flash('success', $isEdit ? 'Masraf güncellendi.' : 'Masraf eklendi.');
-        redirect('shipment.php?id='.urlencode($shipmentId));
+        $response = $isEdit
+            ? $api->patch('/shipment-costs/'.$costId, $payload)
+            : $api->post('/shipments/'.$shipmentId.'/costs', $payload);
+
+        if (in_array($response['status'], [200, 201], true)) {
+            flash('success', $isEdit ? 'Masraf güncellendi.' : 'Masraf eklendi.');
+            redirect('shipment.php?id='.urlencode($shipmentId));
+        }
+        $formError = api_error_message($response, 'Kayıt başarısız');
     }
-    flash('error', api_error_message($response, 'Kayıt başarısız'));
 }
+
+$formError = $formError ?? null;
 
 $activeNav = 'shipments';
 $pageTitle = ($isEdit ? 'Masraf düzenle' : 'Yeni masraf').' — '.app_name($config);
@@ -78,6 +98,11 @@ ob_start();
 ?>
 <?= page_actions($isEdit ? 'Masraf düzenle' : 'Yeni masraf') ?>
 
+<?php if ($formError): ?><div class="alert alert-danger"><?= e($formError) ?></div><?php endif; ?>
+
+<?php if (! can('edit_shipment_costs')): ?>
+<div class="alert alert-warning">Masraf ekleme izniniz kapalı. Ana sistem → Ayarlar → Harici API → "Sevkiyat masrafı düzenleme" işaretleyip kaydedin.</div>
+<?php else: ?>
 <form method="post">
     <?= csrf_field() ?>
     <div class="card mb-3"><div class="card-body">
@@ -102,6 +127,7 @@ ob_start();
         <a href="shipment.php?id=<?= urlencode($shipmentId) ?>" class="btn btn-outline-secondary">İptal</a>
     </div>
 </form>
+<?php endif; ?>
 <?php
 $content = ob_get_clean();
 require __DIR__.'/includes/layout.php';
