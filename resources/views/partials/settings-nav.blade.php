@@ -67,6 +67,9 @@
             <a href="{{ route('settings.marinetraffic') }}" class="list-group-item list-group-item-action {{ request()->routeIs('settings.marinetraffic*') ? 'active' : '' }}">
                 <i class="ti ti-ship me-2"></i>Gemi Takibi API
             </a>
+            <a href="{{ route('settings.external-api.index') }}" class="list-group-item list-group-item-action {{ request()->routeIs('settings.external-api*') ? 'active' : '' }}">
+                <i class="ti ti-api me-2"></i>{{ __('external_api.title') }}
+            </a>
 
             <div class="list-group-item text-muted text-uppercase small fw-bold border-0 pt-3 pb-1">{{ __('settings.system') }}</div>
             <a href="{{ route('settings.modules.index') }}" class="list-group-item list-group-item-action {{ request()->routeIs('settings.modules.*') ? 'active' : '' }}">

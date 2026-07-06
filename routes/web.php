@@ -286,6 +286,12 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/ai', [SettingsController::class, 'updateAi'])->middleware('permission:settings.edit')->name('ai.update');
         Route::get('/marinetraffic', [SettingsController::class, 'marinetraffic'])->name('marinetraffic');
         Route::put('/marinetraffic', [SettingsController::class, 'updateMarinetraffic'])->middleware('permission:settings.edit')->name('marinetraffic.update');
+        Route::get('/external-api', [\App\Http\Controllers\Settings\ExternalApiController::class, 'index'])->name('external-api.index');
+        Route::put('/external-api', [\App\Http\Controllers\Settings\ExternalApiController::class, 'updateGlobal'])->middleware('permission:settings.edit')->name('external-api.update-global');
+        Route::post('/external-api/connections', [\App\Http\Controllers\Settings\ExternalApiController::class, 'store'])->middleware('permission:settings.edit')->name('external-api.store');
+        Route::put('/external-api/connections/{connection}', [\App\Http\Controllers\Settings\ExternalApiController::class, 'update'])->middleware('permission:settings.edit')->name('external-api.update');
+        Route::delete('/external-api/connections/{connection}', [\App\Http\Controllers\Settings\ExternalApiController::class, 'destroy'])->middleware('permission:settings.edit')->name('external-api.destroy');
+        Route::post('/external-api/connections/{connection}/regenerate', [\App\Http\Controllers\Settings\ExternalApiController::class, 'regenerate'])->middleware('permission:settings.edit')->name('external-api.regenerate');
         Route::get('/audit-log', [SettingsController::class, 'auditLog'])->name('audit-log');
         Route::get('/updates', [SettingsController::class, 'updates'])->name('updates');
         Route::post('/updates', [SettingsController::class, 'applyUpdate'])->middleware('permission:settings.edit')->name('updates.apply');

@@ -59,6 +59,13 @@ if (! function_exists('portal')) {
     }
 }
 
+if (! function_exists('external_api')) {
+    function external_api(): \App\Services\ExternalApiContextService
+    {
+        return app(\App\Services\ExternalApiContextService::class);
+    }
+}
+
 if (! function_exists('whatsapp_url')) {
     function whatsapp_url(?string $phone, ?string $message = null): ?string
     {
