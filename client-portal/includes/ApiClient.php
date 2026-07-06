@@ -70,6 +70,7 @@ final class ApiClient
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_FOLLOWLOCATION => false,
         ];
 
         if ($data !== null) {
@@ -82,11 +83,12 @@ final class ApiClient
         curl_setopt_array($ch, $opts);
         $raw = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $redirectUrl = curl_getinfo($ch, CURLINFO_REDIRECT_URL) ?: null;
         $err = curl_error($ch);
         curl_close($ch);
 
         if ($raw === false) {
-            return ['status' => 0, 'body' => null, 'error' => $err ?: 'Bağlantı hatası'];
+            return ['status' => 0, 'body' => null, 'error' => $err ?: 'Bağlantı hatası', 'raw' => null, 'redirect_url' => null];
         }
 
         $body = json_decode($raw, true);
@@ -96,6 +98,7 @@ final class ApiClient
             'body' => is_array($body) ? $body : null,
             'error' => is_array($body) ? null : ($err ?: (is_string($raw) && $raw !== '' ? 'JSON olmayan yanıt' : null)),
             'raw' => is_array($body) ? null : (is_string($raw) ? substr($raw, 0, 300) : null),
+            'redirect_url' => is_string($redirectUrl) && $redirectUrl !== '' ? $redirectUrl : null,
         ];
     }
 }

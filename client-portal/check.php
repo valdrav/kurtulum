@@ -22,6 +22,11 @@ $checks[] = [
 $url = rtrim($config['api_base_url'] ?? '', '/').'/me';
 $checks[] = ['label' => 'API adresi', 'ok' => $url !== '/me', 'detail' => $url];
 
+$urlWarn = api_url_looks_invalid($config);
+if ($urlWarn !== null) {
+    $checks[] = ['label' => 'Adres uyarısı', 'ok' => false, 'detail' => $urlWarn];
+}
+
 $response = $api->get('/me');
 $checks[] = [
     'label' => 'HTTP yanıtı',

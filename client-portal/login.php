@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = Auth::isLocked() ? Auth::lockMessage() : 'Geçersiz kullanıcı adı veya şifre.';
     } elseif ($tokenError = api_token_looks_invalid($config)) {
         $error = $tokenError;
+    } elseif ($urlError = api_url_looks_invalid($config)) {
+        $error = 'API adresi hatalı: '.$urlError;
     } elseif ($apiError = refresh_api_context($api)) {
         Auth::logout();
         $error = $apiError;

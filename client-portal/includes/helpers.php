@@ -86,7 +86,7 @@ function refresh_api_context(ApiClient $api): ?string
     return describe_api_failure($api, $response);
 }
 
-/** @param array{status: int, body: mixed, error: ?string, raw: ?string} $response */
+/** @param array{status: int, body: mixed, error: ?string, raw: ?string, redirect_url?: ?string} $response */
 function describe_api_failure(ApiClient $api, array $response): string
 {
     $url = $api->baseUrl().'/me';
@@ -94,6 +94,17 @@ function describe_api_failure(ApiClient $api, array $response): string
     if ($response['status'] === 0) {
         return 'Ana sisteme ulaşılamadı: '.($response['error'] ?? 'bağlantı hatası')
             .'. Adres: '.$url;
+    }
+
+    if (in_array($response['status'], [301, 302, 307, 308], true)) {
+        $to = $response['redirect_url'] ?? '';
+        $hint = api_url_hint($api->baseUrl());
+
+        return 'Yanlış API adresi (HTTP '.$response['status'].' yönlendirme). '
+            .'api_base_url ana sistemin domain\'i olmalı (ör. https://log.kurtulum.com/api/v1), '
+            .'portal subdomain\'i veya /ticari/public yolu değil.'
+            .($to !== '' ? ' Yönlendirme: '.$to : '')
+            .($hint !== '' ? ' '.$hint : '');
     }
 
     if ($response['status'] === 503) {
@@ -131,4 +142,35 @@ function api_token_looks_invalid(array $config): ?string
     }
 
     return null;
+}
+
+function api_url_looks_invalid(array $config): ?string
+{
+    $base = rtrim(trim((string) ($config['api_base_url'] ?? '')), '/');
+
+    if ($base === '') {
+        return 'api_base_url boş.';
+    }
+
+    return api_url_hint($base);
+}
+
+function api_url_hint(string $base): string
+{
+    $host = parse_url($base, PHP_URL_HOST) ?: '';
+    $lower = strtolower($base);
+
+    if (str_contains($host, 'portal.')) {
+        return 'portal.* subdomain\'ine değil, ana sisteme (log.kurtulum.com) işaret edin.';
+    }
+
+    if (str_contains($lower, '/ticari/public') || str_contains($lower, '/public/api')) {
+        return 'Canlı sunucuda genelde https://log.kurtulum.com/api/v1 yeterli (/ticari/public gerekmez).';
+    }
+
+    if (str_starts_with($lower, 'http://') && ! str_contains($host, 'localhost')) {
+        return 'Canlı ortamda https:// kullanın.';
+    }
+
+    return '';
 }
