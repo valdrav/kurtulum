@@ -4,10 +4,6 @@ namespace App\Http\Controllers\Api\External;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
-use App\Models\DirectoryContact;
-use App\Models\Order;
-use App\Models\Shipment;
-use Illuminate\Http\Request;
 
 class MeController extends Controller
 {

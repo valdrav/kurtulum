@@ -35,4 +35,6 @@ return [
     'perm_orders' => 'Orders',
     'perm_shipments' => 'Shipments',
     'perm_shipment_costs' => 'Shipment costs',
+    'perm_edit_customer' => 'Edit customer',
+    'perm_edit_directory' => 'Edit directory',
 ];

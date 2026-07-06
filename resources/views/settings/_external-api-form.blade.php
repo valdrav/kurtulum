@@ -30,8 +30,20 @@
     </div>
     <div class="col-md-4">
         <label class="form-check">
+            <input type="checkbox" name="edit_customer" class="form-check-input" value="1" @checked(old('edit_customer', $connection?->edit_customer ?? false))>
+            <span class="form-check-label">{{ __('external_api.perm_edit_customer') }}</span>
+        </label>
+    </div>
+    <div class="col-md-4">
+        <label class="form-check">
             <input type="checkbox" name="view_directory" class="form-check-input" value="1" @checked(old('view_directory', $connection?->view_directory ?? false))>
             <span class="form-check-label">{{ __('external_api.perm_directory') }}</span>
+        </label>
+    </div>
+    <div class="col-md-4">
+        <label class="form-check">
+            <input type="checkbox" name="edit_directory" class="form-check-input" value="1" @checked(old('edit_directory', $connection?->edit_directory ?? false))>
+            <span class="form-check-label">{{ __('external_api.perm_edit_directory') }}</span>
         </label>
     </div>
     <div class="col-md-4">

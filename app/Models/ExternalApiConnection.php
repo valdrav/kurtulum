@@ -14,7 +14,9 @@ class ExternalApiConnection extends Model
         'token_hash',
         'is_active',
         'view_customer',
+        'edit_customer',
         'view_directory',
+        'edit_directory',
         'view_orders',
         'view_shipments',
         'view_shipment_costs',
@@ -27,7 +29,9 @@ class ExternalApiConnection extends Model
         return [
             'is_active' => 'boolean',
             'view_customer' => 'boolean',
+            'edit_customer' => 'boolean',
             'view_directory' => 'boolean',
+            'edit_directory' => 'boolean',
             'view_orders' => 'boolean',
             'view_shipments' => 'boolean',
             'view_shipment_costs' => 'boolean',
@@ -49,7 +53,9 @@ class ExternalApiConnection extends Model
     {
         return match ($feature) {
             'customer' => $this->view_customer,
+            'edit_customer' => $this->edit_customer,
             'directory' => $this->view_directory,
+            'edit_directory' => $this->edit_directory,
             'orders' => $this->view_orders,
             'shipments' => $this->view_shipments,
             'shipment_costs' => $this->view_shipment_costs,
@@ -62,7 +68,9 @@ class ExternalApiConnection extends Model
     {
         return [
             'customer' => $this->view_customer,
+            'edit_customer' => $this->edit_customer,
             'directory' => $this->view_directory,
+            'edit_directory' => $this->edit_directory,
             'orders' => $this->view_orders,
             'shipments' => $this->view_shipments,
             'shipment_costs' => $this->view_shipment_costs,

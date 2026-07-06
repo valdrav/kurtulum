@@ -35,4 +35,6 @@ return [
     'perm_orders' => 'Siparişler',
     'perm_shipments' => 'Sevkiyatlar',
     'perm_shipment_costs' => 'Sevkiyat masrafları',
+    'perm_edit_customer' => 'Müşteri düzenleme',
+    'perm_edit_directory' => 'Rehber düzenleme',
 ];

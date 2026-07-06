@@ -51,7 +51,11 @@
             <tbody class="font-monospace small">
                 <tr><td>GET</td><td>/me</td><td>—</td></tr>
                 <tr><td>GET</td><td>/customer</td><td>{{ __('external_api.perm_customer') }}</td></tr>
+                <tr><td>PATCH</td><td>/customer</td><td>{{ __('external_api.perm_edit_customer') }}</td></tr>
                 <tr><td>GET</td><td>/directory</td><td>{{ __('external_api.perm_directory') }}</td></tr>
+                <tr><td>POST</td><td>/directory</td><td>{{ __('external_api.perm_edit_directory') }}</td></tr>
+                <tr><td>PUT</td><td>/directory/{id}</td><td>{{ __('external_api.perm_edit_directory') }}</td></tr>
+                <tr><td>DELETE</td><td>/directory/{id}</td><td>{{ __('external_api.perm_edit_directory') }}</td></tr>
                 <tr><td>GET</td><td>/orders</td><td>{{ __('external_api.perm_orders') }}</td></tr>
                 <tr><td>GET</td><td>/orders/{id}</td><td>{{ __('external_api.perm_orders') }}</td></tr>
                 <tr><td>GET</td><td>/shipments</td><td>{{ __('external_api.perm_shipments') }}</td></tr>
