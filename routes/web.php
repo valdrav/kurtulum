@@ -63,6 +63,15 @@ Route::get('/media/{path}', [PublicMediaController::class, 'show'])
     ->where('path', '.*')
     ->name('media.show');
 
+// Harici sistem API (Bearer token — giriş/CSRF gerekmez)
+Route::get('/api/ping', fn () => response()->json(['ok' => true, 'message' => 'API erişilebilir']));
+Route::middleware('external.api')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->prefix('api')
+    ->group(function () {
+        require __DIR__.'/external-api.php';
+    });
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
     Route::get('/theme/{theme}', [ThemeController::class, 'switch'])->name('theme.switch');

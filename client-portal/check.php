@@ -91,9 +91,10 @@ $allOk = array_reduce($checks, fn ($c, $i) => $c && ($i['ok'] || ($i['label'] ==
 
         <h2>Ana sistemde yapılacaklar (subdomain değil)</h2>
         <ol class="meta">
+            <li>Önce tarayıcıda: <strong><?= e(rtrim($config['api_base_url'] ?? '', '/')) ?>/ping</strong> → <code>{"ok":true}</code> görmelisiniz</li>
             <li><strong>Ayarlar → Harici Sistem API</strong> → API etkin + müşteri seç + bağlantı oluştur</li>
-            <li>Oluşan <code>ef_...</code> anahtarını subdomain <code>includes/config.php</code> içine yapıştır</li>
-            <li>Ana sistemde bir kez: <code>php artisan migrate</code> (API tabloları için)</li>
+            <li>Anahtarı subdomain <code>includes/config.php</code> içine yapıştır</li>
+            <li>Sunucuda: <code>php artisan route:clear</code></li>
         </ol>
 
         <p class="meta">Subdomain tarafında sadece PHP dosyaları + config.php yeterli.</p>
