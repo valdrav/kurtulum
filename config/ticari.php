@@ -180,17 +180,24 @@ return [
         'host' => env('PORTAL_HOST'),
     ],
 
-    /** Haftalık / aylık operasyon programı sütunları */
+    /** Kullanıcı verilerinin otomatik çevirisi (AI) */
+    'auto_translate' => [
+        'source_locale' => env('AUTO_TRANSLATE_SOURCE', 'tr'),
+    ],
+
+    /** Aylık operasyon programı sütunları */
     'schedule_columns' => [
         'entry_date' => ['label' => 'Tarih', 'type' => 'date', 'width' => '7%'],
-        'customer' => ['label' => 'Müşteri', 'type' => 'text', 'width' => '12%'],
-        'cargo' => ['label' => 'Yük / Mal', 'type' => 'text', 'width' => '12%'],
-        'tonnage' => ['label' => 'Tonaj', 'type' => 'text', 'width' => '6%'],
-        'origin' => ['label' => 'Çıkış', 'type' => 'text', 'width' => '10%'],
-        'destination' => ['label' => 'Varış', 'type' => 'text', 'width' => '10%'],
-        'carrier' => ['label' => 'Taşıyıcı', 'type' => 'text', 'width' => '10%'],
-        'vehicle' => ['label' => 'Plaka / Gemi', 'type' => 'text', 'width' => '10%'],
-        'status' => ['label' => 'Durum', 'type' => 'text', 'width' => '8%'],
-        'notes' => ['label' => 'Not', 'type' => 'text', 'width' => '15%'],
+        'exporter' => ['label' => 'İhracatçı', 'type' => 'text', 'width' => '8%'],
+        'customer' => ['label' => 'Müşteri', 'type' => 'text', 'width' => '8%'],
+        'container_count' => ['label' => 'Konteyner Adedi', 'type' => 'text', 'width' => '5%'],
+        'container_no' => ['label' => 'Konteyner No', 'type' => 'text', 'width' => '7%'],
+        'cargo_type' => ['label' => 'Mal Cinsi', 'type' => 'text', 'width' => '8%'],
+        'cargo_owner' => ['label' => 'Mal Sahibi', 'type' => 'text', 'width' => '8%'],
+        'vessel_name' => ['label' => 'Gemi Adı', 'type' => 'text', 'width' => '7%'],
+        'destination_port' => ['label' => 'Varış Limanı', 'type' => 'text', 'width' => '8%'],
+        'cut_off_date' => ['label' => 'Cut-Off Tarihi', 'type' => 'date', 'width' => '7%'],
+        'loading_date' => ['label' => 'Yükleme Tarihi', 'type' => 'date', 'width' => '7%'],
+        'approval_instruction' => ['label' => 'Onay / Talimat', 'type' => 'text', 'width' => '10%'],
     ],
 ];

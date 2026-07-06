@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CustomerPortalAccess;
 use App\Services\PortalContextService;
 use Closure;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ class EnsurePortalUser
     {
         $user = $request->user();
 
-        if (! $user || ! $user->isPortalUser()) {
+        if (! $user || ! $user->usesCustomerPortal()) {
             abort(403, 'Bu alan yalnızca müşteri portalı kullanıcıları içindir.');
         }
 
@@ -23,12 +24,23 @@ class EnsurePortalUser
             return redirect()->route('login')->withErrors(['email' => __('auth.inactive')]);
         }
 
-        $access = $user->portalAccess()->with('customer')->first();
+        $access = CustomerPortalAccess::query()
+            ->with('customer')
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->first();
 
-        if (! $access || ! $access->is_active || ! $access->customer) {
+        if (! $access || ! $access->customer) {
             auth()->logout();
 
             return redirect()->route('login')->withErrors(['email' => 'Portal erişiminiz devre dışı bırakılmış.']);
+        }
+
+        if ((int) $user->customer_id !== (int) $access->customer_id) {
+            $user->forceFill([
+                'user_type' => 'portal',
+                'customer_id' => $access->customer_id,
+            ])->save();
         }
 
         app()->instance(PortalContextService::class, new PortalContextService($user, $access));

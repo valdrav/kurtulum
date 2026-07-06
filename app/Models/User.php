@@ -61,14 +61,33 @@ class User extends Authenticatable
         return $this->hasOne(CustomerPortalAccess::class);
     }
 
+    public function activePortalAccess(): HasOne
+    {
+        return $this->hasOne(CustomerPortalAccess::class)->where('is_active', true);
+    }
+
     public function isPortalUser(): bool
     {
-        return $this->user_type === 'portal';
+        return $this->usesCustomerPortal();
     }
 
     public function isStaffUser(): bool
     {
-        return $this->user_type !== 'portal';
+        return ! $this->usesCustomerPortal();
+    }
+
+    /** Aktif müşteri portalı erişimi var mı (tek müşteri) */
+    public function usesCustomerPortal(): bool
+    {
+        if ($this->user_type === 'portal') {
+            return true;
+        }
+
+        if ($this->relationLoaded('portalAccess')) {
+            return (bool) ($this->portalAccess?->is_active);
+        }
+
+        return $this->portalAccess()->where('is_active', true)->exists();
     }
 
     public function employee(): HasOne

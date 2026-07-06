@@ -222,7 +222,8 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Haftalık / aylık program (tüm kullanıcılar)
-    Route::get('/schedules/{schedule}/export', [ScheduleProgramController::class, 'export'])->name('schedules.export');
+    Route::get('/schedules/{schedule}/export', [ScheduleProgramController::class, 'exportForm'])->name('schedules.export.form');
+    Route::get('/schedules/{schedule}/print', [ScheduleProgramController::class, 'export'])->name('schedules.export');
     Route::resource('schedules', ScheduleProgramController::class);
 
     // Reports

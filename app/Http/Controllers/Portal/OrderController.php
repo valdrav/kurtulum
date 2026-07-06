@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -20,11 +19,11 @@ class OrderController extends Controller
         return view('portal.orders.index', compact('orders'));
     }
 
-    public function show(Order $order)
+    public function show(string $order)
     {
         abort_unless(portal()->allows('orders'), 403);
-        portal()->assertOrderAccess($order);
 
+        $order = portal()->findOrder($order);
         $order->load(['items']);
 
         return view('portal.orders.show', compact('order'));

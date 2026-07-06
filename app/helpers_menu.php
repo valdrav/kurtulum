@@ -18,6 +18,10 @@ if (!function_exists('can_access')) {
             return false;
         }
 
+        if ($user->usesCustomerPortal()) {
+            return false;
+        }
+
         if ($user->hasRole('super-admin')) {
             return true;
         }

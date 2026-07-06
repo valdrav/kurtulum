@@ -27,15 +27,15 @@
                     <div class="card-body">
                         <dl class="row mb-0">
                             <dt class="col-sm-4">{{ __('settings.departments') }}</dt><dd class="col-sm-8">{{ $employee->department?->name ?? '—' }}</dd>
-                            <dt class="col-sm-4">E-posta</dt><dd class="col-sm-8">{{ $employee->email ?? '—' }}</dd>
+                            <dt class="col-sm-4">{{ __('hr.email') }}</dt><dd class="col-sm-8">{{ $employee->email ?? '—' }}</dd>
                             <dt class="col-sm-4">{{ __('settings.phone') }}</dt><dd class="col-sm-8">{{ $employee->phone ?? '—' }}</dd>
-                            <dt class="col-sm-4">İşe Giriş</dt><dd class="col-sm-8">{{ $employee->hire_date?->format('d.m.Y') ?? '—' }}</dd>
-                            <dt class="col-sm-4">Doğum Tarihi</dt><dd class="col-sm-8">{{ $hrDetail->birth_date?->format('d.m.Y') ?? '—' }}</dd>
-                            <dt class="col-sm-4">TC Kimlik</dt><dd class="col-sm-8">{{ $hrDetail->national_id ?? '—' }}</dd>
-                            <dt class="col-sm-4">Adres</dt><dd class="col-sm-8">{{ $hrDetail->address ?? '—' }}</dd>
+                            <dt class="col-sm-4">{{ __('hr.hire_date') }}</dt><dd class="col-sm-8">{{ $employee->hire_date?->format('d.m.Y') ?? '—' }}</dd>
+                            <dt class="col-sm-4">{{ __('hr.birth_date') }}</dt><dd class="col-sm-8">{{ $hrDetail->birth_date?->format('d.m.Y') ?? '—' }}</dd>
+                            <dt class="col-sm-4">{{ __('hr.national_id') }}</dt><dd class="col-sm-8">{{ $hrDetail->national_id ?? '—' }}</dd>
+                            <dt class="col-sm-4">{{ __('hr.address') }}</dt><dd class="col-sm-8">{{ trans_content($hrDetail->address) ?: '—' }}</dd>
                             <dt class="col-sm-4">{{ __('hr.emergency') }}</dt><dd class="col-sm-8">{{ $hrDetail->emergency_contact ?? '—' }} {{ $hrDetail->emergency_phone ? '· '.$hrDetail->emergency_phone : '' }}</dd>
                             <dt class="col-sm-4">{{ __('hr.bank_info') }}</dt><dd class="col-sm-8">{{ $hrDetail->bank_name ?? '—' }}<br>{{ $hrDetail->iban ?? '' }}</dd>
-                            @if($hrDetail->notes)<dt class="col-sm-4">Not</dt><dd class="col-sm-8">{{ $hrDetail->notes }}</dd>@endif
+                            @if($hrDetail->notes)<dt class="col-sm-4">{{ __('hr.notes') }}</dt><dd class="col-sm-8">{{ trans_content($hrDetail->notes) }}</dd>@endif
                         </dl>
                     </div>
                 </div>
@@ -116,19 +116,19 @@
                             @foreach($compensationTypes as $key => $label)<option value="{{ $key }}">{{ $label }}</option>@endforeach
                         </select>
                     </div>
-                    <div class="col-md-2"><input type="number" step="0.01" name="amount" class="form-control" placeholder="Tutar" required></div>
+                    <div class="col-md-2"><input type="number" step="0.01" name="amount" class="form-control" placeholder="{{ __('hr.amount') }}" required></div>
                     <div class="col-md-1"><input type="text" name="currency" class="form-control" value="TRY" maxlength="3"></div>
                     <div class="col-md-2"><input type="date" name="payment_date" class="form-control" value="{{ now()->format('Y-m-d') }}" required></div>
-                    <div class="col-md-2"><input type="text" name="period" class="form-control" placeholder="Dönem (2026-06)"></div>
-                    <div class="col-md-2"><input type="text" name="description" class="form-control" placeholder="Açıklama"></div>
-                    <div class="col-md-1"><button class="btn btn-primary w-100">Ekle</button></div>
+                    <div class="col-md-2"><input type="text" name="period" class="form-control" placeholder="{{ __('hr.period') }}"></div>
+                    <div class="col-md-2"><input type="text" name="description" class="form-control" placeholder="{{ __('hr.description') }}"></div>
+                    <div class="col-md-1"><button class="btn btn-primary w-100">{{ __('hr.add') }}</button></div>
                 </form>
             </div>
         </div>
         <div class="card">
             <div class="table-responsive">
                 <table class="table table-vcenter card-table table-modern">
-                    <thead><tr><th>Tür</th><th>Tutar</th><th>Tarih</th><th>Dönem</th><th>Açıklama</th><th class="ef-table-actions"></th></tr></thead>
+                    <thead><tr><th>{{ __('hr.type') }}</th><th>{{ __('hr.amount') }}</th><th>{{ __('hr.date') }}</th><th>{{ __('hr.period') }}</th><th>{{ __('hr.description') }}</th><th class="ef-table-actions"></th></tr></thead>
                     <tbody>
                         @forelse($employee->compensations as $pay)
                         <tr>
@@ -136,7 +136,7 @@
                             <td>{{ number_format($pay->amount, 2, ',', '.') }} {{ $pay->currency }}</td>
                             <td>{{ $pay->payment_date->format('d.m.Y') }}</td>
                             <td>{{ $pay->period ?? '—' }}</td>
-                            <td>{{ $pay->description ?? '—' }}</td>
+                            <td>{{ trans_content($pay->description) ?: '—' }}</td>
                             <td class="ef-table-actions text-end">
                                 <form method="POST" action="{{ route('hr.compensations.destroy', [$employee, $pay]) }}" class="d-inline" data-confirm="{{ __('app.confirm_delete') }}">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button></form>
                             </td>

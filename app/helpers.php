@@ -747,3 +747,23 @@ if (!function_exists('currency_name')) {
         return $fromDb ?: $code;
     }
 }
+
+if (! function_exists('trans_content')) {
+    /** Kullanıcının girdiği metni aktif dile otomatik çevirir (AI + önbellek). */
+    function trans_content(?string $text, ?string $locale = null): string
+    {
+        return app(\App\Services\ContentTranslationService::class)->translate($text, $locale);
+    }
+}
+
+if (! function_exists('trans_field')) {
+    /** Tarih/telefon gibi alanları çevirmeden, metin alanlarını çevirerek döndürür. */
+    function trans_field(?string $text, string $type = 'text'): string
+    {
+        if (in_array($type, ['date', 'number', 'phone'], true)) {
+            return trim((string) $text);
+        }
+
+        return trans_content($text);
+    }
+}

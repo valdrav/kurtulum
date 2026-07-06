@@ -37,8 +37,8 @@
         <table class="table table-vcenter card-table table-modern">
             <thead>
                 <tr>
-                    <th>Ad Soyad</th>
-                    <th>Telefon</th>
+                    <th>{{ __('directory.full_name') }}</th>
+                    <th>{{ __('directory.phone') }}</th>
                     <th>{{ __('directory.description') }}</th>
                     <th class="ef-table-actions"></th>
                 </tr>
@@ -53,7 +53,7 @@
                             @include('partials.whatsapp-button', ['phone' => $contact->phone, 'iconOnly' => true])
                         </div>
                     </td>
-                    <td class="text-muted">{{ $contact->description ?? '—' }}</td>
+                    <td class="text-muted">{{ trans_content($contact->description) ?: '—' }}</td>
                     <td class="ef-table-actions text-nowrap text-end">
                         @if(can_access('directory.edit'))
                         <a href="{{ route('directory.edit', $contact) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-edit"></i></a>

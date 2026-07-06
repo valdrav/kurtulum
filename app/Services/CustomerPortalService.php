@@ -42,7 +42,7 @@ class CustomerPortalService
                     ]);
 
                     $role = Role::firstOrCreate(['name' => 'portal-customer']);
-                    $user->assignRole($role);
+                    $user->syncRoles([$role->name]);
                 } else {
                     $user->update([
                         'name' => $data['name'] ?? $user->name,
@@ -50,7 +50,11 @@ class CustomerPortalService
                         'customer_id' => $customer->id,
                         'user_type' => 'portal',
                         'is_active' => true,
+                        'department_id' => null,
                     ]);
+
+                    $role = Role::firstOrCreate(['name' => 'portal-customer']);
+                    $user->syncRoles([$role->name]);
 
                     if (! empty($data['password'])) {
                         $user->update(['password' => Hash::make($data['password'])]);

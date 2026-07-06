@@ -12,7 +12,7 @@ class EnsureStaffUser
     {
         $user = $request->user();
 
-        if ($user && $user->isPortalUser()) {
+        if ($user && $user->usesCustomerPortal()) {
             if ($request->expectsJson()) {
                 abort(403, 'Portal kullanıcıları bu alana erişemez.');
             }

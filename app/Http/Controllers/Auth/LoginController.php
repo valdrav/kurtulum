@@ -34,7 +34,7 @@ class LoginController extends Controller
             }
             $request->session()->regenerate();
 
-            $home = $user->isPortalUser()
+            $home = $user->usesCustomerPortal()
                 ? route('portal.dashboard')
                 : route('dashboard');
 

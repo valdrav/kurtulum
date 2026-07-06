@@ -40,6 +40,19 @@ class ScheduleProgram extends Model
             return $this->title;
         }
 
-        return sprintf('%d — %d. Hafta (%s)', $this->year, $this->week_number, str_pad((string) $this->month, 2, '0', STR_PAD_LEFT));
+        $monthNames = [
+            1 => 'Ocak', 2 => 'Şubat', 3 => 'Mart', 4 => 'Nisan',
+            5 => 'Mayıs', 6 => 'Haziran', 7 => 'Temmuz', 8 => 'Ağustos',
+            9 => 'Eylül', 10 => 'Ekim', 11 => 'Kasım', 12 => 'Aralık',
+        ];
+
+        $monthLabel = $monthNames[$this->month] ?? str_pad((string) $this->month, 2, '0', STR_PAD_LEFT);
+
+        return sprintf('%s %d Aylık Program', $monthLabel, $this->year);
+    }
+
+    public function monthLabel(): string
+    {
+        return $this->displayTitle();
     }
 }

@@ -286,6 +286,7 @@ class SettingsController extends Controller
             'ai_api_key' => Setting::get('ai_api_key') ? '********' : '',
             'groq_api_key' => Setting::get('groq_api_key') ? '********' : '',
             'groq_model' => Setting::get('groq_model', config('ticari.ai.groq_model', 'llama-3.1-8b-instant')),
+            'auto_translate_enabled' => Setting::get('auto_translate_enabled', '1'),
         ];
 
         return view('settings.ai', compact('settings'));
@@ -302,6 +303,7 @@ class SettingsController extends Controller
         ]);
 
         Setting::set('ai_enabled', $request->boolean('ai_enabled') ? '1' : '0', 'ai');
+        Setting::set('auto_translate_enabled', $request->boolean('auto_translate_enabled') ? '1' : '0', 'ai');
         Setting::set('ai_provider', $validated['ai_provider'], 'ai');
 
         if (! empty($validated['ai_model'])) {

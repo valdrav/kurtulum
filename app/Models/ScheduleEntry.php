@@ -26,6 +26,35 @@ class ScheduleEntry extends Model
 
     public function value(string $key): string
     {
+        if (in_array($key, ['entry_date', 'cut_off_date', 'loading_date'], true)) {
+            $raw = $key === 'entry_date'
+                ? $this->entry_date?->format('Y-m-d')
+                : ($this->data[$key] ?? '');
+
+            if ($raw && $key !== 'entry_date') {
+                try {
+                    return \Carbon\Carbon::parse($raw)->format('d.m.Y');
+                } catch (\Throwable) {
+                    return (string) $raw;
+                }
+            }
+
+            return $key === 'entry_date' ? ($this->entry_date?->format('d.m.Y') ?? '') : (string) $raw;
+        }
+
+        return (string) ($this->data[$key] ?? '');
+    }
+
+    public function rawValue(string $key): string
+    {
+        if ($key === 'entry_date') {
+            return $this->entry_date?->format('Y-m-d') ?? '';
+        }
+
+        if (in_array($key, ['cut_off_date', 'loading_date'], true)) {
+            return (string) ($this->data[$key] ?? '');
+        }
+
         return (string) ($this->data[$key] ?? '');
     }
 }

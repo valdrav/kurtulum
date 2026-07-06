@@ -92,9 +92,25 @@ class AiService
 
     public function translate(string $text, string $from, string $to): ?string
     {
-        $prompt = "Translate the following text from {$from} to {$to}. Return only the translation:\n\n{$text}";
+        if (trim($text) === '') {
+            return '';
+        }
 
-        return $this->chat($prompt, $to);
+        $prompt = "Translate the following business/logistics text from {$from} to {$to}. "
+            ."Preserve numbers, dates, container codes, company names, and proper nouns when appropriate. "
+            ."Return ONLY the translated text without quotes or explanation:\n\n{$text}";
+
+        return $this->translateChat($prompt);
+    }
+
+    protected function translateChat(string $prompt): ?string
+    {
+        $messages = [
+            ['role' => 'system', 'content' => 'You are a professional translator for international trade and logistics software. Output only the translation.'],
+            ['role' => 'user', 'content' => $prompt],
+        ];
+
+        return $this->requestChat($messages, 0.2);
     }
 
     protected function chat(string $prompt, string $language = 'tr'): ?string
@@ -103,40 +119,40 @@ class AiService
     }
 
     /** @param  array<int, array{role: string, content: string}>  $messages */
-    protected function requestChat(array $messages): ?string
+    protected function requestChat(array $messages, float $temperature = 0.7): ?string
     {
         if ($this->provider === 'groq' && ! empty($this->groqApiKey)) {
-            $result = $this->postChat('https://api.groq.com/openai/v1/chat/completions', $this->groqApiKey, $this->groqModel, $messages);
+            $result = $this->postChat('https://api.groq.com/openai/v1/chat/completions', $this->groqApiKey, $this->groqModel, $messages, $temperature);
             if ($result !== null) {
                 return $result;
             }
         }
 
         if (! empty($this->apiKey)) {
-            $result = $this->postChat('https://api.openai.com/v1/chat/completions', $this->apiKey, $this->model, $messages);
+            $result = $this->postChat('https://api.openai.com/v1/chat/completions', $this->apiKey, $this->model, $messages, $temperature);
             if ($result !== null) {
                 return $result;
             }
         }
 
         if (! empty($this->groqApiKey)) {
-            return $this->postChat('https://api.groq.com/openai/v1/chat/completions', $this->groqApiKey, $this->groqModel, $messages);
+            return $this->postChat('https://api.groq.com/openai/v1/chat/completions', $this->groqApiKey, $this->groqModel, $messages, $temperature);
         }
 
         return null;
     }
 
     /** @param  array<int, array{role: string, content: string}>  $messages */
-    protected function postChat(string $url, string $apiKey, string $model, array $messages): ?string
+    protected function postChat(string $url, string $apiKey, string $model, array $messages, float $temperature = 0.7): ?string
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
+                'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
             ])->timeout(90)->post($url, [
                 'model' => $model,
                 'messages' => $messages,
-                'temperature' => 0.7,
+                'temperature' => $temperature,
                 'max_tokens' => 2000,
             ]);
 
@@ -144,11 +160,12 @@ class AiService
                 return $response->json('choices.0.message.content');
             }
 
-            Log::warning('AI API error: ' . $response->body());
+            Log::warning('AI API error: '.$response->body());
         } catch (\Exception $e) {
-            Log::error('AI service error: ' . $e->getMessage());
+            Log::error('AI service error: '.$e->getMessage());
         }
 
         return null;
     }
 }
+

@@ -5,10 +5,10 @@
 <div class="card mb-3">
     <div class="card-body">
         <dl class="row mb-0">
-            <dt class="col-sm-3">Sevkiyat No</dt><dd class="col-sm-9">{{ $shipment->shipment_number }}</dd>
-            <dt class="col-sm-3">Mod</dt><dd class="col-sm-9">{{ __('logistics.'.$shipment->transport_mode) }}</dd>
-            <dt class="col-sm-3">{{ __('logistics.origin') }}</dt><dd class="col-sm-9">{{ $shipment->origin ?? '—' }}</dd>
-            <dt class="col-sm-3">{{ __('logistics.destination') }}</dt><dd class="col-sm-9">{{ $shipment->destination ?? '—' }}</dd>
+            <dt class="col-sm-3">{{ __('portal.shipment_no') }}</dt><dd class="col-sm-9">{{ $shipment->shipment_number }}</dd>
+            <dt class="col-sm-3">{{ __('portal.mode') }}</dt><dd class="col-sm-9">{{ __('logistics.'.$shipment->transport_mode) }}</dd>
+            <dt class="col-sm-3">{{ __('logistics.origin') }}</dt><dd class="col-sm-9">{{ trans_content($shipment->origin) ?: '—' }}</dd>
+            <dt class="col-sm-3">{{ __('logistics.destination') }}</dt><dd class="col-sm-9">{{ trans_content($shipment->destination) ?: '—' }}</dd>
             <dt class="col-sm-3">{{ __('logistics.atd') }}</dt><dd class="col-sm-9">{{ $shipment->atd?->format('d.m.Y H:i') ?? '—' }}</dd>
             <dt class="col-sm-3">{{ __('logistics.ata') }}</dt><dd class="col-sm-9">{{ $shipment->ata?->format('d.m.Y H:i') ?? '—' }}</dd>
             <dt class="col-sm-3">{{ __('app.status') }}</dt><dd class="col-sm-9">{{ $shipment->statusDisplay() }}</dd>
@@ -24,11 +24,11 @@
     <div class="card-header"><h3 class="card-title mb-0">{{ __('portal.shipment_costs') }}</h3></div>
     <div class="table-responsive">
         <table class="table table-vcenter card-table table-modern mb-0">
-            <thead><tr><th>Kalem</th><th>Tarih</th><th>Tutar</th><th>Durum</th></tr></thead>
+            <thead><tr><th>{{ __('portal.item') }}</th><th>{{ __('portal.date') }}</th><th>{{ __('portal.amount') }}</th><th>{{ __('portal.status') }}</th></tr></thead>
             <tbody>
                 @forelse($shipment->costs as $cost)
                 <tr>
-                    <td>{{ $cost->item_name ?? $cost->description ?? $cost->type }}</td>
+                    <td>{{ trans_content($cost->item_name ?? $cost->description ?? $cost->type) ?: '—' }}</td>
                     <td>{{ $cost->expense_date?->format('d.m.Y') ?? '—' }}</td>
                     <td>{{ format_money($cost->amount, $cost->currency) }}</td>
                     <td>{{ $cost->status ?? '—' }}</td>

@@ -10,4 +10,8 @@ return [
     'import_skipped' => ':count satır atlandı.',
     'whatsapp' => 'WhatsApp',
     'description' => 'Açıklama',
+    'full_name' => 'Ad Soyad',
+    'phone' => 'Telefon',
+    'first_name' => 'Ad',
+    'last_name' => 'Soyad',
 ];

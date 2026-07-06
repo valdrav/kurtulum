@@ -10,9 +10,9 @@
     <div class="card">
         <div class="card-body">
             <div class="row">
-                <div class="col-md-4 mb-3"><label class="form-label">Ad *</label><input type="text" name="first_name" class="form-control" value="{{ old('first_name', $contact->first_name) }}" required></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Soyad *</label><input type="text" name="last_name" class="form-control" value="{{ old('last_name', $contact->last_name) }}" required></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Telefon *</label><input type="text" name="phone" class="form-control" value="{{ old('phone', $contact->phone) }}" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">{{ __('directory.first_name') }} *</label><input type="text" name="first_name" class="form-control" value="{{ old('first_name', $contact->first_name) }}" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">{{ __('directory.last_name') }} *</label><input type="text" name="last_name" class="form-control" value="{{ old('last_name', $contact->last_name) }}" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">{{ __('directory.phone') }} *</label><input type="text" name="phone" class="form-control" value="{{ old('phone', $contact->phone) }}" required></div>
                 <div class="col-12 mb-3"><label class="form-label">{{ __('directory.description') }}</label><textarea name="description" class="form-control" rows="3">{{ old('description', $contact->description) }}</textarea></div>
             </div>
         </div>

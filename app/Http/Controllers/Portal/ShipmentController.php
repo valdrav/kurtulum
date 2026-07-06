@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
-use App\Models\Shipment;
 use Illuminate\Http\Request;
 
 class ShipmentController extends Controller
@@ -20,11 +19,11 @@ class ShipmentController extends Controller
         return view('portal.shipments.index', compact('shipments'));
     }
 
-    public function show(Shipment $shipment)
+    public function show(string $shipment)
     {
         abort_unless(portal()->allows('shipments'), 403);
-        portal()->assertShipmentAccess($shipment);
 
+        $shipment = portal()->findShipment($shipment);
         $shipment->load(['order']);
 
         if (portal()->allows('shipment_costs')) {

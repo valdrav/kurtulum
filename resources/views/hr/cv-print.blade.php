@@ -19,7 +19,7 @@
 </head>
 <body>
     <div class="toolbar">
-        <button onclick="window.print()">Yazdır / PDF</button>
+        <button onclick="window.print()">{{ __('hr.print_pdf') }}</button>
     </div>
 
     <h1>{{ $employee->full_name }}</h1>
@@ -31,13 +31,13 @@
 
     @if($cvData['summary'])
     <h2>{{ __('hr.cv_summary') }}</h2>
-    <p>{{ $cvData['summary'] }}</p>
+    <p>{{ trans_content($cvData['summary']) }}</p>
     @endif
 
     @if(!empty($cvData['skills']))
     <h2>{{ __('hr.cv_skills') }}</h2>
     <div class="skills">
-        @foreach($cvData['skills'] as $skill)<span>{{ $skill }}</span>@endforeach
+        @foreach($cvData['skills'] as $skill)<span>{{ trans_content($skill) }}</span>@endforeach
     </div>
     @endif
 
@@ -48,7 +48,7 @@
         <div class="item">
             <strong>{{ $exp['position'] ?? '' }} — {{ $exp['company'] ?? '' }}</strong>
             <small>{{ trim(($exp['start'] ?? '').' – '.($exp['end'] ?? ''), ' –') }}</small>
-            @if(!empty($exp['description']))<div>{{ $exp['description'] }}</div>@endif
+            @if(!empty($exp['description']))<div>{{ trans_content($exp['description']) }}</div>@endif
         </div>
         @endif
     @endforeach

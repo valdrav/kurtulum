@@ -33,16 +33,37 @@ class PortalContextService
 
     public function ordersQuery(): Builder
     {
+        $customerId = $this->customerId();
+
         return Order::query()
-            ->where('customer_id', $this->customerId())
+            ->where('customer_id', $customerId)
             ->latest('order_date');
     }
 
     public function shipmentsQuery(): Builder
     {
+        $customerId = $this->customerId();
+
         return Shipment::query()
-            ->where('customer_id', $this->customerId())
+            ->where(function (Builder $query) use ($customerId) {
+                $query->where('customer_id', $customerId)
+                    ->orWhereHas('order', fn (Builder $order) => $order->where('customer_id', $customerId));
+            })
             ->latest('created_at');
+    }
+
+    public function findOrder(string $key): Order
+    {
+        return $this->ordersQuery()
+            ->where((new Order)->getRouteKeyName(), $key)
+            ->firstOrFail();
+    }
+
+    public function findShipment(string $key): Shipment
+    {
+        return $this->shipmentsQuery()
+            ->where((new Shipment)->getRouteKeyName(), $key)
+            ->firstOrFail();
     }
 
     public function assertOrderAccess(Order $order): void

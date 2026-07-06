@@ -13,6 +13,13 @@
                     <span class="form-check-label">{{ __('settings.ai_enabled') }}</span>
                 </label>
             </div>
+            <div class="mb-3">
+                <label class="form-check form-switch">
+                    <input type="checkbox" name="auto_translate_enabled" class="form-check-input" value="1" @checked(old('auto_translate_enabled', $settings['auto_translate_enabled'] ?? '1') == '1')>
+                    <span class="form-check-label">{{ __('translation.auto_translate_enabled') }}</span>
+                </label>
+                <p class="text-muted small mb-0">{{ __('translation.auto_translate_hint') }}</p>
+            </div>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">{{ __('settings.ai_provider') }}</label>
