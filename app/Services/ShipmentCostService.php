@@ -39,7 +39,7 @@ class ShipmentCostService
                 );
                 $data['amount_try'] = round((float) $data['amount'] * $rate, 2);
                 $data['exchange_rate'] = $data['exchange_rate'] ?? $rate;
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
                 // manual amount_try may still be provided
             }
         }
@@ -72,9 +72,9 @@ class ShipmentCostService
         if ($cost->status === 'paid') {
             try {
                 app(ShipmentCostTreasuryService::class)->syncPaidStatus($cost->fresh(), 'pending');
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
                 if (! app()->bound(ExternalApiContextService::class)) {
-                    throw;
+                    throw $e;
                 }
             }
         }
@@ -90,9 +90,9 @@ class ShipmentCostService
         $cost->refresh();
         try {
             app(ShipmentCostTreasuryService::class)->syncPaidStatus($cost, $previousStatus);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             if (! app()->bound(ExternalApiContextService::class)) {
-                throw;
+                throw $e;
             }
         }
         $this->syncShipmentTotal($cost->shipment);
