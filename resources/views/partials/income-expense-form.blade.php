@@ -57,7 +57,7 @@
 
     @unless($singleTreasury)
     <div class="mb-2">
-        <label class="form-label">{{ __('finance.treasury_account') }} *</label>
+        <label class="form-label">{{ __('finance.bank_account') }} *</label>
         <select name="account_id" class="form-select" required>
             @foreach($treasuryAccounts as $a)
             <option value="{{ $a->id }}" @selected(old('account_id', $record?->account_id ?? ($defaultTreasuryId ?? null)) == $a->id)>{{ $a->name }} ({{ $a->currency }})</option>

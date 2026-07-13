@@ -18,12 +18,10 @@
                 </select>
             </div>
             <div class="mb-3">
-                <label class="form-label">{{ __('finance.treasury_account') }} *</label>
-                <select name="treasury_account_id" class="form-select" required>
-                    @foreach($treasuryAccounts as $ta)
-                    <option value="{{ $ta->id }}" @selected(old('treasury_account_id', $collection->treasury_account_id) == $ta->id)>{{ $ta->name }} ({{ $ta->currency }})</option>
-                    @endforeach
-                </select>
+                @include('partials.treasury-account-select', [
+                    'treasuryAccounts' => $treasuryAccounts,
+                    'selected' => old('treasury_account_id', $collection->treasury_account_id),
+                ])
             </div>
             <div class="row g-2 mb-3">
                 <div class="col-md-6">

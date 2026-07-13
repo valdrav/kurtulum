@@ -640,7 +640,7 @@ class OrderFinanceService
     protected function resolveTreasury(?int $accountId): Account
     {
         if ($accountId) {
-            $account = Account::query()->whereKey($accountId)->where('is_treasury', true)->first();
+            $account = Account::query()->companyTreasury()->whereKey($accountId)->first();
             if ($account) {
                 return $account;
             }

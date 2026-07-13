@@ -5,39 +5,40 @@
 @include('partials.finance-nav')
 
 <div class="row row-cards mb-3">
-    <div class="col-6 col-md-3">
-        <div class="card"><div class="card-body py-3">
-            <div class="subheader small">{{ __('finance.total_cash_balance') }}</div>
-            <div class="h3 text-primary mb-0">{{ number_format($totalCash, 2, ',', '.') }} ₺</div>
+    <div class="col-md-4">
+        <div class="card border-primary"><div class="card-body py-3">
+            <div class="subheader small">{{ __('finance.bank_balance') }}</div>
+            <div class="h2 text-primary mb-0">{{ number_format($totalCash, 2, ',', '.') }} ₺</div>
+            <div class="text-muted small mt-1">{{ __('finance.bank_balance_hint') }}</div>
         </div></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-md-4">
         <div class="card"><div class="card-body py-3">
-            <div class="subheader small">{{ __('finance.ledger_credit_period') }}</div>
-            <div class="h3 text-green mb-0">{{ number_format($ledgerSummary['credit'], 2, ',', '.') }} ₺</div>
+            <div class="subheader small">{{ __('finance.period_balance_change') }}</div>
+            <div class="h2 mb-0 {{ $ledgerSummary['net'] >= 0 ? 'text-green' : 'text-red' }}">{{ number_format($ledgerSummary['net'], 2, ',', '.') }} ₺</div>
+            <div class="text-muted small mt-1">{{ $periodMeta['label'] }} · {{ $ledgerSummary['count'] }} {{ __('finance.records') }}</div>
         </div></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-md-4">
         <div class="card"><div class="card-body py-3">
-            <div class="subheader small">{{ __('finance.ledger_debit_period') }}</div>
-            <div class="h3 text-red mb-0">{{ number_format($ledgerSummary['debit'], 2, ',', '.') }} ₺</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card"><div class="card-body py-3">
-            <div class="subheader small">{{ __('finance.ledger_net_period') }}</div>
-            <div class="h3 mb-0 {{ $ledgerSummary['net'] >= 0 ? 'text-green' : 'text-red' }}">{{ number_format($ledgerSummary['net'], 2, ',', '.') }} ₺</div>
+            <div class="subheader small">{{ __('finance.period_operational_flow') }}</div>
+            <div class="small text-green">+ {{ number_format($ledgerSummary['operational_credit'], 2, ',', '.') }} ₺ {{ __('finance.income_period') }}</div>
+            <div class="small text-red">− {{ number_format($ledgerSummary['operational_debit'], 2, ',', '.') }} ₺ {{ __('finance.expense_period') }}</div>
+            <div class="fw-bold mt-1 {{ $ledgerSummary['operational_net'] >= 0 ? 'text-green' : 'text-red' }}">
+                {{ __('finance.net_period') }}: {{ number_format($ledgerSummary['operational_net'], 2, ',', '.') }} ₺
+            </div>
         </div></div>
     </div>
 </div>
 
-@if($treasuryAccounts->isNotEmpty())
+@if($treasuryAccounts->count() > 1)
 <div class="card mb-3">
     <div class="card-body py-3">
         <div class="d-flex flex-wrap gap-2 align-items-center">
-            <span class="text-muted small me-1">{{ __('finance.treasury_accounts') }}:</span>
+            <span class="text-muted small me-1">{{ __('finance.bank_accounts') }}:</span>
+            <a href="{{ route('finance.income-expenses', request()->except('account_id')) }}" class="badge bg-{{ request('account_id') ? 'secondary' : 'primary' }}-lt text-decoration-none">{{ __('app.all') }}</a>
             @foreach($treasuryAccounts as $ta)
-            <a href="{{ route('finance.accounts.show', $ta) }}" class="badge bg-{{ request('account_id') == $ta->id ? 'primary' : 'azure' }}-lt text-decoration-none">
+            <a href="{{ route('finance.income-expenses', array_merge(request()->except('page'), ['account_id' => $ta->id])) }}" class="badge bg-{{ request('account_id') == $ta->id ? 'primary' : 'azure' }}-lt text-decoration-none">
                 {{ $ta->name }} · {{ number_format($ta->balance, 2, ',', '.') }} {{ $ta->currency }}
             </a>
             @endforeach
@@ -53,7 +54,7 @@
             'summary' => array_merge($summary, ['total_count' => $ledgerSummary['count']]),
             'uid' => 'ledger',
             'showExtra' => true,
-            'showLedgerFilters' => true,
+            'showLedgerFilters' => $treasuryAccounts->count() > 1,
             'treasuryAccounts' => $treasuryAccounts,
         ])
     </div>
@@ -95,7 +96,9 @@
                     <thead>
                         <tr>
                             <th>{{ __('app.date') }}</th>
-                            <th>{{ __('finance.treasury_account') }}</th>
+                            @if($treasuryAccounts->count() > 1)
+                            <th>{{ __('finance.bank_account') }}</th>
+                            @endif
                             <th>{{ __('finance.ledger_source') }}</th>
                             <th>{{ __('app.description') }}</th>
                             <th class="text-end">{{ __('app.amount') }}</th>
@@ -109,6 +112,7 @@
                         @forelse($movements as $movement)
                         <tr>
                             <td>{{ $movement->transaction_date->format('d.m.Y') }}</td>
+                            @if($treasuryAccounts->count() > 1)
                             <td>
                                 @if($movement->account)
                                 <a href="{{ route('finance.accounts.show', $movement->account) }}">{{ $movement->account->name }}</a>
@@ -116,6 +120,7 @@
                                 <span class="text-muted">—</span>
                                 @endif
                             </td>
+                            @endif
                             <td><span class="badge bg-azure-lt">{{ $ledger->sourceLabel($movement) }}</span></td>
                             <td>
                                 <div>{{ $movement->description }}</div>
@@ -138,7 +143,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="{{ $selectedAccount ? 7 : 6 }}" class="text-muted text-center py-4">{{ __('finance.no_ledger_movements') }}</td></tr>
+                        <tr><td colspan="{{ 5 + ($treasuryAccounts->count() > 1 ? 1 : 0) + ($selectedAccount ? 1 : 0) }}" class="text-muted text-center py-4">{{ __('finance.no_ledger_movements') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>

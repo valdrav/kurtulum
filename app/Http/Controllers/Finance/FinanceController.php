@@ -62,7 +62,7 @@ class FinanceController extends Controller
         $months = $treasury->monthlyBreakdown($year);
         $totalCash = $treasury->totalBalanceTry();
 
-        $treasuryIds = $treasuryAccounts->pluck('id');
+        $treasuryIds = app(TreasuryLedgerService::class)->treasuryAccountIds();
         $recentMovements = AccountTransaction::query()
             ->with([
                 'account' => fn ($query) => $query->withTrashed()->select('id', 'uuid', 'name', 'currency'),
@@ -93,13 +93,13 @@ class FinanceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:bank,cash',
             'currency' => 'required|string|size:3',
             'opening_balance' => 'nullable|numeric',
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $validated['code'] = $this->generateNumber('KSA');
+        $validated['code'] = $this->generateNumber('BNK');
+        $validated['type'] = 'bank';
         $validated['is_treasury'] = true;
         $validated['opening_balance'] = $validated['opening_balance'] ?? 0;
         $validated['current_balance'] = $validated['opening_balance'];
@@ -162,8 +162,14 @@ class FinanceController extends Controller
 
         $validated['is_treasury'] = $request->boolean('is_treasury');
         if ($validated['is_treasury']) {
+            if ($validated['customer_id'] || $validated['supplier_id'] || in_array($validated['type'], ['customer', 'supplier'], true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'is_treasury' => [__('finance.treasury_cannot_be_cari')],
+                ]);
+            }
             $validated['customer_id'] = null;
             $validated['supplier_id'] = null;
+            $validated['type'] = in_array($validated['type'], ['bank', 'cash'], true) ? 'bank' : $validated['type'];
         }
 
         $validated['code'] = $validated['code'] ?? $this->generateNumber('ACC');
@@ -214,8 +220,14 @@ class FinanceController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['is_treasury'] = $request->boolean('is_treasury');
         if ($validated['is_treasury']) {
+            if ($validated['customer_id'] || $validated['supplier_id'] || in_array($validated['type'], ['customer', 'supplier'], true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'is_treasury' => [__('finance.treasury_cannot_be_cari')],
+                ]);
+            }
             $validated['customer_id'] = null;
             $validated['supplier_id'] = null;
+            $validated['type'] = in_array($validated['type'], ['bank', 'cash'], true) ? 'bank' : $validated['type'];
         }
         $account->update($validated);
 
@@ -642,7 +654,7 @@ class FinanceController extends Controller
         $treasury = company_treasury();
 
         if ($accountId) {
-            $account = Account::query()->whereKey($accountId)->where('is_treasury', true)->first();
+            $account = Account::query()->companyTreasury()->whereKey($accountId)->first();
 
             if (! $account) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
@@ -676,7 +688,9 @@ class FinanceController extends Controller
             $delta,
             $entry,
             ($entry->type === 'income' ? 'Gelir: ' : 'Gider: ') . $entry->displayTitle(),
-            $entry->transaction_date->toDateString()
+            $entry->transaction_date->toDateString(),
+            null,
+            (float) $entry->exchange_rate
         );
     }
 

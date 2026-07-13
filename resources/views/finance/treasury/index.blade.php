@@ -16,33 +16,36 @@
 </form>
 
 <div class="row row-cards mb-4">
-    <div class="col-md-4">
+    <div class="col-md-5">
         <div class="card stat-card border-primary h-100">
             <div class="card-body">
-                <div class="subheader">{{ __('finance.total_cash_balance') }}</div>
+                <div class="subheader">{{ __('finance.bank_balance') }}</div>
                 <div class="h1 mb-0 text-primary">{{ number_format($totalCash, 2, ',', '.') }} ₺</div>
-                <div class="text-muted small mt-1">{{ $treasuryAccounts->count() }} {{ __('finance.treasury_account') }}</div>
+                <div class="text-muted small mt-1">{{ $defaultTreasury->name }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-8">
+    <div class="col-md-7">
         <div class="row g-3">
             <div class="col-4">
                 <div class="card stat-card h-100"><div class="card-body py-3">
                     <div class="subheader small">{{ __('finance.income_ytd') }}</div>
                     <div class="h3 text-green mb-0">{{ number_format($summary['income'], 2, ',', '.') }} ₺</div>
+                    <div class="text-muted small">{{ __('finance.income_expense_only') }}</div>
                 </div></div>
             </div>
             <div class="col-4">
                 <div class="card stat-card h-100"><div class="card-body py-3">
                     <div class="subheader small">{{ __('finance.expense_ytd') }}</div>
                     <div class="h3 text-red mb-0">{{ number_format($summary['expense'], 2, ',', '.') }} ₺</div>
+                    <div class="text-muted small">{{ __('finance.income_expense_only') }}</div>
                 </div></div>
             </div>
             <div class="col-4">
                 <div class="card stat-card h-100"><div class="card-body py-3">
                     <div class="subheader small">{{ __('finance.net_ytd') }}</div>
                     <div class="h3 mb-0 {{ $summary['net'] >= 0 ? 'text-green' : 'text-red' }}">{{ number_format($summary['net'], 2, ',', '.') }} ₺</div>
+                    <a href="{{ route('finance.income-expenses', ['period' => 'year', 'date' => $year . '-01-01']) }}" class="small">{{ __('finance.view_all') }}</a>
                 </div></div>
             </div>
         </div>
@@ -75,7 +78,7 @@
     <div class="col-lg-{{ can_access('finance.create') ? '8' : '12' }}">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="card-title mb-0">{{ __('finance.treasury_accounts') }}</h3>
+                <h3 class="card-title mb-0">{{ __('finance.bank_accounts') }}</h3>
                 @if(can_access('finance.create'))
                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#newTreasuryAccount">
                     <i class="ti ti-plus"></i>
@@ -87,19 +90,13 @@
                 <div class="card-body border-bottom bg-light py-3">
                     <form method="POST" action="{{ route('finance.treasury.accounts.store') }}" class="row g-2">
                         @csrf
-                        <div class="col-md-5"><input type="text" name="name" class="form-control form-control-sm" placeholder="Hesap adı" required></div>
+                        <div class="col-md-6"><input type="text" name="name" class="form-control form-control-sm" placeholder="{{ __('finance.bank_account_name') }}" required></div>
                         <div class="col-md-3">
-                            <select name="type" class="form-select form-select-sm">
-                                <option value="cash">Nakit Kasa</option>
-                                <option value="bank">Banka</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
                             <select name="currency" class="form-select form-select-sm">
                                 @foreach(registry()->currencyCodes() as $c)<option value="{{ $c }}">{{ $c }}</option>@endforeach
                             </select>
                         </div>
-                        <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100">{{ __('app.save') }}</button></div>
+                        <div class="col-md-3"><button type="submit" class="btn btn-sm btn-primary w-100">{{ __('app.save') }}</button></div>
                     </form>
                 </div>
             </div>

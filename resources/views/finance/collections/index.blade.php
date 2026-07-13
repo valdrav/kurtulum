@@ -21,14 +21,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label">{{ __('finance.treasury_account') }}</label>
-                        <select name="treasury_account_id" class="form-select" required>
-                            @foreach($treasuryAccounts as $ta)
-                            <option value="{{ $ta->id }}">{{ $ta->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                    @include('partials.treasury-account-select', ['treasuryAccounts' => $treasuryAccounts])
                     @include('partials.payment-method-form', ['paymentMethods' => $paymentMethods, 'dateField' => 'collection_date'])
                     <button type="submit" class="btn btn-primary w-100 mt-2">{{ __('app.save') }}</button>
                 </form>

@@ -48,6 +48,16 @@ class Account extends Model
         return $query->where('is_treasury', false);
     }
 
+    /** Şirket kasası / banka — cari hesaplardan ayrı */
+    public function scopeCompanyTreasury($query)
+    {
+        return $query
+            ->where('is_treasury', true)
+            ->whereNull('customer_id')
+            ->whereNull('supplier_id')
+            ->whereNotIn('type', ['customer', 'supplier', 'expense', 'income']);
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);

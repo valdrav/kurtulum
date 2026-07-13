@@ -12,6 +12,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection as SupportCollection;
 
 class TreasuryLedgerService
 {
@@ -31,51 +32,85 @@ class TreasuryLedgerService
     {
         $target = $this->defaultCurrency();
 
-        return (float) $this->treasury->accounts()->sum(function (Account $account) use ($target) {
-            return $this->amountInCurrency((float) $account->current_balance, $account->currency, $target);
-        });
+        return (float) Account::query()
+            ->companyTreasury()
+            ->where('is_active', true)
+            ->get()
+            ->sum(fn (Account $account) => $this->accountBalanceInDefaultCurrency($account, $target));
     }
 
-    public function amountInCurrency(float $amount, string $from, string $to): float
+    public function accountBalanceInDefaultCurrency(Account $account, ?string $target = null): float
     {
-        $from = strtoupper($from);
-        $to = strtoupper($to);
+        $target ??= $this->defaultCurrency();
 
-        if ($from === $to) {
-            return $amount;
-        }
-
-        $converted = $this->rates->convert($amount, $from, $to);
-
-        return $converted ?? $amount;
+        return $this->transactionAmountInDefaultCurrency(
+            (float) $account->current_balance,
+            strtoupper((string) ($account->currency ?? 'TRY')),
+            null,
+            $target
+        );
     }
 
-    /** @return array{credit: float, debit: float, net: float, count: int} */
+    /**
+     * @return array{
+     *     credit: float,
+     *     debit: float,
+     *     net: float,
+     *     operational_credit: float,
+     *     operational_debit: float,
+     *     operational_net: float,
+     *     count: int
+     * }
+     */
     public function periodSummary(Carbon $start, Carbon $end, ?int $accountId = null): array
     {
-        $target = $this->defaultCurrency();
         $transactions = $this->baseQuery($accountId)
             ->whereDate('transaction_date', '>=', $start->toDateString())
             ->whereDate('transaction_date', '<=', $end->toDateString())
-            ->get(['type', 'amount', 'currency', 'exchange_rate']);
+            ->get();
 
         $credit = 0.0;
         $debit = 0.0;
+        $net = 0.0;
+        $operationalCredit = 0.0;
+        $operationalDebit = 0.0;
 
         foreach ($transactions as $transaction) {
-            $amount = $this->amountInCurrency((float) $transaction->amount, (string) $transaction->currency, $target);
+            $account = $transaction->account;
+
+            if (! $account) {
+                continue;
+            }
+
+            $amount = $this->transactionAmountInDefaultCurrency(
+                (float) $transaction->amount,
+                strtoupper((string) ($account->currency ?? 'TRY')),
+                (float) ($transaction->exchange_rate ?? 0) ?: null,
+            );
+
+            $signed = $transaction->type === 'credit' ? $amount : -$amount;
+            $net += $signed;
+
+            if ($this->isReversalTransaction($transaction)) {
+                continue;
+            }
 
             if ($transaction->type === 'credit') {
                 $credit += $amount;
+                $operationalCredit += $amount;
             } else {
                 $debit += $amount;
+                $operationalDebit += $amount;
             }
         }
 
         return [
             'credit' => $credit,
             'debit' => $debit,
-            'net' => $credit - $debit,
+            'net' => $net,
+            'operational_credit' => $operationalCredit,
+            'operational_debit' => $operationalDebit,
+            'operational_net' => $operationalCredit - $operationalDebit,
             'count' => $transactions->count(),
         ];
     }
@@ -164,21 +199,62 @@ class TreasuryLedgerService
         return class_basename((string) $transaction->reference_type);
     }
 
+    public function treasuryAccountIds(): SupportCollection
+    {
+        return Account::query()
+            ->companyTreasury()
+            ->where('is_active', true)
+            ->pluck('id');
+    }
+
     protected function baseQuery(?int $accountId = null): Builder
     {
-        $treasuryIds = $this->treasury->accounts()->pluck('id');
-
         return AccountTransaction::query()
             ->with([
-                'account' => fn ($query) => $query->withTrashed()->select('id', 'uuid', 'name', 'currency', 'is_treasury'),
+                'account' => fn ($query) => $query->withTrashed()->select('id', 'uuid', 'name', 'currency', 'is_treasury', 'type'),
                 'reference' => fn (MorphTo $morphTo) => $morphTo->morphWith([
                     Collection::class => ['customer', 'account.customer'],
                     Payment::class => ['supplier', 'account.supplier'],
                     IncomeExpense::class => [],
                 ]),
             ])
-            ->whereIn('account_id', $treasuryIds)
+            ->whereIn('account_id', $this->treasuryAccountIds())
             ->when($accountId, fn (Builder $q) => $q->where('account_id', $accountId));
+    }
+
+    protected function transactionAmountInDefaultCurrency(
+        float $amount,
+        string $accountCurrency,
+        ?float $lockedRate = null,
+        ?string $target = null,
+    ): float {
+        $target ??= $this->defaultCurrency();
+        $accountCurrency = strtoupper($accountCurrency);
+
+        if ($accountCurrency === $target) {
+            return round($amount, 2);
+        }
+
+        if ($lockedRate && $lockedRate > 0) {
+            return round($amount * $lockedRate, 2);
+        }
+
+        $converted = $this->rates->convert($amount, $accountCurrency, $target);
+
+        return round($converted ?? $amount, 2);
+    }
+
+    protected function isReversalTransaction(AccountTransaction $transaction): bool
+    {
+        $description = (string) $transaction->description;
+
+        foreach (['İptal', 'iptal', 'Düzeltme iptali', 'Cancel'] as $prefix) {
+            if (str_starts_with($description, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function signedAmount(AccountTransaction $transaction): float
