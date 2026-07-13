@@ -1,5 +1,5 @@
 /**
- * Document depot upload modal with progress bar (XHR).
+ * Document depot upload with progress bar (XHR). Inline panel — no modal dependency.
  */
 (function () {
     function formatBytes(bytes) {
@@ -8,34 +8,27 @@
         return bytes + ' B';
     }
 
-    function initFilesApp(app) {
-        const modalEl = document.getElementById('filesUploadModal');
-        if (!modalEl) {
+    function initUploadPanel(panel) {
+        if (panel.dataset.filesUploadInit === '1') {
             return;
         }
+        panel.dataset.filesUploadInit = '1';
 
-        if (modalEl.dataset.filesUploadInit === '1') {
-            return;
-        }
-        modalEl.dataset.filesUploadInit = '1';
-
-        const modal = window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(modalEl) : null;
-        const form = modalEl.querySelector('[data-files-upload-form]');
-        const dropzone = modalEl.querySelector('[data-files-dropzone]');
-        const input = modalEl.querySelector('.files-dropzone-input');
-        const progressWrap = modalEl.querySelector('[data-files-upload-progress]');
-        const progressBar = modalEl.querySelector('[data-files-upload-bar]');
-        const progressLabel = modalEl.querySelector('[data-files-upload-label]');
-        const progressPercent = modalEl.querySelector('[data-files-upload-percent]');
+        const form = panel.querySelector('[data-files-upload-form]');
+        const dropzone = panel.querySelector('[data-files-dropzone]');
+        const input = panel.querySelector('.files-dropzone-input');
+        const progressWrap = panel.querySelector('[data-files-upload-progress]');
+        const progressBar = panel.querySelector('[data-files-upload-bar]');
+        const progressLabel = panel.querySelector('[data-files-upload-label]');
+        const progressPercent = panel.querySelector('[data-files-upload-percent]');
         const submitBtn = form?.querySelector('[type="submit"]');
-        const folderFieldWrap = modalEl.querySelector('[data-files-folder-field]');
-        const folderInput = modalEl.querySelector('[data-files-folder-input]');
-        const folderReadonly = modalEl.querySelector('[data-files-folder-readonly]');
-        const folderLabel = modalEl.querySelector('[data-files-folder-label]');
-        const selectedList = modalEl.querySelector('[data-files-selected-list]');
+        const folderInput = panel.querySelector('[data-files-folder-input]');
+        const folderHint = panel.querySelector('[data-files-folder-hint]');
+        const selectedList = panel.querySelector('[data-files-selected-list]');
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
         const labels = window.__filesUploadLabels || {};
-        const defaultFolderLabel = app.dataset.defaultFolderLabel || 'Genel';
+        const defaultFolderLabel = panel.dataset.defaultFolderLabel || 'Genel';
+        const pickModeDefault = panel.dataset.pickModeDefault === '1';
 
         function setProgress(percent, label) {
             if (!progressWrap || !progressBar) return;
@@ -57,7 +50,7 @@
 
         function setUploading(active) {
             if (submitBtn) submitBtn.disabled = active;
-            app.classList.toggle('is-uploading', active);
+            panel.classList.toggle('is-uploading', active);
         }
 
         function updateSelectedList() {
@@ -74,34 +67,48 @@
         }
 
         function applyFolderContext(folder, pickMode) {
-            const value = folder ?? '';
             if (!folderInput) return;
 
+            const value = folder ?? '';
             folderInput.value = value;
+            folderInput.readOnly = !pickMode && value !== '';
 
-            if (pickMode) {
-                folderFieldWrap?.classList.remove('d-none');
-                folderReadonly?.classList.add('d-none');
-                folderInput.required = true;
-                return;
+            if (folderHint) {
+                if (pickMode) {
+                    folderHint.textContent = labels.folderHintPick || folderHint.dataset.pickHint || '';
+                } else if (value !== '') {
+                    folderHint.textContent = (labels.folderHintFixed || 'Hedef klasör: ') + value;
+                } else {
+                    folderHint.textContent = (labels.folderHintDefault || 'Hedef klasör: ') + defaultFolderLabel;
+                }
             }
 
-            folderFieldWrap?.classList.add('d-none');
-            folderReadonly?.classList.remove('d-none');
-            folderInput.required = false;
-            if (folderLabel) {
-                folderLabel.textContent = value !== '' ? value : defaultFolderLabel;
-            }
+            folderInput.focus({ preventScroll: true });
         }
 
-        document.querySelectorAll('[data-files-upload-open]').forEach(btn => {
-            btn.addEventListener('click', () => {
+        function scrollToPanel() {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            panel.classList.add('is-highlight');
+            window.setTimeout(() => panel.classList.remove('is-highlight'), 1200);
+        }
+
+        document.querySelectorAll('[data-files-upload-target]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
                 resetProgress();
                 if (input) input.value = '';
                 updateSelectedList();
-                applyFolderContext(btn.dataset.folder ?? '', btn.dataset.filesUploadPick === '1');
+                applyFolderContext(
+                    btn.dataset.folder ?? '',
+                    btn.dataset.filesUploadPick === '1'
+                );
+                scrollToPanel();
             });
         });
+
+        if (pickModeDefault && folderInput && !folderInput.value.trim()) {
+            applyFolderContext('', true);
+        }
 
         if (dropzone && input) {
             ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, e => {
@@ -125,37 +132,29 @@
             input.addEventListener('change', updateSelectedList);
         }
 
-        modalEl?.addEventListener('hidden.bs.modal', () => {
-            resetProgress();
-            setUploading(false);
-            if (input) input.value = '';
-            updateSelectedList();
-        });
-
         form?.addEventListener('submit', function (e) {
             e.preventDefault();
 
             if (!input?.files?.length) {
-                alert(labels.noFiles || 'Select at least one file.');
-                return;
-            }
-
-            if (folderInput && folderFieldWrap && !folderFieldWrap.classList.contains('d-none') && folderInput.required && !folderInput.value.trim()) {
-                alert(labels.folderRequired || 'Folder name is required.');
+                alert(labels.noFiles || 'En az bir dosya seçin.');
                 return;
             }
 
             const formData = new FormData(form);
+            if (!formData.get('folder') && folderInput) {
+                formData.set('folder', folderInput.value.trim());
+            }
+
             const xhr = new XMLHttpRequest();
 
             setUploading(true);
-            setProgress(0, labels.uploading || 'Uploading…');
+            setProgress(0, labels.uploading || 'Yükleniyor…');
 
             xhr.upload.addEventListener('progress', (ev) => {
                 if (!ev.lengthComputable) return;
                 const pct = (ev.loaded / ev.total) * 100;
                 const loadedLabel = formatBytes(ev.loaded) + ' / ' + formatBytes(ev.total);
-                setProgress(pct, (labels.uploading || 'Uploading') + ' — ' + loadedLabel);
+                setProgress(pct, (labels.uploading || 'Yükleniyor') + ' — ' + loadedLabel);
             });
 
             xhr.addEventListener('load', () => {
@@ -170,18 +169,17 @@
                         return;
                     }
 
-                    setProgress(100, labels.done || 'Complete');
+                    setProgress(100, labels.done || 'Tamamlandı');
                     progressBar?.classList.add('bg-success');
-                    modal?.hide();
 
-                    setTimeout(() => {
+                    window.setTimeout(() => {
                         window.location.href = data.redirect || window.location.href;
-                    }, 350);
+                    }, 400);
                     return;
                 }
 
                 progressBar?.classList.add('bg-danger');
-                let message = labels.failed || 'Upload failed.';
+                let message = labels.failed || 'Yükleme başarısız.';
 
                 try {
                     const data = JSON.parse(xhr.responseText);
@@ -200,7 +198,7 @@
             xhr.addEventListener('error', () => {
                 setUploading(false);
                 progressBar?.classList.add('bg-danger');
-                if (progressLabel) progressLabel.textContent = labels.networkError || 'Network error.';
+                if (progressLabel) progressLabel.textContent = labels.networkError || 'Ağ hatası.';
             });
 
             xhr.open('POST', form.action, true);
@@ -211,7 +209,13 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[data-files-app]').forEach(initFilesApp);
-    });
+    function boot() {
+        document.querySelectorAll('[data-files-upload-panel]').forEach(initUploadPanel);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
 })();

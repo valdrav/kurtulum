@@ -11,6 +11,9 @@
         'networkError' => __('documents.upload_network_error'),
         'noFiles' => __('documents.upload_no_files'),
         'folderRequired' => __('documents.folder') . ' *',
+        'folderHintPick' => __('documents.target_folder_hint'),
+        'folderHintFixed' => __('documents.target_folder') . ': ',
+        'folderHintDefault' => __('documents.target_folder') . ': ',
     ];
     $canManageDocs = can_manage_documents();
     $canDeleteDocs = can_delete_documents();
@@ -34,8 +37,10 @@
 
             <div class="files-toolbar-actions">
                 <form method="GET" class="files-search">
-                    @if($currentSlug !== null)
+                    @if($viewMode !== 'grid')
                     <input type="hidden" name="view" value="{{ $viewMode }}">
+                    @endif
+                    @if($currentSlug !== null && $sort !== 'date')
                     <input type="hidden" name="sort" value="{{ $sort }}">
                     @endif
                     <i class="ti ti-search"></i>
@@ -78,10 +83,9 @@
                 @endif
 
                 @if($canManageDocs)
-                <button type="button" class="btn btn-primary files-upload-btn-prominent" data-files-upload-open
+                <button type="button" class="btn btn-primary files-upload-btn-prominent" data-files-upload-target
                         data-folder="{{ $defaultUploadFolder }}"
-                        @if($currentSlug === null) data-files-upload-pick="1" @endif
-                        data-bs-toggle="modal" data-bs-target="#filesUploadModal">
+                        @if($currentSlug === null) data-files-upload-pick="1" @endif>
                     <i class="ti ti-cloud-upload me-1"></i>
                     {{ $currentSlug !== null ? __('documents.upload_to_this_folder') : __('documents.upload_open_panel') }}
                 </button>
@@ -102,18 +106,61 @@
         </div>
 
         @if($canManageDocs)
-        <div class="files-create-banner">
-            <div class="files-create-banner-icon">@include('documents.partials.icon', ['kind' => 'folder'])</div>
-            <div class="files-create-banner-body">
-                <div class="fw-semibold">{{ __('documents.create_banner_title') }}</div>
-                <div class="text-muted small">{{ __('documents.create_banner_hint') }}</div>
+        <div class="files-upload-panel" id="filesUploadPanel" data-files-upload-panel
+             data-default-folder-label="{{ __('documents.default_folder') }}"
+             data-pick-mode-default="{{ $currentSlug === null ? '1' : '0' }}">
+            <div class="files-upload-head">
+                <div class="files-upload-title">
+                    <span class="files-create-banner-icon d-inline-flex align-middle me-2">@include('documents.partials.icon', ['kind' => 'folder'])</span>
+                    {{ __('documents.create_banner_title') }}
+                </div>
+                <p class="text-muted small mb-0 mt-1">{{ __('documents.create_banner_hint') }}</p>
             </div>
-            <button type="button" class="btn btn-primary files-upload-btn-prominent" data-files-upload-open
-                    data-folder="{{ $defaultUploadFolder }}"
-                    @if($currentSlug === null) data-files-upload-pick="1" @endif
-                    data-bs-toggle="modal" data-bs-target="#filesUploadModal">
-                <i class="ti ti-plus me-1"></i>{{ $currentSlug !== null ? __('documents.upload_to_this_folder') : __('documents.create_new_folder') }}
-            </button>
+            <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="files-upload-form" data-files-upload-form novalidate>
+                @csrf
+                <div class="row g-3">
+                    <div class="col-12 col-md-5">
+                        <label class="form-label" for="filesFolderInput">{{ __('documents.target_folder') }} *</label>
+                        <input type="text" name="folder" id="filesFolderInput" class="form-control" maxlength="100" list="folderList"
+                               placeholder="{{ __('documents.folder_placeholder') }}" value="{{ old('folder', $defaultUploadFolder) }}"
+                               data-files-folder-input autocomplete="off">
+                        <datalist id="folderList">
+                            @foreach($folders as $f)
+                            <option value="{{ $f->folder_name === __('documents.default_folder') ? '' : $f->folder_name }}">
+                            @endforeach
+                        </datalist>
+                        <div class="form-hint mt-1" data-files-folder-hint data-pick-hint="{{ __('documents.target_folder_hint') }}">{{ __('documents.target_folder_hint') }}</div>
+                    </div>
+                    <div class="col-12 col-md-7">
+                        <label class="form-label">{{ __('documents.drop_files') }}</label>
+                        <div class="files-dropzone" data-files-dropzone>
+                            <input type="file" name="files[]" class="files-dropzone-input" multiple>
+                            <div class="files-dropzone-inner">
+                                <i class="ti ti-cloud-upload"></i>
+                                <div class="fw-semibold">{{ __('documents.drop_files') }}</div>
+                                <div class="text-muted small">{{ __('documents.multi_upload_hint') }}</div>
+                                <div class="text-muted small mt-1">{{ __('documents.click_to_select') }}</div>
+                            </div>
+                        </div>
+                        <div class="files-selected-list small text-muted mt-2 d-none" data-files-selected-list></div>
+                    </div>
+                </div>
+                <div class="files-upload-progress mt-3" data-files-upload-progress hidden>
+                    <div class="d-flex justify-content-between align-items-center small mb-1">
+                        <span data-files-upload-label>{{ __('documents.upload_progress') }}</span>
+                        <span data-files-upload-percent>0%</span>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar" role="progressbar" data-files-upload-bar style="width:0%"
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-upload me-1"></i>{{ __('app.upload') }}
+                    </button>
+                </div>
+            </form>
         </div>
         @endif
 
@@ -139,8 +186,8 @@
                         <span class="files-list-meta">{{ $f->file_count }}</span>
                         <span class="files-list-actions">
                             @if($canManageDocs)
-                            <button type="button" class="btn btn-sm btn-primary" data-files-upload-open
-                                    data-folder="{{ $folderValue }}" data-bs-toggle="modal" data-bs-target="#filesUploadModal">
+                            <button type="button" class="btn btn-sm btn-primary" data-files-upload-target
+                                    data-folder="{{ $folderValue }}">
                                 <i class="ti ti-upload me-1"></i>{{ __('documents.upload_short') }}
                             </button>
                             @if($canDeleteDocs)
@@ -176,8 +223,8 @@
                         </a>
                         @if($canManageDocs)
                         <div class="files-item-menu files-item-menu--visible">
-                            <button type="button" class="btn btn-sm btn-primary w-100" data-files-upload-open
-                                    data-folder="{{ $folderValue }}" data-bs-toggle="modal" data-bs-target="#filesUploadModal">
+                            <button type="button" class="btn btn-sm btn-primary w-100" data-files-upload-target
+                                    data-folder="{{ $folderValue }}">
                                 <i class="ti ti-upload me-1"></i>{{ __('documents.upload_to_this_folder') }}
                             </button>
                             @if($canDeleteDocs)
@@ -267,67 +314,7 @@
     </section>
 </div>
 
-@if($canManageDocs)
-<div class="modal fade" id="filesUploadModal" tabindex="-1" aria-labelledby="filesUploadModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filesUploadModalLabel">
-                    <i class="ti ti-cloud-upload me-1"></i>{{ __('documents.upload_modal_title') }}
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('app.close') ?? 'Kapat' }}"></button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="files-upload-form" data-files-upload-form>
-                    @csrf
-                    <div class="mb-3" data-files-folder-field>
-                        <label class="form-label">{{ __('documents.target_folder') }} *</label>
-                        <input type="text" name="folder" class="form-control" maxlength="100" list="folderList"
-                               placeholder="{{ __('documents.folder_placeholder') }}" value="{{ old('folder', $defaultUploadFolder) }}"
-                               data-files-folder-input>
-                        <datalist id="folderList">
-                            @foreach($folders as $f)
-                            <option value="{{ $f->folder_name === __('documents.default_folder') ? '' : $f->folder_name }}">
-                            @endforeach
-                        </datalist>
-                        <div class="form-hint">{{ __('documents.target_folder_hint') }}</div>
-                    </div>
-                    <div class="alert alert-azure-lt py-2 mb-3 d-none" data-files-folder-readonly>
-                        <i class="ti ti-folder me-1"></i>
-                        <span data-files-folder-label></span>
-                    </div>
-                    <div class="files-dropzone" data-files-dropzone>
-                        <input type="file" name="files[]" class="files-dropzone-input" multiple required>
-                        <div class="files-dropzone-inner">
-                            <i class="ti ti-cloud-upload"></i>
-                            <div class="fw-semibold">{{ __('documents.drop_files') }}</div>
-                            <div class="text-muted small">{{ __('documents.multi_upload_hint') }}</div>
-                            <div class="text-muted small mt-1">{{ __('documents.click_to_select') }}</div>
-                        </div>
-                    </div>
-                    <div class="files-selected-list small text-muted mt-2 d-none" data-files-selected-list></div>
-                    <div class="files-upload-progress mt-3" data-files-upload-progress hidden>
-                        <div class="d-flex justify-content-between align-items-center small mb-1">
-                            <span data-files-upload-label>{{ __('documents.upload_progress') }}</span>
-                            <span data-files-upload-percent>0%</span>
-                        </div>
-                        <div class="progress progress-sm">
-                            <div class="progress-bar" role="progressbar" data-files-upload-bar style="width:0%"
-                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-end gap-2 mt-3">
-                        <button type="button" class="btn btn-ghost-secondary" data-bs-dismiss="modal">{{ __('app.cancel') }}</button>
-                        <button type="submit" class="btn btn-primary"><i class="ti ti-upload me-1"></i>{{ __('app.upload') }}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
 @push('scripts')
 <script>window.__filesUploadLabels = {!! json_encode($uploadLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!};</script>
-<script src="{{ asset('js/documents-upload.js') }}?v=6"></script>
+<script src="{{ asset('js/documents-upload.js') }}?v=7"></script>
 @endpush

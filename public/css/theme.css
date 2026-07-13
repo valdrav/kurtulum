@@ -826,6 +826,8 @@ button.ef-more-tile {
     display: flex;
     flex-direction: column;
     width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .files-mobile-stats {
@@ -964,9 +966,34 @@ button.ef-more-tile {
 }
 
 .files-upload-panel {
-    padding: 1rem;
+    padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--ef-border);
-    background: rgba(var(--ef-primary-rgb), 0.04);
+    background: linear-gradient(135deg, rgba(var(--ef-primary-rgb), 0.08) 0%, rgba(var(--ef-primary-rgb), 0.02) 100%);
+}
+
+.files-upload-panel.is-highlight {
+    animation: files-panel-highlight 1.2s ease;
+}
+
+@keyframes files-panel-highlight {
+    0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
+    30% { box-shadow: inset 0 0 0 2px rgba(var(--ef-primary-rgb), 0.45); }
+}
+
+.files-upload-panel .files-upload-head .files-create-banner-icon .files-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: transparent;
+}
+
+.files-upload-panel .files-create-banner-icon .files-svg-icon {
+    width: 2rem;
+    height: 2rem;
+}
+
+.files-upload-panel.is-uploading .files-dropzone {
+    pointer-events: none;
+    opacity: 0.7;
 }
 
 .files-upload-head {
@@ -1007,6 +1034,8 @@ button.ef-more-tile {
     flex: 1;
     padding: 1rem;
     overflow: auto;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .files-grid {
@@ -1245,7 +1274,18 @@ button.ef-more-tile {
 }
 
 .files-app--full {
-    flex-direction: column;
+    flex-direction: column !important;
+    overflow: visible;
+    width: 100%;
+    max-width: 100%;
+}
+
+@media (min-width: 1200px) {
+    .files-app.files-app--full {
+        flex-direction: column;
+        overflow: visible;
+        min-height: auto;
+    }
 }
 
 .files-svg-icon {
@@ -1327,7 +1367,13 @@ button.ef-more-tile {
     }
 
     .files-grid {
-        grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+        gap: 0.5rem;
+    }
+
+    .files-item-link {
+        min-height: 6.5rem;
+        padding: 0.65rem 0.35rem 0.5rem;
     }
 
     .files-item-menu {
@@ -1339,17 +1385,39 @@ button.ef-more-tile {
         display: none;
     }
 
-    .files-list-row {
-        grid-template-columns: minmax(0, 1fr) auto;
+    .files-list-row,
+    .files-list-folders .files-list-row {
+        grid-template-columns: minmax(0, 1fr);
         grid-template-areas:
-            "main actions"
-            "meta meta";
+            "main"
+            "meta"
+            "actions";
+        gap: 0.35rem 0.75rem;
     }
 
     .files-list-main { grid-area: main; }
-    .files-list-actions { grid-area: actions; }
+    .files-list-actions {
+        grid-area: actions;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
     .files-list-meta { grid-area: meta; font-size: 0.75rem; }
     .files-list-row .files-list-meta:nth-child(3) { display: none; }
+
+    .files-list-actions .btn {
+        width: auto;
+        height: auto;
+        padding: 0.25rem 0.65rem;
+    }
+
+    .files-upload-panel {
+        padding: 0.85rem 1rem;
+    }
+
+    .files-toolbar-actions .btn-group,
+    .files-toolbar-actions .dropdown {
+        flex: 1 1 auto;
+    }
 }
 
 .pdf-editor-card {

@@ -48,7 +48,7 @@ return [
     'target_folder_hint' => 'Mevcut klasörlerden seçin veya yeni klasör adı yazın',
     'create_new_folder' => 'Yeni klasör / dosya ekle',
     'create_banner_title' => 'Yeni klasör oluştur veya dosya yükle',
-    'create_banner_hint' => 'Modalda klasör adı yazın (yeni klasör oluşturur) ve dosyalarınızı seçin. Mevcut klasöre de yükleyebilirsiniz.',
+    'create_banner_hint' => 'Klasör adı yazın (yeni klasör oluşturur), dosyaları sürükleyin veya seçin. Mevcut klasörlerden de seçebilirsiniz.',
     'click_to_select' => 'Dosyaları seçmek için alana tıklayın',
     'no_folders' => 'Henüz klasör yok — yukarıdan klasör adı girip dosya yükleyin',
     'search_folders' => 'Klasör ara',
