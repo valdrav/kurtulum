@@ -1094,6 +1094,11 @@ button.ef-more-tile {
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
+.files-icon-folder .files-svg-icon {
+    width: 2rem;
+    height: 2rem;
+}
+
 .files-icon-pdf { color: #ef4444; background: rgba(239, 68, 68, 0.12); }
 .files-icon-doc { color: #2563eb; background: rgba(37, 99, 235, 0.12); }
 .files-icon-xls { color: #16a34a; background: rgba(22, 163, 74, 0.12); }
@@ -1241,6 +1246,43 @@ button.ef-more-tile {
 
 .files-app--full {
     flex-direction: column;
+}
+
+.files-svg-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: block;
+}
+
+.files-icon-fallback {
+    display: none !important;
+}
+
+.files-create-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    margin: 0;
+    border-bottom: 1px solid var(--ef-border);
+    background: linear-gradient(135deg, rgba(var(--ef-primary-rgb), 0.08) 0%, rgba(var(--ef-primary-rgb), 0.02) 100%);
+}
+
+.files-create-banner-icon .files-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    background: transparent;
+}
+
+.files-create-banner-icon .files-svg-icon {
+    width: 3rem;
+    height: 3rem;
+}
+
+.files-create-banner-body {
+    flex: 1;
+    min-width: 12rem;
 }
 
 .files-upload-btn-prominent {

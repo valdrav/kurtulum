@@ -41,7 +41,24 @@ if (!function_exists('can_access')) {
 if (! function_exists('can_manage_documents')) {
     function can_manage_documents(): bool
     {
+        $user = auth()->user();
+
+        if (! $user || $user->usesCustomerPortal()) {
+            return false;
+        }
+
+        return can_access('documents.view')
+            || can_access('documents.create')
+            || can_access('documents.edit')
+            || is_patron_or_super_admin();
+    }
+}
+
+if (! function_exists('can_delete_documents')) {
+    function can_delete_documents(): bool
+    {
         return can_access('documents.create')
+            || can_access('documents.delete')
             || can_access('documents.edit')
             || is_patron_or_super_admin();
     }

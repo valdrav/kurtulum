@@ -1,8 +1,10 @@
-const CACHE_NAME = 'exportflow-v3';
+const CACHE_NAME = 'exportflow-v5';
 const STATIC_ASSETS = [
     '/css/theme.css',
     '/vendor/tabler-icons/tabler-icons.min.css',
     '/vendor/tabler-icons/fonts/tabler-icons.woff2',
+    '/vendor/tabler-icons/fonts/tabler-icons.woff',
+    '/js/documents-upload.js',
 ];
 
 self.addEventListener('install', (e) => {
@@ -35,8 +37,9 @@ self.addEventListener('fetch', (e) => {
 
     const isStatic = url.pathname.startsWith('/css/')
         || url.pathname.startsWith('/js/')
+        || url.pathname.startsWith('/vendor/')
         || url.pathname.startsWith('/build/')
-        || url.pathname.match(/\.(css|js|png|jpg|jpeg|webp|svg|woff2?)$/i);
+        || url.pathname.match(/\.(css|js|png|jpg|jpeg|webp|svg|woff2?|ttf)$/i);
 
     if (isStatic) {
         e.respondWith(

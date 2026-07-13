@@ -10,20 +10,29 @@
 
     function initFilesApp(app) {
         const modalEl = document.getElementById('filesUploadModal');
-        const modal = modalEl && window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(modalEl) : null;
-        const form = app.querySelector('[data-files-upload-form]');
-        const dropzone = app.querySelector('[data-files-dropzone]');
-        const input = app.querySelector('.files-dropzone-input');
-        const progressWrap = app.querySelector('[data-files-upload-progress]');
-        const progressBar = app.querySelector('[data-files-upload-bar]');
-        const progressLabel = app.querySelector('[data-files-upload-label]');
-        const progressPercent = app.querySelector('[data-files-upload-percent]');
+        if (!modalEl) {
+            return;
+        }
+
+        if (modalEl.dataset.filesUploadInit === '1') {
+            return;
+        }
+        modalEl.dataset.filesUploadInit = '1';
+
+        const modal = window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(modalEl) : null;
+        const form = modalEl.querySelector('[data-files-upload-form]');
+        const dropzone = modalEl.querySelector('[data-files-dropzone]');
+        const input = modalEl.querySelector('.files-dropzone-input');
+        const progressWrap = modalEl.querySelector('[data-files-upload-progress]');
+        const progressBar = modalEl.querySelector('[data-files-upload-bar]');
+        const progressLabel = modalEl.querySelector('[data-files-upload-label]');
+        const progressPercent = modalEl.querySelector('[data-files-upload-percent]');
         const submitBtn = form?.querySelector('[type="submit"]');
-        const folderFieldWrap = app.querySelector('[data-files-folder-field]');
-        const folderInput = app.querySelector('[data-files-folder-input]');
-        const folderReadonly = app.querySelector('[data-files-folder-readonly]');
-        const folderLabel = app.querySelector('[data-files-folder-label]');
-        const selectedList = app.querySelector('[data-files-selected-list]');
+        const folderFieldWrap = modalEl.querySelector('[data-files-folder-field]');
+        const folderInput = modalEl.querySelector('[data-files-folder-input]');
+        const folderReadonly = modalEl.querySelector('[data-files-folder-readonly]');
+        const folderLabel = modalEl.querySelector('[data-files-folder-label]');
+        const selectedList = modalEl.querySelector('[data-files-selected-list]');
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
         const labels = window.__filesUploadLabels || {};
         const defaultFolderLabel = app.dataset.defaultFolderLabel || 'Genel';
@@ -73,7 +82,7 @@
             if (pickMode) {
                 folderFieldWrap?.classList.remove('d-none');
                 folderReadonly?.classList.add('d-none');
-                folderInput.required = false;
+                folderInput.required = true;
                 return;
             }
 

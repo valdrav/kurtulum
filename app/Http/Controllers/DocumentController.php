@@ -17,7 +17,17 @@ class DocumentController extends Controller
 
     public function __construct(
         protected DocumentStorageService $storage,
-    ) {}
+    ) {
+        $this->middleware('permission:documents.view')->only([
+            'index', 'folder', 'preview', 'download',
+        ]);
+        $this->middleware('permission:documents.view|documents.create|documents.edit')->only([
+            'store',
+        ]);
+        $this->middleware('permission:documents.create|documents.delete|documents.edit')->only([
+            'destroy', 'destroyFolder', 'backup',
+        ]);
+    }
 
     public function index(Request $request)
     {

@@ -13,6 +13,7 @@
         'folderRequired' => __('documents.folder') . ' *',
     ];
     $canManageDocs = can_manage_documents();
+    $canDeleteDocs = can_delete_documents();
     $defaultUploadFolder = $folderName ?? '';
 @endphp
 
@@ -42,16 +43,25 @@
                            placeholder="{{ $currentSlug !== null ? __('app.search') : __('documents.search_folders') }}...">
                 </form>
 
-                @if($currentSlug !== null)
                 <div class="btn-group files-view-toggle" role="group">
+                    @if($currentSlug !== null)
                     <a href="{{ route('documents.folder', array_merge(['folder' => $currentSlug], array_merge($queryBase, ['view' => 'grid']))) }}"
                        class="btn btn-sm {{ $viewMode === 'grid' ? 'btn-primary' : 'btn-ghost-secondary' }}"
                        title="{{ __('documents.view_grid') }}"><i class="ti ti-layout-grid"></i></a>
                     <a href="{{ route('documents.folder', array_merge(['folder' => $currentSlug], array_merge($queryBase, ['view' => 'list']))) }}"
                        class="btn btn-sm {{ $viewMode === 'list' ? 'btn-primary' : 'btn-ghost-secondary' }}"
                        title="{{ __('documents.view_list') }}"><i class="ti ti-list"></i></a>
+                    @else
+                    <a href="{{ route('documents.index', array_merge($queryBase, ['view' => 'grid'])) }}"
+                       class="btn btn-sm {{ $viewMode === 'grid' ? 'btn-primary' : 'btn-ghost-secondary' }}"
+                       title="{{ __('documents.view_grid') }}"><i class="ti ti-layout-grid"></i></a>
+                    <a href="{{ route('documents.index', array_merge($queryBase, ['view' => 'list'])) }}"
+                       class="btn btn-sm {{ $viewMode === 'list' ? 'btn-primary' : 'btn-ghost-secondary' }}"
+                       title="{{ __('documents.view_list') }}"><i class="ti ti-list"></i></a>
+                    @endif
                 </div>
 
+                @if($currentSlug !== null)
                 <div class="dropdown">
                     <button class="btn btn-sm btn-ghost-secondary dropdown-toggle" data-bs-toggle="dropdown">
                         <i class="ti ti-arrows-sort me-1"></i>{{ __('documents.sort') }}
@@ -77,7 +87,7 @@
                 </button>
                 @endif
 
-                @if($currentSlug !== null && $canManageDocs)
+                @if($currentSlug !== null && $canDeleteDocs)
                 <form action="{{ route('documents.folder.destroy', $currentSlug) }}" method="POST" class="d-inline"
                       data-confirm="{{ __('documents.delete_folder_confirm') }}"
                       data-confirm-title="{{ __('app.confirm_title') }}"
@@ -90,6 +100,22 @@
                 @endif
             </div>
         </div>
+
+        @if($canManageDocs)
+        <div class="files-create-banner">
+            <div class="files-create-banner-icon">@include('documents.partials.icon', ['kind' => 'folder'])</div>
+            <div class="files-create-banner-body">
+                <div class="fw-semibold">{{ __('documents.create_banner_title') }}</div>
+                <div class="text-muted small">{{ __('documents.create_banner_hint') }}</div>
+            </div>
+            <button type="button" class="btn btn-primary files-upload-btn-prominent" data-files-upload-open
+                    data-folder="{{ $defaultUploadFolder }}"
+                    @if($currentSlug === null) data-files-upload-pick="1" @endif
+                    data-bs-toggle="modal" data-bs-target="#filesUploadModal">
+                <i class="ti ti-plus me-1"></i>{{ $currentSlug !== null ? __('documents.upload_to_this_folder') : __('documents.create_new_folder') }}
+            </button>
+        </div>
+        @endif
 
         <div class="files-content {{ $viewMode === 'list' ? 'is-list' : 'is-grid' }}">
             @if($currentSlug === null)
@@ -107,7 +133,7 @@
                     @endphp
                     <div class="files-list-row files-list-row-folder">
                         <a href="{{ route('documents.folder', $slug) }}" class="files-list-main">
-                            <span class="files-icon files-icon-folder"><i class="ti ti-folder-filled"></i></span>
+                            @include('documents.partials.icon', ['kind' => 'folder'])
                             <span class="files-list-name">{{ $f->folder_name }}</span>
                         </a>
                         <span class="files-list-meta">{{ $f->file_count }}</span>
@@ -117,6 +143,7 @@
                                     data-folder="{{ $folderValue }}" data-bs-toggle="modal" data-bs-target="#filesUploadModal">
                                 <i class="ti ti-upload me-1"></i>{{ __('documents.upload_short') }}
                             </button>
+                            @if($canDeleteDocs)
                             <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="d-inline ms-1"
                                   data-confirm="{{ __('documents.delete_folder_confirm') }}"
                                   data-confirm-title="{{ __('app.confirm_title') }}"
@@ -126,6 +153,7 @@
                                     <i class="ti ti-trash"></i>
                                 </button>
                             </form>
+                            @endif
                             @endif
                         </span>
                     </div>
@@ -142,7 +170,7 @@
                     @endphp
                     <div class="files-item files-item-folder">
                         <a href="{{ route('documents.folder', $slug) }}" class="files-item-link">
-                            <span class="files-icon files-icon-folder"><i class="ti ti-folder-filled"></i></span>
+                            @include('documents.partials.icon', ['kind' => 'folder'])
                             <span class="files-item-name">{{ $f->folder_name }}</span>
                             <span class="files-item-meta">{{ $f->file_count }} {{ __('documents.file_count') }}</span>
                         </a>
@@ -152,6 +180,7 @@
                                     data-folder="{{ $folderValue }}" data-bs-toggle="modal" data-bs-target="#filesUploadModal">
                                 <i class="ti ti-upload me-1"></i>{{ __('documents.upload_to_this_folder') }}
                             </button>
+                            @if($canDeleteDocs)
                             <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="mt-1"
                                   data-confirm="{{ __('documents.delete_folder_confirm') }}"
                                   data-confirm-title="{{ __('app.confirm_title') }}"
@@ -161,6 +190,7 @@
                                     <i class="ti ti-trash me-1"></i>{{ __('documents.delete_folder') }}
                                 </button>
                             </form>
+                            @endif
                         </div>
                         @endif
                     </div>
@@ -181,14 +211,14 @@
                     @forelse($documents as $d)
                     <div class="files-list-row">
                         <a href="{{ $d->openUrl() }}" class="files-list-main" @if($d->isPreviewable()) target="_blank" @endif>
-                            <span class="files-icon files-icon-{{ $d->iconTone() }}"><i class="ti {{ $d->iconClass() }}"></i></span>
+                            @include('documents.partials.icon', ['document' => $d])
                             <span class="files-list-name">{{ $d->original_name }}</span>
                         </a>
                         <span class="files-list-meta">{{ $d->created_at?->format('d.m.Y') }}</span>
                         <span class="files-list-meta">{{ $d->humanSize() }}</span>
                         <span class="files-list-actions">
                             <a href="{{ route('documents.download', $d) }}" class="btn btn-sm btn-ghost-secondary" title="{{ __('app.download') }}"><i class="ti ti-download"></i></a>
-                            @if($canManageDocs)
+                            @if($canDeleteDocs)
                             <form method="POST" action="{{ route('documents.destroy', $d) }}" class="d-inline" data-confirm="{{ __('app.confirm_delete') }}">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-ghost-danger" title="{{ __('app.delete') }}"><i class="ti ti-trash"></i></button>
@@ -208,14 +238,14 @@
                             @if($d->iconTone() === 'image' && $d->isPreviewable())
                             <span class="files-thumb" style="background-image:url('{{ route('documents.preview', $d) }}')"></span>
                             @else
-                            <span class="files-icon files-icon-{{ $d->iconTone() }}"><i class="ti {{ $d->iconClass() }}"></i></span>
+                            @include('documents.partials.icon', ['document' => $d])
                             @endif
                             <span class="files-item-name">{{ $d->original_name }}</span>
                             <span class="files-item-meta">{{ $d->humanSize() }}</span>
                         </a>
                         <div class="files-item-menu">
                             <a href="{{ route('documents.download', $d) }}" class="btn btn-sm btn-ghost-secondary" title="{{ __('app.download') }}"><i class="ti ti-download"></i></a>
-                            @if($canManageDocs)
+                            @if($canDeleteDocs)
                             <form method="POST" action="{{ route('documents.destroy', $d) }}" class="d-inline" data-confirm="{{ __('app.confirm_delete') }}">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-ghost-danger" title="{{ __('app.delete') }}"><i class="ti ti-trash"></i></button>
@@ -299,5 +329,5 @@
 
 @push('scripts')
 <script>window.__filesUploadLabels = {!! json_encode($uploadLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!};</script>
-<script src="{{ asset('js/documents-upload.js') }}?v=4"></script>
+<script src="{{ asset('js/documents-upload.js') }}?v=6"></script>
 @endpush
