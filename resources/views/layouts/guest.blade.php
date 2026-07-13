@@ -8,7 +8,7 @@
     <title>@yield('title', app_brand())</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css" rel="stylesheet">
+    @include('partials.tabler-icons')
     <link href="{{ asset('css/theme.css') }}" rel="stylesheet">
     @stack('styles')
 </head>

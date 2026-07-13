@@ -14,7 +14,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', __('portal.title')) — {{ portal()->customer()->company_name }}</title>
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css" rel="stylesheet">
+    @include('partials.tabler-icons')
     <link href="{{ asset('css/theme.css') }}" rel="stylesheet">
     <style>
         :root { --ef-primary: {{ site_branding()->themeColor() }}; --ef-sidebar-w: 14rem; }

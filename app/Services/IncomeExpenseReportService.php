@@ -2,10 +2,17 @@
 
 namespace App\Services;
 
+use App\Models\Collection;
+use App\Models\Customer;
 use App\Models\IncomeExpense;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\Shipment;
+use App\Models\Supplier;
+use App\Models\Task;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
 
 class IncomeExpenseReportService
@@ -15,7 +22,7 @@ class IncomeExpenseReportService
     /** @return array{period: string, start: Carbon, end: Carbon, label: string} */
     public function resolvePeriod(string $period, ?string $anchor = null, ?string $from = null, ?string $to = null): array
     {
-        $period = in_array($period, self::PERIODS, true) ? $period : 'month';
+        $period = in_array($period, self::PERIODS, true) ? $period : 'year';
         $anchorDate = $anchor ? Carbon::parse($anchor) : now();
 
         if ($from && $to) {
@@ -71,7 +78,7 @@ class IncomeExpenseReportService
     public function summary(Carbon $start, Carbon $end): array
     {
         $base = $this->queryForRange($start, $end);
-        $amountSql = DB::raw('COALESCE(amount_base, amount)');
+        $amountSql = $this->amountExpression();
 
         $income = (float) (clone $base)->where('type', 'income')->sum($amountSql);
         $expense = (float) (clone $base)->where('type', 'expense')->sum($amountSql);
@@ -89,11 +96,11 @@ class IncomeExpenseReportService
     }
 
     /** @return Collection<int, object{category: string, type: string, total: float, count: int}> */
-    public function byCategory(Carbon $start, Carbon $end, ?string $type = null): Collection
+    public function byCategory(Carbon $start, Carbon $end, ?string $type = null): SupportCollection
     {
         $query = $this->queryForRange($start, $end)
             ->select('category', 'type')
-            ->selectRaw('SUM(COALESCE(amount_base, amount)) as total')
+            ->selectRaw('SUM('.$this->amountExpressionSql().') as total')
             ->selectRaw('COUNT(*) as count')
             ->groupBy('category', 'type')
             ->orderByDesc('total');
@@ -103,7 +110,9 @@ class IncomeExpenseReportService
         }
 
         return $query->get()->map(fn ($row) => (object) [
-            'category' => finance_categories()->label($row->category),
+            'category' => $row->category
+                ? finance_categories()->label($row->category)
+                : __('finance.legacy_categories.genel'),
             'type' => $row->type,
             'total' => (float) $row->total,
             'count' => (int) $row->count,
@@ -111,15 +120,17 @@ class IncomeExpenseReportService
     }
 
     /** @return Collection<int, object{account_name: string, income: float, expense: float, net: float}> */
-    public function byTreasury(Carbon $start, Carbon $end): Collection
+    public function byTreasury(Carbon $start, Carbon $end): SupportCollection
     {
         return $this->queryForRange($start, $end)
             ->whereNotNull('income_expenses.account_id')
             ->join('accounts', 'accounts.id', '=', 'income_expenses.account_id')
             ->where('accounts.is_treasury', true)
+            ->whereNull('accounts.customer_id')
+            ->whereNull('accounts.supplier_id')
             ->select('accounts.name as account_name')
-            ->selectRaw("SUM(CASE WHEN income_expenses.type = 'income' THEN COALESCE(income_expenses.amount_base, income_expenses.amount) ELSE 0 END) as income")
-            ->selectRaw("SUM(CASE WHEN income_expenses.type = 'expense' THEN COALESCE(income_expenses.amount_base, income_expenses.amount) ELSE 0 END) as expense")
+            ->selectRaw("SUM(CASE WHEN income_expenses.type = 'income' THEN {$this->amountExpressionSql('income_expenses')} ELSE 0 END) as income")
+            ->selectRaw("SUM(CASE WHEN income_expenses.type = 'expense' THEN {$this->amountExpressionSql('income_expenses')} ELSE 0 END) as expense")
             ->groupBy('accounts.id', 'accounts.name')
             ->orderBy('accounts.name')
             ->get()
@@ -132,7 +143,7 @@ class IncomeExpenseReportService
     }
 
     /** @return Collection<int, array{label: string, income: float, expense: float, net: float}> */
-    public function timeline(Carbon $start, Carbon $end, string $period): Collection
+    public function timeline(Carbon $start, Carbon $end, string $period): SupportCollection
     {
         return match ($period) {
             'day' => collect([[
@@ -142,14 +153,14 @@ class IncomeExpenseReportService
                 'net' => $this->sumType($start, $end, 'income') - $this->sumType($start, $end, 'expense'),
             ]]),
             'week' => collect(range(0, 6))->map(function (int $offset) use ($start) {
-                $day = $start->copy()->addDays($offset);
+                $day = $start->copy();
 
                 return [
-                    'label' => $day->translatedFormat('l d.m'),
-                    'income' => $this->sumType($day->copy()->startOfDay(), $day->copy()->endOfDay(), 'income'),
-                    'expense' => $this->sumType($day->copy()->startOfDay(), $day->copy()->endOfDay(), 'expense'),
-                    'net' => $this->sumType($day->copy()->startOfDay(), $day->copy()->endOfDay(), 'income')
-                        - $this->sumType($day->copy()->startOfDay(), $day->copy()->endOfDay(), 'expense'),
+                    'label' => $day->copy()->addDays($offset)->translatedFormat('l d.m'),
+                    'income' => $this->sumType($day->copy()->addDays($offset)->startOfDay(), $day->copy()->addDays($offset)->endOfDay(), 'income'),
+                    'expense' => $this->sumType($day->copy()->addDays($offset)->startOfDay(), $day->copy()->addDays($offset)->endOfDay(), 'expense'),
+                    'net' => $this->sumType($day->copy()->addDays($offset)->startOfDay(), $day->copy()->addDays($offset)->endOfDay(), 'income')
+                        - $this->sumType($day->copy()->addDays($offset)->startOfDay(), $day->copy()->addDays($offset)->endOfDay(), 'expense'),
                 ];
             }),
             'year' => collect(range(1, 12))->map(function (int $month) use ($start) {
@@ -165,6 +176,18 @@ class IncomeExpenseReportService
             }),
             default => $this->weeklyBucketsInMonth($start, $end),
         };
+    }
+
+    public function amountExpression()
+    {
+        return DB::raw($this->amountExpressionSql());
+    }
+
+    public function amountExpressionSql(string $table = ''): string
+    {
+        $prefix = $table !== '' ? $table.'.' : '';
+
+        return 'COALESCE(NULLIF('.$prefix.'amount_base, 0), ROUND('.$prefix.'amount * COALESCE(NULLIF('.$prefix.'exchange_rate, 0), 1), 2))';
     }
 
     /** @return list<string> */
@@ -186,11 +209,11 @@ class IncomeExpenseReportService
     {
         return (float) $this->queryForRange($start, $end)
             ->where('type', $type)
-            ->sum(DB::raw('COALESCE(amount_base, amount)'));
+            ->sum($this->amountExpression());
     }
 
     /** @return Collection<int, array{label: string, income: float, expense: float, net: float}> */
-    protected function weeklyBucketsInMonth(Carbon $start, Carbon $end): Collection
+    protected function weeklyBucketsInMonth(Carbon $start, Carbon $end): SupportCollection
     {
         $buckets = collect();
         $cursor = $start->copy();

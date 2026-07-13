@@ -182,6 +182,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
     Route::delete('/documents/folder/{folder}', [DocumentController::class, 'destroyFolder'])->name('documents.folder.destroy')->where('folder', '[^/]+');
     Route::post('/documents/backup', [DocumentController::class, 'backup'])->name('documents.backup');
+    Route::post('/documents/purge-orphans', [DocumentController::class, 'purgeOrphans'])->name('documents.purge-orphans');
 
     Route::prefix('documents/tools')->name('documents.tools.')->group(function () {
         Route::get('/', [DocumentToolsController::class, 'index'])->name('index');

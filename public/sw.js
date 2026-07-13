@@ -1,8 +1,8 @@
-const CACHE_NAME = 'exportflow-v2';
+const CACHE_NAME = 'exportflow-v3';
 const STATIC_ASSETS = [
     '/css/theme.css',
-    'https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css',
-    'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css',
+    '/vendor/tabler-icons/tabler-icons.min.css',
+    '/vendor/tabler-icons/fonts/tabler-icons.woff2',
 ];
 
 self.addEventListener('install', (e) => {

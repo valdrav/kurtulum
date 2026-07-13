@@ -58,6 +58,15 @@ class IncomeExpense extends Model
         return $this->item_name ?: ($this->description ?: $this->categoryLabel());
     }
 
+    public function normalizedAmount(): float
+    {
+        if ($this->amount_base && (float) $this->amount_base != 0.0) {
+            return (float) $this->amount_base;
+        }
+
+        return round((float) $this->amount * (float) ($this->exchange_rate ?: 1), 2);
+    }
+
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Document;
 use App\Models\User;
+use App\Services\DocumentStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -11,27 +12,19 @@ use Illuminate\Validation\ValidationException;
 
 class DocumentController extends Controller
 {
-    /** @var array<int, string> */
-    protected array $allowedExtensions = [
-        'pdf', 'xlsx', 'xls', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'csv', 'txt', 'zip',
-    ];
+    protected int $maxFileKb = 51200;
 
-    protected int $maxFileKb = 20480;
+    public function __construct(
+        protected DocumentStorageService $storage,
+    ) {}
 
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $folders = $this->folderSummaries($search);
+        $storageStats = $this->storage->stats();
 
-        $folders = Document::query()
-            ->selectRaw("COALESCE(NULLIF(folder, ''), ?) as folder_name", [__('documents.default_folder')])
-            ->selectRaw('COUNT(*) as file_count')
-            ->selectRaw('SUM(size) as total_size')
-            ->when($search, fn ($q, $s) => $q->where('folder', 'like', "%{$s}%"))
-            ->groupBy('folder_name')
-            ->orderBy('folder_name')
-            ->get();
-
-        return view('documents.index', compact('folders', 'search'));
+        return view('documents.index', compact('folders', 'search', 'storageStats'));
     }
 
     public function folder(Request $request, string $folder)
@@ -46,21 +39,32 @@ class DocumentController extends Controller
                 $q->where('original_name', 'like', "%{$s}%")
                     ->orWhere('description', 'like', "%{$s}%");
             }))
-            ->latest()
-            ->paginate(24);
+            ->when($request->input('sort') === 'name', fn ($q) => $q->orderBy('original_name'))
+            ->when($request->input('sort') === 'size', fn ($q) => $q->orderByDesc('size'))
+            ->when(! in_array($request->input('sort'), ['name', 'size'], true), fn ($q) => $q->latest())
+            ->paginate(48);
 
-        $allFolders = Document::query()
+        $folders = $this->folderSummaries();
+        $storageStats = $this->storage->stats();
+
+        return view('documents.folder', compact('documents', 'folderName', 'displayName', 'folders', 'storageStats'));
+    }
+
+    protected function folderSummaries(?string $search = null)
+    {
+        return Document::query()
             ->selectRaw("COALESCE(NULLIF(folder, ''), ?) as folder_name", [__('documents.default_folder')])
-            ->distinct()
-            ->pluck('folder_name');
-
-        return view('documents.folder', compact('documents', 'folderName', 'displayName', 'allFolders'));
+            ->selectRaw('COUNT(*) as file_count')
+            ->when($search, fn ($q, $s) => $q->where('folder', 'like', "%{$s}%"))
+            ->groupBy('folder_name')
+            ->orderBy('folder_name')
+            ->get();
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'files' => 'required|array|min:1|max:30',
+            'files' => 'required|array|min:1|max:50',
             'folder' => 'required|string|max:100',
             'description' => 'nullable|string|max:500',
             'documentable_type' => 'nullable|string',
@@ -79,6 +83,7 @@ class DocumentController extends Controller
                 'name' => Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension(),
                 'original_name' => $file->getClientOriginalName(),
                 'path' => $path,
+                'disk' => 'local',
                 'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
                 'size' => $file->getSize(),
                 'category' => 'other',
@@ -94,7 +99,19 @@ class DocumentController extends Controller
         }
 
         $redirect = route('documents.folder', $folder !== '' ? $folder : '__default');
-        $flash = redirect($redirect)->with('success', __('documents.files_uploaded', ['count' => $count]));
+        $message = __('documents.files_uploaded', ['count' => $count]);
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'count' => $count,
+                'redirect' => $redirect,
+                'message' => $message,
+                'warnings' => $warnings,
+            ]);
+        }
+
+        $flash = redirect($redirect)->with('success', $message);
 
         if ($warnings !== []) {
             $flash->with('warning', implode(' ', $warnings));
@@ -134,8 +151,8 @@ class DocumentController extends Controller
 
             $ext = strtolower($file->getClientOriginalExtension() ?: '');
 
-            if ($ext === '' || ! in_array($ext, $this->allowedExtensions, true)) {
-                $errors[] = $label . ': ' . __('documents.upload_bad_extension');
+            if ($this->storage->isBlockedExtension($ext)) {
+                $errors[] = $label . ': ' . __('documents.upload_blocked_extension');
                 continue;
             }
 
@@ -172,11 +189,11 @@ class DocumentController extends Controller
             abort(403);
         }
 
-        if (! Storage::disk($document->disk)->exists($document->path)) {
+        if (! Storage::disk($document->disk ?: 'local')->exists($document->path)) {
             abort(404);
         }
 
-        $path = Storage::disk($document->disk)->path($document->path);
+        $path = Storage::disk($document->disk ?: 'local')->path($document->path);
         $mime = $document->mime_type ?: 'application/octet-stream';
 
         if (str_contains($mime, 'pdf') || str_contains($mime, 'image')) {
@@ -195,18 +212,24 @@ class DocumentController extends Controller
             abort(403);
         }
 
-        return Storage::disk($document->disk)->download($document->path, $document->original_name);
+        return Storage::disk($document->disk ?: 'local')->download($document->path, $document->original_name);
     }
 
     public function destroy(Document $document)
     {
-        Storage::disk($document->disk)->delete($document->path);
         $folder = $document->folder;
-        $document->delete();
+        $document->forceDelete();
 
         $redirect = $folder
             ? route('documents.folder', $folder)
             : route('documents.folder', '__default');
+
+        if (request()->ajax() || request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.deleted'),
+            ]);
+        }
 
         return redirect($redirect)->with('success', __('messages.deleted'));
     }
@@ -224,12 +247,31 @@ class DocumentController extends Controller
             return redirect()->route('documents.index')->with('warning', __('documents.folder_empty'));
         }
 
+        $count = $documents->count();
+
         foreach ($documents as $document) {
-            Storage::disk($document->disk)->delete($document->path);
-            $document->delete();
+            $document->forceDelete();
         }
 
-        return redirect()->route('documents.index')->with('success', __('documents.folder_deleted', ['count' => $documents->count()]));
+        return redirect()->route('documents.index')->with('success', __('documents.folder_deleted', ['count' => $count]));
+    }
+
+    public function purgeOrphans(Request $request)
+    {
+        $orphans = $this->storage->orphanPaths();
+        $freedBytes = (int) $orphans->sum('bytes');
+        $deleted = $this->storage->purgeOrphans();
+        $trashed = $this->storage->purgeTrashedRecords();
+
+        if ($deleted === 0 && $trashed === 0) {
+            return back()->with('info', __('documents.no_orphans'));
+        }
+
+        return back()->with('success', __('documents.orphans_purged', [
+            'files' => $deleted,
+            'trashed' => $trashed,
+            'freed' => $this->storage->humanBytes($freedBytes),
+        ]));
     }
 
     public function backup()
@@ -241,9 +283,9 @@ class DocumentController extends Controller
 
         $docs = Document::all();
         foreach ($docs as $doc) {
-            if (Storage::disk($doc->disk)->exists($doc->path)) {
+            if (Storage::disk($doc->disk ?: 'local')->exists($doc->path)) {
                 $dest = $backupDir . '/' . basename($doc->path);
-                copy(Storage::disk($doc->disk)->path($doc->path), $dest);
+                copy(Storage::disk($doc->disk ?: 'local')->path($doc->path), $dest);
             }
         }
 

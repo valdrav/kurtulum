@@ -579,14 +579,28 @@ class FinanceController extends Controller
 
     public function profitLoss(Request $request, IncomeExpenseReportService $reports)
     {
+        $period = $request->input('period', 'year');
+        $date = $request->input('date', now()->format('Y-01-01'));
+
         $periodMeta = $reports->resolvePeriod(
-            $request->input('period', 'month'),
-            $request->input('date'),
+            $period,
+            $date,
             $request->input('from'),
             $request->input('to')
         );
 
         $summary = $reports->summary($periodMeta['start'], $periodMeta['end']);
+
+        if ($summary['total_count'] === 0 && in_array($periodMeta['period'], ['day', 'week', 'month'], true)) {
+            $yearMeta = $reports->resolvePeriod('year', now()->format('Y-01-01'));
+            $yearSummary = $reports->summary($yearMeta['start'], $yearMeta['end']);
+
+            if ($yearSummary['total_count'] > 0) {
+                $periodMeta = $yearMeta;
+                $summary = $yearSummary;
+            }
+        }
+
         $timeline = $reports->timeline($periodMeta['start'], $periodMeta['end'], $periodMeta['period']);
         $byCategory = $reports->byCategory($periodMeta['start'], $periodMeta['end']);
         $byTreasury = $reports->byTreasury($periodMeta['start'], $periodMeta['end']);
@@ -596,6 +610,7 @@ class FinanceController extends Controller
             ->when($request->type, fn ($q, $t) => $q->where('type', $t))
             ->latest('transaction_date')
             ->latest('id')
+            ->limit(500)
             ->get();
 
         return view('finance.reports.profit-loss', compact(
