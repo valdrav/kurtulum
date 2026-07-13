@@ -713,21 +713,40 @@ button.ef-more-tile {
 /* iPad / Finder style document browser */
 .files-app {
     display: flex;
-    min-height: 32rem;
+    flex-direction: column;
+    min-height: 24rem;
     border: 1px solid var(--ef-border);
     border-radius: var(--ef-radius);
-    overflow: hidden;
+    overflow: visible;
     background: var(--ef-surface);
     box-shadow: var(--ef-shadow-sm);
 }
 
+@media (min-width: 1200px) {
+    .files-app {
+        flex-direction: row;
+        min-height: 32rem;
+        overflow: hidden;
+    }
+}
+
 .files-sidebar {
-    width: 15rem;
+    width: 100%;
+    max-height: 14rem;
     flex-shrink: 0;
-    border-right: 1px solid var(--ef-border);
+    border-bottom: 1px solid var(--ef-border);
     background: color-mix(in srgb, var(--ef-surface) 92%, var(--ef-muted) 8%);
     flex-direction: column;
     display: flex;
+}
+
+@media (min-width: 1200px) {
+    .files-sidebar {
+        width: 14rem;
+        max-height: none;
+        border-bottom: 0;
+        border-right: 1px solid var(--ef-border);
+    }
 }
 
 .files-sidebar-head {
@@ -746,8 +765,18 @@ button.ef-more-tile {
 
 .files-sidebar-nav {
     padding: 0.5rem;
+    overflow-x: auto;
     overflow-y: auto;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+@media (min-width: 1200px) {
+    .files-sidebar-nav {
+        overflow-x: hidden;
+    }
 }
 
 .files-sidebar-item {
@@ -759,7 +788,16 @@ button.ef-more-tile {
     color: inherit;
     text-decoration: none;
     font-size: 0.875rem;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+@media (min-width: 1200px) {
+    .files-sidebar-item {
+        margin-bottom: 0.15rem;
+        white-space: normal;
+    }
 }
 
 .files-sidebar-item .ti {
@@ -787,6 +825,54 @@ button.ef-more-tile {
     min-width: 0;
     display: flex;
     flex-direction: column;
+    width: 100%;
+}
+
+.files-mobile-stats {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    color: var(--ef-muted);
+    border-bottom: 1px solid var(--ef-border);
+    background: color-mix(in srgb, var(--ef-surface) 94%, var(--ef-muted) 6%);
+}
+
+.files-folder-strip {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--ef-border);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.files-folder-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--ef-border);
+    background: var(--ef-surface);
+    color: inherit;
+    text-decoration: none;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.files-folder-chip.active {
+    background: rgba(var(--ef-primary-rgb), 0.12);
+    border-color: rgba(var(--ef-primary-rgb), 0.35);
+    font-weight: 600;
+}
+
+.files-folder-chip-count {
+    font-size: 0.75rem;
+    color: var(--ef-muted);
+    background: rgba(148, 163, 184, 0.15);
+    border-radius: 999px;
+    padding: 0 0.35rem;
 }
 
 .files-toolbar {
@@ -833,6 +919,13 @@ button.ef-more-tile {
     align-items: center;
     gap: 0.5rem;
     margin-left: auto;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .files-toolbar-actions {
+        width: auto;
+    }
 }
 
 .files-mobile-folder {
@@ -842,7 +935,15 @@ button.ef-more-tile {
 
 .files-search {
     position: relative;
-    min-width: 10rem;
+    flex: 1 1 100%;
+    min-width: 0;
+}
+
+@media (min-width: 768px) {
+    .files-search {
+        flex: 0 1 auto;
+        min-width: 10rem;
+    }
 }
 
 .files-search .ti {
@@ -856,15 +957,25 @@ button.ef-more-tile {
 
 .files-search input {
     padding-left: 2rem;
-    min-width: 11rem;
+    width: 100%;
+    min-width: 0;
     height: 2rem;
     font-size: 0.875rem;
 }
 
 .files-upload-panel {
-    padding: 0.75rem 1rem;
+    padding: 1rem;
     border-bottom: 1px solid var(--ef-border);
     background: rgba(var(--ef-primary-rgb), 0.04);
+}
+
+.files-upload-head {
+    margin-bottom: 0.75rem;
+}
+
+.files-upload-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
 }
 
 .files-dropzone {
@@ -1128,10 +1239,24 @@ button.ef-more-tile {
     justify-content: center;
 }
 
+@media (max-width: 1199.98px) {
+    .files-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .files-breadcrumb {
+        width: 100%;
+    }
+
+    .files-toolbar-actions {
+        margin-left: 0;
+    }
+}
+
 @media (max-width: 767.98px) {
     .files-app {
         min-height: auto;
-        flex-direction: column;
     }
 
     .files-grid {

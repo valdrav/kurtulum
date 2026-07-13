@@ -49,13 +49,16 @@
             app.classList.toggle('is-uploading', active);
         }
 
-        trigger?.addEventListener('click', () => {
-            if (panel) panel.hidden = false;
+        trigger?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (panel) {
+                panel.hidden = false;
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
             input?.click();
         });
 
         cancel?.addEventListener('click', () => {
-            if (panel) panel.hidden = true;
             resetProgress();
             if (input) input.value = '';
         });
@@ -72,7 +75,7 @@
             dropzone.addEventListener('drop', e => {
                 if (e.dataTransfer?.files?.length) {
                     input.files = e.dataTransfer.files;
-                    if (panel) panel.hidden = false;
+                    panel?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             });
             dropzone.addEventListener('click', (e) => {
@@ -80,7 +83,9 @@
                 input.click();
             });
             input.addEventListener('change', () => {
-                if (input.files?.length && panel) panel.hidden = false;
+                if (input.files?.length) {
+                    panel?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             });
         }
 

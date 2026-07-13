@@ -12,13 +12,14 @@
         'noFiles' => __('documents.upload_no_files'),
         'folderRequired' => __('documents.folder') . ' *',
     ];
+    $canManageDocs = can_manage_documents();
 @endphp
 
 <div class="files-app" data-files-app>
-    <aside class="files-sidebar d-none d-lg-flex">
+    <aside class="files-sidebar d-none d-xl-flex">
         <div class="files-sidebar-head">
-            <i class="ti ti-files"></i>
-            <span>{{ __('documents.depot') }}</span>
+            <i class="ti ti-folders"></i>
+            <span>{{ __('documents.folders_sidebar') }}</span>
         </div>
         <nav class="files-sidebar-nav">
             <a href="{{ route('documents.index', $queryBase) }}"
@@ -51,7 +52,7 @@
                 {{ __('documents.orphan_hint', ['count' => $storageStats['orphan_count'], 'size' => $storageStats['orphan_human']]) }}
             </div>
             @endif
-            @if(can_access('documents.create'))
+            @if($canManageDocs)
             <form method="POST" action="{{ route('documents.purge-orphans') }}" class="mt-2"
                   data-confirm="{{ __('documents.purge_orphans_confirm') }}">
                 @csrf
@@ -65,6 +66,27 @@
     </aside>
 
     <section class="files-main">
+        @if(isset($storageStats))
+        <div class="files-mobile-stats d-xl-none">
+            <span><i class="ti ti-database me-1"></i>{{ $storageStats['total_human'] }} · {{ $storageStats['file_count'] }} {{ __('documents.file_count') }}</span>
+        </div>
+        @endif
+
+        <div class="files-folder-strip d-xl-none">
+            <a href="{{ route('documents.index', $queryBase) }}"
+               class="files-folder-chip {{ $currentSlug === null ? 'active' : '' }}">
+                <i class="ti ti-folders"></i> {{ __('documents.all_folders') }}
+            </a>
+            @foreach($folders as $f)
+            @php $slug = $folderSlugFn($f); @endphp
+            <a href="{{ route('documents.folder', array_merge(['folder' => $slug], $queryBase)) }}"
+               class="files-folder-chip {{ $currentSlug === $slug ? 'active' : '' }}">
+                <i class="ti ti-folder"></i> {{ $f->folder_name }}
+                <span class="files-folder-chip-count">{{ $f->file_count }}</span>
+            </a>
+            @endforeach
+        </div>
+
         <div class="files-toolbar">
             <div class="files-breadcrumb">
                 <a href="{{ route('documents.index') }}" class="files-crumb"><i class="ti ti-home-2"></i></a>
@@ -78,14 +100,6 @@
             </div>
 
             <div class="files-toolbar-actions">
-                <select class="form-select form-select-sm files-mobile-folder d-lg-none" onchange="if(this.value) window.location.href=this.value">
-                    <option value="{{ route('documents.index') }}" @selected($currentSlug === null)>{{ __('documents.all_folders') }}</option>
-                    @foreach($folders as $f)
-                    @php $slug = $folderSlugFn($f); @endphp
-                    <option value="{{ route('documents.folder', $slug) }}" @selected($currentSlug === $slug)>{{ $f->folder_name }}</option>
-                    @endforeach
-                </select>
-
                 <form method="GET" class="files-search">
                     @if($currentSlug !== null)
                     <input type="hidden" name="view" value="{{ $viewMode }}">
@@ -121,13 +135,13 @@
                 </div>
                 @endif
 
-                @if(can_access('documents.create'))
+                @if($canManageDocs)
                 <button type="button" class="btn btn-sm btn-primary" data-files-upload-trigger>
                     <i class="ti ti-upload me-1"></i>{{ __('app.upload') }}
                 </button>
                 @endif
 
-                @if($currentSlug !== null && can_access('documents.create'))
+                @if($currentSlug !== null && $canManageDocs)
                 <form action="{{ route('documents.folder.destroy', $currentSlug) }}" method="POST" class="d-inline"
                       data-confirm="{{ __('documents.delete_folder_confirm') }}"
                       data-confirm-title="{{ __('app.confirm_title') }}"
@@ -141,8 +155,14 @@
             </div>
         </div>
 
-        @if(can_access('documents.create'))
-        <div class="files-upload-panel" data-files-upload-panel hidden>
+        @if($canManageDocs)
+        <div class="files-upload-panel" id="files-upload" data-files-upload-panel>
+            <div class="files-upload-head">
+                <h4 class="files-upload-title mb-0">
+                    <i class="ti ti-cloud-upload me-1"></i>
+                    {{ $currentSlug === null ? __('documents.upload_section_root') : __('documents.upload_section') }}
+                </h4>
+            </div>
             <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="files-upload-form" data-files-upload-form>
                 @csrf
                 @if($currentSlug === null)
@@ -206,7 +226,7 @@
                         </a>
                         <span class="files-list-meta">{{ $f->file_count }}</span>
                         <span class="files-list-actions">
-                            @if(can_access('documents.create'))
+                            @if($canManageDocs)
                             <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="d-inline"
                                   data-confirm="{{ __('documents.delete_folder_confirm') }}"
                                   data-confirm-title="{{ __('app.confirm_title') }}"
@@ -233,7 +253,7 @@
                             <span class="files-item-name">{{ $f->folder_name }}</span>
                             <span class="files-item-meta">{{ $f->file_count }} {{ __('documents.file_count') }}</span>
                         </a>
-                        @if(can_access('documents.create'))
+                        @if($canManageDocs)
                         <div class="files-item-menu">
                             <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST"
                                   data-confirm="{{ __('documents.delete_folder_confirm') }}"
@@ -272,7 +292,7 @@
                         <span class="files-list-meta">{{ $d->humanSize() }}</span>
                         <span class="files-list-actions">
                             <a href="{{ route('documents.download', $d) }}" class="btn btn-sm btn-ghost-secondary" title="{{ __('app.download') }}"><i class="ti ti-download"></i></a>
-                            @if(can_access('documents.create'))
+                            @if($canManageDocs)
                             <form method="POST" action="{{ route('documents.destroy', $d) }}" class="d-inline" data-confirm="{{ __('app.confirm_delete') }}">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-ghost-danger" title="{{ __('app.delete') }}"><i class="ti ti-trash"></i></button>
@@ -299,7 +319,7 @@
                         </a>
                         <div class="files-item-menu">
                             <a href="{{ route('documents.download', $d) }}" class="btn btn-sm btn-ghost-secondary" title="{{ __('app.download') }}"><i class="ti ti-download"></i></a>
-                            @if(can_access('documents.create'))
+                            @if($canManageDocs)
                             <form method="POST" action="{{ route('documents.destroy', $d) }}" class="d-inline" data-confirm="{{ __('app.confirm_delete') }}">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-ghost-danger" title="{{ __('app.delete') }}"><i class="ti ti-trash"></i></button>
@@ -323,5 +343,5 @@
 
 @push('scripts')
 <script>window.__filesUploadLabels = {!! json_encode($uploadLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!};</script>
-<script src="{{ asset('js/documents-upload.js') }}?v=2"></script>
+<script src="{{ asset('js/documents-upload.js') }}?v=3"></script>
 @endpush

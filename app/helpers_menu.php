@@ -38,6 +38,15 @@ if (!function_exists('can_access')) {
     }
 }
 
+if (! function_exists('can_manage_documents')) {
+    function can_manage_documents(): bool
+    {
+        return can_access('documents.create')
+            || can_access('documents.edit')
+            || is_patron_or_super_admin();
+    }
+}
+
 if (! function_exists('is_super_admin')) {
     function is_super_admin(): bool
     {

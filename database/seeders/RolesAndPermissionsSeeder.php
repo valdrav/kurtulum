@@ -59,7 +59,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'orders.view', 'orders.edit', 'orders.export',
             'shipments.view', 'shipments.edit', 'shipments.export',
             'finance.view', 'finance.export',
-            'documents.view', 'documents.export',
+            'documents.view', 'documents.create', 'documents.delete', 'documents.export',
             'tasks.view', 'tasks.create', 'tasks.edit',
             'reports.view', 'reports.export',
             'emails.view',
