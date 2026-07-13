@@ -45,7 +45,7 @@
     <style>[x-cloak]{display:none!important}</style>
     @stack('styles')
 </head>
-<body class="ef-app" x-data="{ sidebarOpen: false }" @keydown.escape.window="sidebarOpen = false">
+<body class="ef-app @auth ef-app--auth @endauth" x-data="{ sidebarOpen: false }" @keydown.escape.window="sidebarOpen = false">
     @auth
     <div class="ef-sidebar-backdrop" :class="{ 'show': sidebarOpen }" @click="sidebarOpen = false"></div>
 

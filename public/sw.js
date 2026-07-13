@@ -1,4 +1,4 @@
-const CACHE_NAME = 'exportflow-v8';
+const CACHE_NAME = 'exportflow-v10';
 const STATIC_ASSETS = [
     '/css/theme.css',
     '/vendor/tabler-icons/tabler-icons.min.css',
