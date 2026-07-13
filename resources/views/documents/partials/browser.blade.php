@@ -4,17 +4,17 @@
     $viewMode = request('view', 'grid');
     $sort = request('sort', 'date');
     $queryBase = array_filter(['search' => $search ?? request('search'), 'sort' => $sort !== 'date' ? $sort : null, 'view' => $viewMode !== 'grid' ? $viewMode : null]);
+    $uploadLabels = [
+        'uploading' => __('documents.upload_progress'),
+        'done' => __('documents.upload_complete'),
+        'failed' => __('documents.upload_failed'),
+        'networkError' => __('documents.upload_network_error'),
+        'noFiles' => __('documents.upload_no_files'),
+        'folderRequired' => __('documents.folder') . ' *',
+    ];
 @endphp
 
-<div class="files-app" data-files-app
-     data-upload-labels='@json([
-         "uploading" => __("documents.upload_progress"),
-         "done" => __("documents.upload_complete"),
-         "failed" => __("documents.upload_failed"),
-         "networkError" => __("documents.upload_network_error"),
-         "noFiles" => __("documents.upload_no_files"),
-         "folderRequired" => __("documents.folder") . " *",
-     ])'>
+<div class="files-app" data-files-app data-upload-labels="@json($uploadLabels)">
     <aside class="files-sidebar d-none d-lg-flex">
         <div class="files-sidebar-head">
             <i class="ti ti-files"></i>
