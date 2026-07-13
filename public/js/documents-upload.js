@@ -1,5 +1,5 @@
 /**
- * Document depot upload with progress bar (XHR).
+ * Document depot upload modal with progress bar (XHR).
  */
 (function () {
     function formatBytes(bytes) {
@@ -9,20 +9,24 @@
     }
 
     function initFilesApp(app) {
-        const panel = app.querySelector('[data-files-upload-panel]');
-        const trigger = app.querySelector('[data-files-upload-trigger]');
-        const cancel = app.querySelector('[data-files-upload-cancel]');
+        const modalEl = document.getElementById('filesUploadModal');
+        const modal = modalEl && window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(modalEl) : null;
+        const form = app.querySelector('[data-files-upload-form]');
         const dropzone = app.querySelector('[data-files-dropzone]');
         const input = app.querySelector('.files-dropzone-input');
-        const form = app.querySelector('[data-files-upload-form]');
         const progressWrap = app.querySelector('[data-files-upload-progress]');
         const progressBar = app.querySelector('[data-files-upload-bar]');
         const progressLabel = app.querySelector('[data-files-upload-label]');
         const progressPercent = app.querySelector('[data-files-upload-percent]');
         const submitBtn = form?.querySelector('[type="submit"]');
+        const folderFieldWrap = app.querySelector('[data-files-folder-field]');
+        const folderInput = app.querySelector('[data-files-folder-input]');
+        const folderReadonly = app.querySelector('[data-files-folder-readonly]');
+        const folderLabel = app.querySelector('[data-files-folder-label]');
+        const selectedList = app.querySelector('[data-files-selected-list]');
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-
-        const labels = window.__filesUploadLabels || (app.dataset.uploadLabels ? JSON.parse(app.dataset.uploadLabels) : {});
+        const labels = window.__filesUploadLabels || {};
+        const defaultFolderLabel = app.dataset.defaultFolderLabel || 'Genel';
 
         function setProgress(percent, label) {
             if (!progressWrap || !progressBar) return;
@@ -44,23 +48,50 @@
 
         function setUploading(active) {
             if (submitBtn) submitBtn.disabled = active;
-            if (trigger) trigger.disabled = active;
-            if (cancel) cancel.disabled = active;
             app.classList.toggle('is-uploading', active);
         }
 
-        trigger?.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (panel) {
-                panel.hidden = false;
-                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        function updateSelectedList() {
+            if (!selectedList || !input?.files) return;
+            if (!input.files.length) {
+                selectedList.classList.add('d-none');
+                selectedList.textContent = '';
+                return;
             }
-            input?.click();
-        });
+            const names = Array.from(input.files).map(f => f.name).slice(0, 5);
+            const extra = input.files.length > 5 ? ` (+${input.files.length - 5})` : '';
+            selectedList.textContent = names.join(', ') + extra;
+            selectedList.classList.remove('d-none');
+        }
 
-        cancel?.addEventListener('click', () => {
-            resetProgress();
-            if (input) input.value = '';
+        function applyFolderContext(folder, pickMode) {
+            const value = folder ?? '';
+            if (!folderInput) return;
+
+            folderInput.value = value;
+
+            if (pickMode) {
+                folderFieldWrap?.classList.remove('d-none');
+                folderReadonly?.classList.add('d-none');
+                folderInput.required = false;
+                return;
+            }
+
+            folderFieldWrap?.classList.add('d-none');
+            folderReadonly?.classList.remove('d-none');
+            folderInput.required = false;
+            if (folderLabel) {
+                folderLabel.textContent = value !== '' ? value : defaultFolderLabel;
+            }
+        }
+
+        document.querySelectorAll('[data-files-upload-open]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                resetProgress();
+                if (input) input.value = '';
+                updateSelectedList();
+                applyFolderContext(btn.dataset.folder ?? '', btn.dataset.filesUploadPick === '1');
+            });
         });
 
         if (dropzone && input) {
@@ -75,19 +106,22 @@
             dropzone.addEventListener('drop', e => {
                 if (e.dataTransfer?.files?.length) {
                     input.files = e.dataTransfer.files;
-                    panel?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    updateSelectedList();
                 }
             });
             dropzone.addEventListener('click', (e) => {
                 if (e.target === input) return;
                 input.click();
             });
-            input.addEventListener('change', () => {
-                if (input.files?.length) {
-                    panel?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            });
+            input.addEventListener('change', updateSelectedList);
         }
+
+        modalEl?.addEventListener('hidden.bs.modal', () => {
+            resetProgress();
+            setUploading(false);
+            if (input) input.value = '';
+            updateSelectedList();
+        });
 
         form?.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -97,15 +131,13 @@
                 return;
             }
 
-            const folderInput = form.querySelector('[name="folder"]');
-            if (folderInput && folderInput.required && !folderInput.value.trim()) {
+            if (folderInput && folderFieldWrap && !folderFieldWrap.classList.contains('d-none') && folderInput.required && !folderInput.value.trim()) {
                 alert(labels.folderRequired || 'Folder name is required.');
                 return;
             }
 
             const formData = new FormData(form);
             const xhr = new XMLHttpRequest();
-            const totalBytes = Array.from(input.files).reduce((sum, f) => sum + f.size, 0);
 
             setUploading(true);
             setProgress(0, labels.uploading || 'Uploading…');
@@ -131,10 +163,11 @@
 
                     setProgress(100, labels.done || 'Complete');
                     progressBar?.classList.add('bg-success');
+                    modal?.hide();
 
                     setTimeout(() => {
                         window.location.href = data.redirect || window.location.href;
-                    }, 400);
+                    }, 350);
                     return;
                 }
 

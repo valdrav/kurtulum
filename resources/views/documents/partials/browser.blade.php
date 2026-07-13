@@ -13,88 +13,20 @@
         'folderRequired' => __('documents.folder') . ' *',
     ];
     $canManageDocs = can_manage_documents();
+    $defaultUploadFolder = $folderName ?? '';
 @endphp
 
-<div class="files-app" data-files-app>
-    <aside class="files-sidebar d-none d-xl-flex">
-        <div class="files-sidebar-head">
-            <i class="ti ti-folders"></i>
-            <span>{{ __('documents.folders_sidebar') }}</span>
-        </div>
-        <nav class="files-sidebar-nav">
-            <a href="{{ route('documents.index', $queryBase) }}"
-               class="files-sidebar-item {{ $currentSlug === null ? 'active' : '' }}">
-                <i class="ti ti-folders"></i>
-                <span>{{ __('documents.all_folders') }}</span>
-            </a>
-            @foreach($folders as $f)
-            @php $slug = $folderSlugFn($f); @endphp
-            <a href="{{ route('documents.folder', array_merge(['folder' => $slug], $queryBase)) }}"
-               class="files-sidebar-item {{ $currentSlug === $slug ? 'active' : '' }}">
-                <i class="ti ti-folder{{ $currentSlug === $slug ? '-filled' : '' }}"></i>
-                <span class="text-truncate">{{ $f->folder_name }}</span>
-                <span class="files-sidebar-badge">{{ $f->file_count }}</span>
-            </a>
-            @endforeach
-        </nav>
-        @if(isset($storageStats))
-        <div class="files-sidebar-stats">
-            <div class="files-sidebar-stats-row">
-                <i class="ti ti-database"></i>
-                <div>
-                    <div class="fw-semibold small">{{ $storageStats['total_human'] }}</div>
-                    <div class="text-muted" style="font-size:0.75rem">{{ $storageStats['file_count'] }} {{ __('documents.file_count') }}</div>
-                </div>
-            </div>
-            @if(($storageStats['orphan_count'] ?? 0) > 0)
-            <div class="text-warning small mt-1">
-                <i class="ti ti-alert-triangle"></i>
-                {{ __('documents.orphan_hint', ['count' => $storageStats['orphan_count'], 'size' => $storageStats['orphan_human']]) }}
-            </div>
-            @endif
-            @if($canManageDocs)
-            <form method="POST" action="{{ route('documents.purge-orphans') }}" class="mt-2"
-                  data-confirm="{{ __('documents.purge_orphans_confirm') }}">
-                @csrf
-                <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
-                    <i class="ti ti-recycle me-1"></i>{{ __('documents.purge_orphans') }}
-                </button>
-            </form>
-            @endif
-        </div>
-        @endif
-    </aside>
-
+<div class="files-app files-app--full" data-files-app data-default-folder-label="{{ __('documents.default_folder') }}">
     <section class="files-main">
-        @if(isset($storageStats))
-        <div class="files-mobile-stats d-xl-none">
-            <span><i class="ti ti-database me-1"></i>{{ $storageStats['total_human'] }} · {{ $storageStats['file_count'] }} {{ __('documents.file_count') }}</span>
-        </div>
-        @endif
-
-        <div class="files-folder-strip d-xl-none">
-            <a href="{{ route('documents.index', $queryBase) }}"
-               class="files-folder-chip {{ $currentSlug === null ? 'active' : '' }}">
-                <i class="ti ti-folders"></i> {{ __('documents.all_folders') }}
-            </a>
-            @foreach($folders as $f)
-            @php $slug = $folderSlugFn($f); @endphp
-            <a href="{{ route('documents.folder', array_merge(['folder' => $slug], $queryBase)) }}"
-               class="files-folder-chip {{ $currentSlug === $slug ? 'active' : '' }}">
-                <i class="ti ti-folder"></i> {{ $f->folder_name }}
-                <span class="files-folder-chip-count">{{ $f->file_count }}</span>
-            </a>
-            @endforeach
-        </div>
-
         <div class="files-toolbar">
             <div class="files-breadcrumb">
                 <a href="{{ route('documents.index') }}" class="files-crumb"><i class="ti ti-home-2"></i></a>
+                <i class="ti ti-chevron-right files-crumb-sep"></i>
                 @if($currentSlug !== null)
+                <a href="{{ route('documents.index') }}" class="files-crumb">{{ __('documents.all_folders') }}</a>
                 <i class="ti ti-chevron-right files-crumb-sep"></i>
                 <span class="files-crumb current">{{ $displayName ?? __('documents.depot') }}</span>
                 @else
-                <i class="ti ti-chevron-right files-crumb-sep"></i>
                 <span class="files-crumb current">{{ __('documents.all_folders') }}</span>
                 @endif
             </div>
@@ -136,8 +68,12 @@
                 @endif
 
                 @if($canManageDocs)
-                <button type="button" class="btn btn-sm btn-primary" data-files-upload-trigger>
-                    <i class="ti ti-upload me-1"></i>{{ __('app.upload') }}
+                <button type="button" class="btn btn-primary files-upload-btn-prominent" data-files-upload-open
+                        data-folder="{{ $defaultUploadFolder }}"
+                        @if($currentSlug === null) data-files-upload-pick="1" @endif
+                        data-bs-toggle="modal" data-bs-target="#filesUploadModal">
+                    <i class="ti ti-cloud-upload me-1"></i>
+                    {{ $currentSlug !== null ? __('documents.upload_to_this_folder') : __('documents.upload_open_panel') }}
                 </button>
                 @endif
 
@@ -155,61 +91,8 @@
             </div>
         </div>
 
-        @if($canManageDocs)
-        <div class="files-upload-panel" id="files-upload" data-files-upload-panel>
-            <div class="files-upload-head">
-                <h4 class="files-upload-title mb-0">
-                    <i class="ti ti-cloud-upload me-1"></i>
-                    {{ $currentSlug === null ? __('documents.upload_section_root') : __('documents.upload_section') }}
-                </h4>
-            </div>
-            <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="files-upload-form" data-files-upload-form>
-                @csrf
-                @if($currentSlug === null)
-                <div class="row g-2 mb-2">
-                    <div class="col-md-6">
-                        <label class="form-label">{{ __('documents.folder') }} *</label>
-                        <input type="text" name="folder" class="form-control" required maxlength="100" list="folderList"
-                               placeholder="{{ __('documents.folder_placeholder') }}" value="{{ old('folder') }}">
-                        <datalist id="folderList">
-                            @foreach($folders as $f)
-                            <option value="{{ $f->folder_name === __('documents.default_folder') ? '' : $f->folder_name }}">
-                            @endforeach
-                        </datalist>
-                    </div>
-                </div>
-                @else
-                <input type="hidden" name="folder" value="{{ $folderName ?? '' }}">
-                @endif
-                <div class="files-dropzone" data-files-dropzone>
-                    <input type="file" name="files[]" class="files-dropzone-input" multiple required>
-                    <div class="files-dropzone-inner">
-                        <i class="ti ti-cloud-upload"></i>
-                        <div class="fw-semibold">{{ __('documents.drop_files') }}</div>
-                        <div class="text-muted small">{{ __('documents.multi_upload_hint') }}</div>
-                    </div>
-                </div>
-                <div class="files-upload-progress mt-3" data-files-upload-progress hidden>
-                    <div class="d-flex justify-content-between align-items-center small mb-1">
-                        <span data-files-upload-label>{{ __('documents.upload_progress') }}</span>
-                        <span data-files-upload-percent>0%</span>
-                    </div>
-                    <div class="progress progress-sm">
-                        <div class="progress-bar progress-bar-indeterminate" role="progressbar"
-                             data-files-upload-bar style="width:0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                </div>
-                <div class="d-flex justify-content-end gap-2 mt-2">
-                    <button type="button" class="btn btn-ghost-secondary btn-sm" data-files-upload-cancel>{{ __('app.cancel') }}</button>
-                    <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-upload me-1"></i>{{ __('app.upload') }}</button>
-                </div>
-            </form>
-        </div>
-        @endif
-
         <div class="files-content {{ $viewMode === 'list' ? 'is-list' : 'is-grid' }}">
             @if($currentSlug === null)
-                {{-- Root: folder tiles --}}
                 @if($viewMode === 'list')
                 <div class="files-list files-list-folders">
                     <div class="files-list-head">
@@ -218,7 +101,10 @@
                         <span></span>
                     </div>
                     @forelse($folders as $f)
-                    @php $slug = $folderSlugFn($f); @endphp
+                    @php
+                        $slug = $folderSlugFn($f);
+                        $folderValue = ($f->folder_name === __('documents.default_folder') || $f->folder_name === '') ? '' : $f->folder_name;
+                    @endphp
                     <div class="files-list-row files-list-row-folder">
                         <a href="{{ route('documents.folder', $slug) }}" class="files-list-main">
                             <span class="files-icon files-icon-folder"><i class="ti ti-folder-filled"></i></span>
@@ -227,7 +113,11 @@
                         <span class="files-list-meta">{{ $f->file_count }}</span>
                         <span class="files-list-actions">
                             @if($canManageDocs)
-                            <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="d-inline"
+                            <button type="button" class="btn btn-sm btn-primary" data-files-upload-open
+                                    data-folder="{{ $folderValue }}" data-bs-toggle="modal" data-bs-target="#filesUploadModal">
+                                <i class="ti ti-upload me-1"></i>{{ __('documents.upload_short') }}
+                            </button>
+                            <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="d-inline ms-1"
                                   data-confirm="{{ __('documents.delete_folder_confirm') }}"
                                   data-confirm-title="{{ __('app.confirm_title') }}"
                                   data-confirm-button="{{ __('documents.delete_folder') }}">
@@ -246,7 +136,10 @@
                 @else
                 <div class="files-grid">
                     @forelse($folders as $f)
-                    @php $slug = $folderSlugFn($f); @endphp
+                    @php
+                        $slug = $folderSlugFn($f);
+                        $folderValue = ($f->folder_name === __('documents.default_folder') || $f->folder_name === '') ? '' : $f->folder_name;
+                    @endphp
                     <div class="files-item files-item-folder">
                         <a href="{{ route('documents.folder', $slug) }}" class="files-item-link">
                             <span class="files-icon files-icon-folder"><i class="ti ti-folder-filled"></i></span>
@@ -254,14 +147,18 @@
                             <span class="files-item-meta">{{ $f->file_count }} {{ __('documents.file_count') }}</span>
                         </a>
                         @if($canManageDocs)
-                        <div class="files-item-menu">
-                            <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST"
+                        <div class="files-item-menu files-item-menu--visible">
+                            <button type="button" class="btn btn-sm btn-primary w-100" data-files-upload-open
+                                    data-folder="{{ $folderValue }}" data-bs-toggle="modal" data-bs-target="#filesUploadModal">
+                                <i class="ti ti-upload me-1"></i>{{ __('documents.upload_to_this_folder') }}
+                            </button>
+                            <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="mt-1"
                                   data-confirm="{{ __('documents.delete_folder_confirm') }}"
                                   data-confirm-title="{{ __('app.confirm_title') }}"
                                   data-confirm-button="{{ __('documents.delete_folder') }}">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-ghost-danger" title="{{ __('documents.delete_folder') }}">
-                                    <i class="ti ti-trash"></i>
+                                <button type="submit" class="btn btn-sm btn-ghost-danger w-100" title="{{ __('documents.delete_folder') }}">
+                                    <i class="ti ti-trash me-1"></i>{{ __('documents.delete_folder') }}
                                 </button>
                             </form>
                         </div>
@@ -273,7 +170,6 @@
                 </div>
                 @endif
             @else
-                {{-- Folder: file items --}}
                 @if($viewMode === 'list')
                 <div class="files-list">
                     <div class="files-list-head">
@@ -341,7 +237,67 @@
     </section>
 </div>
 
+@if($canManageDocs)
+<div class="modal fade" id="filesUploadModal" tabindex="-1" aria-labelledby="filesUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filesUploadModalLabel">
+                    <i class="ti ti-cloud-upload me-1"></i>{{ __('documents.upload_modal_title') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('app.close') ?? 'Kapat' }}"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="files-upload-form" data-files-upload-form>
+                    @csrf
+                    <div class="mb-3" data-files-folder-field>
+                        <label class="form-label">{{ __('documents.target_folder') }} *</label>
+                        <input type="text" name="folder" class="form-control" maxlength="100" list="folderList"
+                               placeholder="{{ __('documents.folder_placeholder') }}" value="{{ old('folder', $defaultUploadFolder) }}"
+                               data-files-folder-input>
+                        <datalist id="folderList">
+                            @foreach($folders as $f)
+                            <option value="{{ $f->folder_name === __('documents.default_folder') ? '' : $f->folder_name }}">
+                            @endforeach
+                        </datalist>
+                        <div class="form-hint">{{ __('documents.target_folder_hint') }}</div>
+                    </div>
+                    <div class="alert alert-azure-lt py-2 mb-3 d-none" data-files-folder-readonly>
+                        <i class="ti ti-folder me-1"></i>
+                        <span data-files-folder-label></span>
+                    </div>
+                    <div class="files-dropzone" data-files-dropzone>
+                        <input type="file" name="files[]" class="files-dropzone-input" multiple required>
+                        <div class="files-dropzone-inner">
+                            <i class="ti ti-cloud-upload"></i>
+                            <div class="fw-semibold">{{ __('documents.drop_files') }}</div>
+                            <div class="text-muted small">{{ __('documents.multi_upload_hint') }}</div>
+                            <div class="text-muted small mt-1">{{ __('documents.click_to_select') }}</div>
+                        </div>
+                    </div>
+                    <div class="files-selected-list small text-muted mt-2 d-none" data-files-selected-list></div>
+                    <div class="files-upload-progress mt-3" data-files-upload-progress hidden>
+                        <div class="d-flex justify-content-between align-items-center small mb-1">
+                            <span data-files-upload-label>{{ __('documents.upload_progress') }}</span>
+                            <span data-files-upload-percent>0%</span>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar" role="progressbar" data-files-upload-bar style="width:0%"
+                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <button type="button" class="btn btn-ghost-secondary" data-bs-dismiss="modal">{{ __('app.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary"><i class="ti ti-upload me-1"></i>{{ __('app.upload') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @push('scripts')
 <script>window.__filesUploadLabels = {!! json_encode($uploadLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!};</script>
-<script src="{{ asset('js/documents-upload.js') }}?v=3"></script>
+<script src="{{ asset('js/documents-upload.js') }}?v=4"></script>
 @endpush

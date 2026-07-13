@@ -7,6 +7,5 @@
     'folders' => $folders,
     'currentFolderSlug' => null,
     'search' => $search,
-    'storageStats' => $storageStats ?? null,
 ])
 @endsection

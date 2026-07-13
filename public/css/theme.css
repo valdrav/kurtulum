@@ -1239,6 +1239,26 @@ button.ef-more-tile {
     justify-content: center;
 }
 
+.files-app--full {
+    flex-direction: column;
+}
+
+.files-upload-btn-prominent {
+    font-weight: 600;
+    padding: 0.45rem 1rem;
+    box-shadow: 0 2px 8px rgba(var(--ef-primary-rgb), 0.25);
+}
+
+.files-item-menu--visible {
+    opacity: 1;
+    pointer-events: auto;
+    padding: 0 0.5rem 0.65rem;
+}
+
+.files-item-menu--visible .btn-primary {
+    font-weight: 600;
+}
+
 @media (max-width: 1199.98px) {
     .files-toolbar {
         flex-direction: column;
@@ -1257,6 +1277,11 @@ button.ef-more-tile {
 @media (max-width: 767.98px) {
     .files-app {
         min-height: auto;
+    }
+
+    .files-upload-btn-prominent {
+        flex: 1 1 100%;
+        justify-content: center;
     }
 
     .files-grid {

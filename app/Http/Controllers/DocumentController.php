@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\User;
 use App\Services\DocumentStorageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -20,15 +21,18 @@ class DocumentController extends Controller
 
     public function index(Request $request)
     {
+        $this->autoMaintainStorage();
+
         $search = $request->input('search');
         $folders = $this->folderSummaries($search);
-        $storageStats = $this->storage->stats();
 
-        return view('documents.index', compact('folders', 'search', 'storageStats'));
+        return view('documents.index', compact('folders', 'search'));
     }
 
     public function folder(Request $request, string $folder)
     {
+        $this->autoMaintainStorage();
+
         $folderName = $folder === '__default' ? '' : $folder;
         $displayName = $folderName !== '' ? $folderName : __('documents.default_folder');
 
@@ -45,9 +49,21 @@ class DocumentController extends Controller
             ->paginate(48);
 
         $folders = $this->folderSummaries();
-        $storageStats = $this->storage->stats();
 
-        return view('documents.folder', compact('documents', 'folderName', 'displayName', 'folders', 'storageStats'));
+        return view('documents.folder', compact('documents', 'folderName', 'displayName', 'folders'));
+    }
+
+    protected function autoMaintainStorage(): void
+    {
+        $cacheKey = 'documents:auto_maintained_at';
+
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+
+        $this->storage->purgeOrphans();
+        $this->storage->purgeTrashedRecords();
+        Cache::put($cacheKey, now(), now()->addHours(12));
     }
 
     protected function folderSummaries(?string $search = null)
@@ -254,24 +270,6 @@ class DocumentController extends Controller
         }
 
         return redirect()->route('documents.index')->with('success', __('documents.folder_deleted', ['count' => $count]));
-    }
-
-    public function purgeOrphans(Request $request)
-    {
-        $orphans = $this->storage->orphanPaths();
-        $freedBytes = (int) $orphans->sum('bytes');
-        $deleted = $this->storage->purgeOrphans();
-        $trashed = $this->storage->purgeTrashedRecords();
-
-        if ($deleted === 0 && $trashed === 0) {
-            return back()->with('info', __('documents.no_orphans'));
-        }
-
-        return back()->with('success', __('documents.orphans_purged', [
-            'files' => $deleted,
-            'trashed' => $trashed,
-            'freed' => $this->storage->humanBytes($freedBytes),
-        ]));
     }
 
     public function backup()

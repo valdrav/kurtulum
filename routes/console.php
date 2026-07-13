@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 Schedule::command('rates:sync')->everySixHours();
 Schedule::command('emails:sync')->hourly();
 Schedule::command('tasks:send-reminders')->everyFiveMinutes();
+Schedule::command('documents:purge-orphans --trashed')->daily();

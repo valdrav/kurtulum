@@ -10,6 +10,5 @@
     'folderName' => $folderName,
     'documents' => $documents,
     'search' => request('search'),
-    'storageStats' => $storageStats ?? null,
 ])
 @endsection
