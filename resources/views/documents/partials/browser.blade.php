@@ -122,8 +122,8 @@
             </div>
             <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="files-upload-form" data-files-upload-form novalidate>
                 @csrf
-                <div class="row g-3">
-                    <div class="col-12 col-md-5">
+                <div class="files-upload-fields">
+                    <div class="files-upload-field">
                         <label class="form-label" for="filesFolderInput">{{ __('documents.target_folder') }} *</label>
                         <input type="text" name="folder" id="filesFolderInput" class="form-control" maxlength="100" list="folderList"
                                placeholder="{{ __('documents.folder_placeholder') }}" value="{{ old('folder', $defaultUploadFolder) }}"
@@ -135,7 +135,7 @@
                         </datalist>
                         <div class="form-hint mt-1" data-files-folder-hint data-pick-hint="{{ __('documents.target_folder_hint') }}">{{ __('documents.target_folder_hint') }}</div>
                     </div>
-                    <div class="col-12 col-md-7">
+                    <div class="files-upload-field">
                         <label class="form-label">{{ __('documents.drop_files') }}</label>
                         <div class="files-dropzone" data-files-dropzone>
                             <input type="file" name="files[]" class="files-dropzone-input" multiple>
@@ -234,13 +234,13 @@
                                 <i class="ti ti-upload me-1"></i><span class="files-btn-label">{{ __('documents.upload_short') }}</span>
                             </button>
                             @if($canDeleteDocs)
-                            <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="mt-1"
+                            <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="w-100"
                                   data-confirm="{{ __('documents.delete_folder_confirm') }}"
                                   data-confirm-title="{{ __('app.confirm_title') }}"
                                   data-confirm-button="{{ __('documents.delete_folder') }}">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-ghost-danger w-100" title="{{ __('documents.delete_folder') }}">
-                                    <i class="ti ti-trash me-1"></i>{{ __('documents.delete_folder') }}
+                                    <i class="ti ti-trash"></i>
                                 </button>
                             </form>
                             @endif

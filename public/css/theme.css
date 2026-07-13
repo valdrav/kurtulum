@@ -36,6 +36,11 @@ body.ef-app {
     min-height: 100dvh;
     margin: 0;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    overflow-x: hidden;
+}
+
+html.ef-app-root {
+    overflow-x: hidden;
 }
 
 /* Sidebar */
@@ -178,10 +183,18 @@ body.ef-app {
 
 .ef-main-auth {
     margin-left: var(--ef-sidebar-w);
+    width: calc(100% - var(--ef-sidebar-w));
+    max-width: calc(100% - var(--ef-sidebar-w));
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 @media (max-width: 991.98px) {
-    .ef-main-auth { margin-left: 0; }
+    .ef-main-auth {
+        margin-left: 0;
+        width: 100%;
+        max-width: 100%;
+    }
 }
 
 /* Top bar */
@@ -334,6 +347,17 @@ body.ef-app {
     flex: 1;
     padding: 1rem 0 1.5rem;
     max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+.ef-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 1rem;
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 .ef-main-auth .ef-content {
@@ -356,13 +380,6 @@ body.ef-app {
     .ef-main-auth:has(.ef-currency-bar.expanded) .ef-content {
         padding-bottom: 13rem;
     }
-}
-
-.ef-container {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 0 1rem;
 }
 
 .ef-alert { border-radius: var(--ef-radius-sm); margin-bottom: 1rem; }
@@ -717,9 +734,12 @@ button.ef-more-tile {
     min-height: 24rem;
     border: 1px solid var(--ef-border);
     border-radius: var(--ef-radius);
-    overflow: visible;
+    overflow: hidden;
     background: var(--ef-surface);
     box-shadow: var(--ef-shadow-sm);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 @media (min-width: 1200px) {
@@ -986,6 +1006,39 @@ button.ef-more-tile {
     padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--ef-border);
     background: linear-gradient(135deg, rgba(var(--ef-primary-rgb), 0.08) 0%, rgba(var(--ef-primary-rgb), 0.02) 100%);
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.files-upload-panel .files-upload-form,
+.files-upload-panel .row {
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.files-upload-panel .row > [class*="col-"] {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.files-upload-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    max-width: 100%;
+}
+
+@media (min-width: 992px) {
+    .files-upload-fields {
+        grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
+    }
+}
+
+.files-upload-field {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .files-upload-panel.is-highlight {
@@ -1056,49 +1109,59 @@ button.ef-more-tile {
 .files-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0.75rem;
+    gap: 0.65rem;
     width: 100%;
+    max-width: 100%;
+}
+
+.files-grid .files-item {
+    min-width: 0;
 }
 
 .files-grid .files-item-link {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 0.75rem 0.45rem 0.55rem;
-    gap: 0.45rem;
-}
-
-.files-grid .files-item-body {
-    width: 100%;
+    padding: 0.65rem 0.35rem 0.5rem;
+    gap: 0.35rem;
 }
 
 .files-grid .files-item-name {
-    font-size: 0.75rem;
-    line-height: 1.25;
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    word-break: break-all;
+    -webkit-line-clamp: 3;
 }
 
 .files-grid .files-item-meta {
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
 }
 
 .files-grid .doc-badge {
-    width: 2.5rem;
-    height: 2.5rem;
-}
-
-.files-grid .files-thumb {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.15rem;
+    height: 2.15rem;
+    font-size: 0.5625rem;
 }
 
 .files-grid .files-item-menu {
-    padding: 0 0.35rem 0.55rem;
+    padding: 0 0.35rem 0.45rem;
+    gap: 0.25rem;
+    flex-direction: column;
 }
 
 .files-grid .files-item-menu .btn {
-    font-size: 0.6875rem;
-    padding: 0.2rem 0.35rem;
-    min-height: 1.75rem;
+    width: 100%;
+    font-size: 0.625rem;
+    padding: 0.2rem 0.25rem;
+    min-height: 1.65rem;
+}
+
+.files-grid .files-item-menu form {
+    width: 100%;
+}
+
+.files-grid .files-item-menu form .btn {
+    width: 100%;
 }
 
 .files-item {
@@ -1413,7 +1476,7 @@ button.ef-more-tile {
 
 .files-app--full {
     flex-direction: column !important;
-    overflow: visible;
+    overflow: hidden;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -1422,7 +1485,7 @@ button.ef-more-tile {
 @media (min-width: 1200px) {
     .files-app.files-app--full {
         flex-direction: column !important;
-        overflow: visible;
+        overflow: hidden;
         min-height: auto;
     }
 }
