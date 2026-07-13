@@ -145,6 +145,7 @@ return [
     'new_income_expense' => 'Income / Expense Entry',
     'edit_income_expense' => 'Edit Entry',
     'profit_loss' => 'Income / Expense Report',
+    'profit_loss_ledger_hint' => 'This report shows collections, payments, and manual income/expense entries from treasury movements.',
     'transactions' => 'Account Movements',
     'counterparty' => 'Counterparty',
     'tx_credit' => 'Credit',

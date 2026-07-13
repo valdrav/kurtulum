@@ -2,14 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Collection;
-use App\Models\Customer;
 use App\Models\IncomeExpense;
-use App\Models\Order;
-use App\Models\Payment;
-use App\Models\Shipment;
-use App\Models\Supplier;
-use App\Models\Task;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection as SupportCollection;
@@ -19,10 +12,14 @@ class IncomeExpenseReportService
 {
     public const PERIODS = ['day', 'week', 'month', 'year'];
 
+    public function __construct(
+        protected TreasuryLedgerService $ledger,
+    ) {}
+
     /** @return array{period: string, start: Carbon, end: Carbon, label: string} */
     public function resolvePeriod(string $period, ?string $anchor = null, ?string $from = null, ?string $to = null): array
     {
-        $period = in_array($period, self::PERIODS, true) ? $period : 'year';
+        $period = in_array($period, self::PERIODS, true) ? $period : 'month';
         $anchorDate = $anchor ? Carbon::parse($anchor) : now();
 
         if ($from && $to) {
@@ -75,15 +72,16 @@ class IncomeExpenseReportService
     }
 
     /** @return array{income: float, expense: float, net: float, income_count: int, expense_count: int, total_count: int} */
-    public function summary(Carbon $start, Carbon $end): array
+    public function summary(Carbon $start, Carbon $end, ?int $accountId = null): array
     {
-        $base = $this->queryForRange($start, $end);
-        $amountSql = $this->amountExpression();
+        $ledger = $this->ledger->periodSummary($start, $end, $accountId);
+        $transactions = $this->ledger->transactionsInRange($start, $end, $accountId);
+        $orphans = $this->orphanIncomeExpenseTotals($start, $end);
 
-        $income = (float) (clone $base)->where('type', 'income')->sum($amountSql);
-        $expense = (float) (clone $base)->where('type', 'expense')->sum($amountSql);
-        $incomeCount = (int) (clone $base)->where('type', 'income')->count();
-        $expenseCount = (int) (clone $base)->where('type', 'expense')->count();
+        $income = $ledger['operational_credit'] + $orphans['income'];
+        $expense = $ledger['operational_debit'] + $orphans['expense'];
+        $incomeCount = $transactions->where('type', 'credit')->count() + $orphans['income_count'];
+        $expenseCount = $transactions->where('type', 'debit')->count() + $orphans['expense_count'];
 
         return [
             'income' => $income,
@@ -95,86 +93,120 @@ class IncomeExpenseReportService
         ];
     }
 
-    /** @return Collection<int, object{category: string, type: string, total: float, count: int}> */
-    public function byCategory(Carbon $start, Carbon $end, ?string $type = null): SupportCollection
+    /** @return SupportCollection<int, object{category: string, type: string, total: float, count: int}> */
+    public function byCategory(Carbon $start, Carbon $end, ?string $type = null, ?int $accountId = null): SupportCollection
     {
-        $query = $this->queryForRange($start, $end)
-            ->select('category', 'type')
-            ->selectRaw('SUM('.$this->amountExpressionSql().') as total')
-            ->selectRaw('COUNT(*) as count')
-            ->groupBy('category', 'type')
-            ->orderByDesc('total');
+        $groups = [];
 
-        if ($type) {
-            $query->where('type', $type);
+        foreach ($this->ledger->transactionsInRange($start, $end, $accountId) as $transaction) {
+            $meta = $this->ledger->categoryKey($transaction);
+            $entryType = $meta['type'];
+            $amount = $this->ledger->amountInDefaultCurrency($transaction);
+
+            if ($type && $entryType !== $type) {
+                continue;
+            }
+
+            $key = $meta['category'] . '|' . $entryType;
+            $groups[$key] ??= [
+                'category' => $meta['category'],
+                'type' => $entryType,
+                'total' => 0.0,
+                'count' => 0,
+            ];
+            $groups[$key]['total'] += $amount;
+            $groups[$key]['count']++;
         }
 
-        return $query->get()->map(fn ($row) => (object) [
-            'category' => $row->category
-                ? finance_categories()->label($row->category)
-                : __('finance.legacy_categories.genel'),
-            'type' => $row->type,
-            'total' => (float) $row->total,
-            'count' => (int) $row->count,
-        ]);
+        foreach ($this->orphanIncomeExpenses($start, $end) as $entry) {
+            if ($type && $entry->type !== $type) {
+                continue;
+            }
+
+            $key = $entry->categoryLabel() . '|' . $entry->type;
+            $groups[$key] ??= [
+                'category' => $entry->categoryLabel(),
+                'type' => $entry->type,
+                'total' => 0.0,
+                'count' => 0,
+            ];
+            $groups[$key]['total'] += $entry->normalizedAmount();
+            $groups[$key]['count']++;
+        }
+
+        return collect($groups)
+            ->sortByDesc('total')
+            ->values()
+            ->map(fn (array $row) => (object) $row);
     }
 
-    /** @return Collection<int, object{account_name: string, income: float, expense: float, net: float}> */
-    public function byTreasury(Carbon $start, Carbon $end): SupportCollection
+    /** @return SupportCollection<int, object{account_name: string, income: float, expense: float, net: float}> */
+    public function byTreasury(Carbon $start, Carbon $end, ?int $accountId = null): SupportCollection
     {
-        return $this->queryForRange($start, $end)
-            ->whereNotNull('income_expenses.account_id')
-            ->join('accounts', 'accounts.id', '=', 'income_expenses.account_id')
-            ->where('accounts.is_treasury', true)
-            ->whereNull('accounts.customer_id')
-            ->whereNull('accounts.supplier_id')
-            ->select('accounts.name as account_name')
-            ->selectRaw("SUM(CASE WHEN income_expenses.type = 'income' THEN {$this->amountExpressionSql('income_expenses')} ELSE 0 END) as income")
-            ->selectRaw("SUM(CASE WHEN income_expenses.type = 'expense' THEN {$this->amountExpressionSql('income_expenses')} ELSE 0 END) as expense")
-            ->groupBy('accounts.id', 'accounts.name')
-            ->orderBy('accounts.name')
-            ->get()
-            ->map(fn ($row) => (object) [
-                'account_name' => $row->account_name,
-                'income' => (float) $row->income,
-                'expense' => (float) $row->expense,
-                'net' => (float) $row->income - (float) $row->expense,
+        $groups = [];
+
+        foreach ($this->ledger->transactionsInRange($start, $end, $accountId) as $transaction) {
+            $accountName = $transaction->account?->name ?? __('finance.treasury_account');
+            $amount = $this->ledger->amountInDefaultCurrency($transaction);
+
+            $groups[$accountName] ??= [
+                'account_name' => $accountName,
+                'income' => 0.0,
+                'expense' => 0.0,
+            ];
+
+            if ($transaction->type === 'credit') {
+                $groups[$accountName]['income'] += $amount;
+            } else {
+                $groups[$accountName]['expense'] += $amount;
+            }
+        }
+
+        return collect($groups)
+            ->sortBy('account_name')
+            ->values()
+            ->map(fn (array $row) => (object) [
+                'account_name' => $row['account_name'],
+                'income' => $row['income'],
+                'expense' => $row['expense'],
+                'net' => $row['income'] - $row['expense'],
             ]);
     }
 
-    /** @return Collection<int, array{label: string, income: float, expense: float, net: float}> */
-    public function timeline(Carbon $start, Carbon $end, string $period): SupportCollection
+    /** @return SupportCollection<int, array{label: string, income: float, expense: float, net: float}> */
+    public function timeline(Carbon $start, Carbon $end, string $period, ?int $accountId = null): SupportCollection
     {
         return match ($period) {
             'day' => collect([[
                 'label' => $start->translatedFormat('d F Y'),
-                'income' => $this->sumType($start, $end, 'income'),
-                'expense' => $this->sumType($start, $end, 'expense'),
-                'net' => $this->sumType($start, $end, 'income') - $this->sumType($start, $end, 'expense'),
+                'income' => $this->sumType($start, $end, 'income', $accountId),
+                'expense' => $this->sumType($start, $end, 'expense', $accountId),
+                'net' => $this->sumType($start, $end, 'income', $accountId) - $this->sumType($start, $end, 'expense', $accountId),
             ]]),
-            'week' => collect(range(0, 6))->map(function (int $offset) use ($start) {
-                $day = $start->copy();
+            'week' => collect(range(0, 6))->map(function (int $offset) use ($start, $accountId) {
+                $day = $start->copy()->addDays($offset);
 
                 return [
-                    'label' => $day->copy()->addDays($offset)->translatedFormat('l d.m'),
-                    'income' => $this->sumType($day->copy()->addDays($offset)->startOfDay(), $day->copy()->addDays($offset)->endOfDay(), 'income'),
-                    'expense' => $this->sumType($day->copy()->addDays($offset)->startOfDay(), $day->copy()->addDays($offset)->endOfDay(), 'expense'),
-                    'net' => $this->sumType($day->copy()->addDays($offset)->startOfDay(), $day->copy()->addDays($offset)->endOfDay(), 'income')
-                        - $this->sumType($day->copy()->addDays($offset)->startOfDay(), $day->copy()->addDays($offset)->endOfDay(), 'expense'),
+                    'label' => $day->translatedFormat('l d.m'),
+                    'income' => $this->sumType($day->copy()->startOfDay(), $day->copy()->endOfDay(), 'income', $accountId),
+                    'expense' => $this->sumType($day->copy()->startOfDay(), $day->copy()->endOfDay(), 'expense', $accountId),
+                    'net' => $this->sumType($day->copy()->startOfDay(), $day->copy()->endOfDay(), 'income', $accountId)
+                        - $this->sumType($day->copy()->startOfDay(), $day->copy()->endOfDay(), 'expense', $accountId),
                 ];
             }),
-            'year' => collect(range(1, 12))->map(function (int $month) use ($start) {
+            'year' => collect(range(1, 12))->map(function (int $month) use ($start, $accountId) {
                 $monthStart = $start->copy()->month($month)->startOfMonth();
                 $monthEnd = $start->copy()->month($month)->endOfMonth();
 
                 return [
                     'label' => $monthStart->translatedFormat('F'),
-                    'income' => $this->sumType($monthStart, $monthEnd, 'income'),
-                    'expense' => $this->sumType($monthStart, $monthEnd, 'expense'),
-                    'net' => $this->sumType($monthStart, $monthEnd, 'income') - $this->sumType($monthStart, $monthEnd, 'expense'),
+                    'income' => $this->sumType($monthStart, $monthEnd, 'income', $accountId),
+                    'expense' => $this->sumType($monthStart, $monthEnd, 'expense', $accountId),
+                    'net' => $this->sumType($monthStart, $monthEnd, 'income', $accountId)
+                        - $this->sumType($monthStart, $monthEnd, 'expense', $accountId),
                 ];
             }),
-            default => $this->weeklyBucketsInMonth($start, $end),
+            default => $this->weeklyBucketsInMonth($start, $end, $accountId),
         };
     }
 
@@ -205,15 +237,15 @@ class IncomeExpenseReportService
             ->all();
     }
 
-    protected function sumType(Carbon $start, Carbon $end, string $type): float
+    protected function sumType(Carbon $start, Carbon $end, string $type, ?int $accountId = null): float
     {
-        return (float) $this->queryForRange($start, $end)
-            ->where('type', $type)
-            ->sum($this->amountExpression());
+        $summary = $this->summary($start, $end, $accountId);
+
+        return $type === 'income' ? $summary['income'] : $summary['expense'];
     }
 
-    /** @return Collection<int, array{label: string, income: float, expense: float, net: float}> */
-    protected function weeklyBucketsInMonth(Carbon $start, Carbon $end): SupportCollection
+    /** @return SupportCollection<int, array{label: string, income: float, expense: float, net: float}> */
+    protected function weeklyBucketsInMonth(Carbon $start, Carbon $end, ?int $accountId = null): SupportCollection
     {
         $buckets = collect();
         $cursor = $start->copy();
@@ -225,16 +257,51 @@ class IncomeExpenseReportService
                 $weekEnd = $end->copy();
             }
 
+            $income = $this->sumType($weekStart, $weekEnd, 'income', $accountId);
+            $expense = $this->sumType($weekStart, $weekEnd, 'expense', $accountId);
+
             $buckets->push([
                 'label' => $weekStart->format('d.m') . ' – ' . $weekEnd->format('d.m'),
-                'income' => $this->sumType($weekStart, $weekEnd, 'income'),
-                'expense' => $this->sumType($weekStart, $weekEnd, 'expense'),
-                'net' => $this->sumType($weekStart, $weekEnd, 'income') - $this->sumType($weekStart, $weekEnd, 'expense'),
+                'income' => $income,
+                'expense' => $expense,
+                'net' => $income - $expense,
             ]);
 
             $cursor->addDays(7);
         }
 
         return $buckets;
+    }
+
+    /** @return array{income: float, expense: float, income_count: int, expense_count: int} */
+    protected function orphanIncomeExpenseTotals(Carbon $start, Carbon $end): array
+    {
+        $entries = $this->orphanIncomeExpenses($start, $end);
+
+        return [
+            'income' => (float) $entries->where('type', 'income')->sum(fn (IncomeExpense $entry) => $entry->normalizedAmount()),
+            'expense' => (float) $entries->where('type', 'expense')->sum(fn (IncomeExpense $entry) => $entry->normalizedAmount()),
+            'income_count' => $entries->where('type', 'income')->count(),
+            'expense_count' => $entries->where('type', 'expense')->count(),
+        ];
+    }
+
+    /** @return SupportCollection<int, IncomeExpense> */
+    protected function orphanIncomeExpenses(Carbon $start, Carbon $end): SupportCollection
+    {
+        $linkedIds = DB::table('account_transactions')
+            ->where('reference_type', IncomeExpense::class)
+            ->whereNotNull('reference_id')
+            ->pluck('reference_id');
+
+        $query = IncomeExpense::query()
+            ->whereDate('transaction_date', '>=', $start->toDateString())
+            ->whereDate('transaction_date', '<=', $end->toDateString());
+
+        if ($linkedIds->isNotEmpty()) {
+            $query->whereNotIn('id', $linkedIds);
+        }
+
+        return $query->get();
     }
 }

@@ -111,7 +111,7 @@
              data-pick-mode-default="{{ $currentSlug === null ? '1' : '0' }}">
             <div class="files-upload-head">
                 <div class="files-upload-title">
-                    <span class="files-create-banner-icon d-inline-flex align-middle me-2">@include('documents.partials.icon', ['kind' => 'folder'])</span>
+                    <span class="d-inline-flex align-middle me-2">@include('documents.partials.icon', ['kind' => 'folder'])</span>
                     {{ __('documents.create_banner_title') }}
                 </div>
                 <p class="text-muted small mb-0 mt-1">{{ __('documents.create_banner_hint') }}</p>
@@ -218,8 +218,10 @@
                     <div class="files-item files-item-folder">
                         <a href="{{ route('documents.folder', $slug) }}" class="files-item-link">
                             @include('documents.partials.icon', ['kind' => 'folder'])
-                            <span class="files-item-name">{{ $f->folder_name }}</span>
-                            <span class="files-item-meta">{{ $f->file_count }} {{ __('documents.file_count') }}</span>
+                            <div class="files-item-body">
+                                <div class="files-item-name">{{ $f->folder_name }}</div>
+                                <div class="files-item-meta">{{ $f->file_count }} {{ __('documents.file_count') }}</div>
+                            </div>
                         </a>
                         @if($canManageDocs)
                         <div class="files-item-menu files-item-menu--visible">
@@ -287,8 +289,10 @@
                             @else
                             @include('documents.partials.icon', ['document' => $d])
                             @endif
-                            <span class="files-item-name">{{ $d->original_name }}</span>
-                            <span class="files-item-meta">{{ $d->humanSize() }}</span>
+                            <div class="files-item-body">
+                                <div class="files-item-name">{{ $d->original_name }}</div>
+                                <div class="files-item-meta">{{ $d->humanSize() }}</div>
+                            </div>
                         </a>
                         <div class="files-item-menu">
                             <a href="{{ route('documents.download', $d) }}" class="btn btn-sm btn-ghost-secondary" title="{{ __('app.download') }}"><i class="ti ti-download"></i></a>

@@ -207,6 +207,81 @@ class TreasuryLedgerService
             ->pluck('id');
     }
 
+    public function isOperationalTransaction(AccountTransaction $transaction): bool
+    {
+        return ! $this->isReversalTransaction($transaction);
+    }
+
+    public function amountInDefaultCurrency(AccountTransaction $transaction): float
+    {
+        $account = $transaction->account;
+
+        if (! $account) {
+            return 0.0;
+        }
+
+        return $this->transactionAmountInDefaultCurrency(
+            (float) $transaction->amount,
+            strtoupper((string) ($account->currency ?? 'TRY')),
+            (float) ($transaction->exchange_rate ?? 0) ?: null,
+        );
+    }
+
+    /** @return SupportCollection<int, AccountTransaction> */
+    public function transactionsInRange(Carbon $start, Carbon $end, ?int $accountId = null): SupportCollection
+    {
+        return $this->baseQuery($accountId)
+            ->whereDate('transaction_date', '>=', $start->toDateString())
+            ->whereDate('transaction_date', '<=', $end->toDateString())
+            ->orderBy('transaction_date')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (AccountTransaction $transaction) => $this->isOperationalTransaction($transaction))
+            ->values();
+    }
+
+    public function categoryKey(AccountTransaction $transaction): array
+    {
+        $reference = $transaction->relationLoaded('reference')
+            ? $transaction->reference
+            : $transaction->reference()->first();
+
+        if ($reference instanceof Collection) {
+            return [
+                'category' => __('finance.ledger_source_collection'),
+                'type' => 'income',
+            ];
+        }
+
+        if ($reference instanceof Payment) {
+            return [
+                'category' => __('finance.ledger_source_payment'),
+                'type' => 'expense',
+            ];
+        }
+
+        if ($reference instanceof IncomeExpense) {
+            return [
+                'category' => $reference->categoryLabel(),
+                'type' => $reference->type,
+            ];
+        }
+
+        if ($transaction->reference_type === null
+            && (str_contains((string) $transaction->description, 'açılış')
+                || str_contains((string) $transaction->description, 'Açılış'))) {
+            return [
+                'category' => __('finance.ledger_source_opening'),
+                'type' => $transaction->type === 'credit' ? 'income' : 'expense',
+            ];
+        }
+
+        return [
+            'category' => $transaction->description ?: __('finance.ledger_source_manual'),
+            'type' => $transaction->type === 'credit' ? 'income' : 'expense',
+        ];
+    }
+
     protected function baseQuery(?int $accountId = null): Builder
     {
         return AccountTransaction::query()

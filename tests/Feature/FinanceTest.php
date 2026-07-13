@@ -102,19 +102,13 @@ class FinanceTest extends FeatureTestCase
     {
         $this->actingAsAdmin();
 
-        IncomeExpense::create([
+        $this->post(route('finance.income-expenses.store'), [
             'type' => 'expense',
-            'category' => 'Yemek',
             'item_name' => 'Kahvaltı',
             'amount' => 100,
             'currency' => 'TRY',
-            'exchange_rate' => 1,
-            'amount_base' => 100,
             'transaction_date' => now()->toDateString(),
-            'description' => 'Kahvaltı',
-            'account_id' => company_treasury()->defaultAccount()->id,
-            'user_id' => auth()->id(),
-        ]);
+        ])->assertRedirect();
 
         $this->get(route('finance.profit-loss', ['period' => 'day', 'date' => now()->toDateString()]))
             ->assertOk()

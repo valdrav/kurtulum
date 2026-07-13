@@ -577,10 +577,11 @@ class FinanceController extends Controller
         return back()->with('success', __('messages.deleted'));
     }
 
-    public function profitLoss(Request $request, IncomeExpenseReportService $reports)
+    public function profitLoss(Request $request, IncomeExpenseReportService $reports, TreasuryLedgerService $ledger)
     {
-        $period = $request->input('period', 'year');
-        $date = $request->input('date', now()->format('Y-01-01'));
+        $period = $request->input('period', 'month');
+        $date = $request->input('date', now()->format('Y-m-d'));
+        $accountId = $request->filled('account_id') ? (int) $request->account_id : null;
 
         $periodMeta = $reports->resolvePeriod(
             $period,
@@ -589,11 +590,11 @@ class FinanceController extends Controller
             $request->input('to')
         );
 
-        $summary = $reports->summary($periodMeta['start'], $periodMeta['end']);
+        $summary = $reports->summary($periodMeta['start'], $periodMeta['end'], $accountId);
 
         if ($summary['total_count'] === 0 && in_array($periodMeta['period'], ['day', 'week', 'month'], true)) {
             $yearMeta = $reports->resolvePeriod('year', now()->format('Y-01-01'));
-            $yearSummary = $reports->summary($yearMeta['start'], $yearMeta['end']);
+            $yearSummary = $reports->summary($yearMeta['start'], $yearMeta['end'], $accountId);
 
             if ($yearSummary['total_count'] > 0) {
                 $periodMeta = $yearMeta;
@@ -601,20 +602,33 @@ class FinanceController extends Controller
             }
         }
 
-        $timeline = $reports->timeline($periodMeta['start'], $periodMeta['end'], $periodMeta['period']);
-        $byCategory = $reports->byCategory($periodMeta['start'], $periodMeta['end']);
-        $byTreasury = $reports->byTreasury($periodMeta['start'], $periodMeta['end']);
-        $entries = IncomeExpense::with(['account', 'user'])
-            ->whereDate('transaction_date', '>=', $periodMeta['start']->toDateString())
-            ->whereDate('transaction_date', '<=', $periodMeta['end']->toDateString())
-            ->when($request->type, fn ($q, $t) => $q->where('type', $t))
-            ->latest('transaction_date')
-            ->latest('id')
-            ->limit(500)
-            ->get();
+        $timeline = $reports->timeline($periodMeta['start'], $periodMeta['end'], $periodMeta['period'], $accountId);
+        $byCategory = $reports->byCategory($periodMeta['start'], $periodMeta['end'], $request->type, $accountId);
+        $byTreasury = $reports->byTreasury($periodMeta['start'], $periodMeta['end'], $accountId);
+        $treasuryAccounts = company_treasury()->accounts();
+
+        $entries = $ledger->transactionsInRange($periodMeta['start'], $periodMeta['end'], $accountId)
+            ->when($request->type === 'income', fn ($rows) => $rows->where('type', 'credit'))
+            ->when($request->type === 'expense', fn ($rows) => $rows->where('type', 'debit'))
+            ->when($request->search, function ($rows, string $search) {
+                $needle = mb_strtolower($search);
+
+                return $rows->filter(function ($movement) use ($needle) {
+                    $haystack = mb_strtolower(trim(
+                        ($movement->description ?? '') . ' '
+                        . ($movement->account?->name ?? '') . ' '
+                        . ($movement->counterpartyLabel() ?? '')
+                    ));
+
+                    return str_contains($haystack, $needle);
+                });
+            })
+            ->sortByDesc(fn ($movement) => $movement->transaction_date?->format('Y-m-d') . str_pad((string) $movement->id, 8, '0', STR_PAD_LEFT))
+            ->take(500)
+            ->values();
 
         return view('finance.reports.profit-loss', compact(
-            'periodMeta', 'summary', 'timeline', 'byCategory', 'byTreasury', 'entries'
+            'periodMeta', 'summary', 'timeline', 'byCategory', 'byTreasury', 'entries', 'ledger', 'treasuryAccounts'
         ));
     }
 

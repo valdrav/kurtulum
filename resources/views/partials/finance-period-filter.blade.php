@@ -1,6 +1,9 @@
 @php
-    $currentPeriod = request('period', 'month');
-    $currentDate = request('date', now()->format('Y-m-d'));
+    $currentPeriod = $periodMeta['period'] ?? request('period', 'month');
+    if ($currentPeriod === 'custom') {
+        $currentPeriod = request('period', 'month');
+    }
+    $currentDate = request('date', ($periodMeta['start'] ?? now())->format('Y-m-d'));
 @endphp
 <form method="GET" class="ef-finance-filter">
     @foreach(request()->except(['period', 'date', 'from', 'to', 'page']) as $key => $value)

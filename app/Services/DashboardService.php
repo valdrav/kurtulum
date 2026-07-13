@@ -95,7 +95,7 @@ class DashboardService
                 'currency' => $currency,
                 'icon' => 'ti-arrow-down-left',
                 'color' => 'green',
-                'link' => route('finance.profit-loss', ['period' => 'month']),
+                'link' => route('finance.profit-loss', ['period' => 'month', 'date' => now()->format('Y-m-d')]),
             ];
 
             $kpis[] = [
@@ -106,7 +106,7 @@ class DashboardService
                 'currency' => $currency,
                 'icon' => 'ti-arrow-up-right',
                 'color' => 'red',
-                'link' => route('finance.profit-loss', ['period' => 'month']),
+                'link' => route('finance.profit-loss', ['period' => 'month', 'date' => now()->format('Y-m-d')]),
             ];
 
             $kpis[] = [

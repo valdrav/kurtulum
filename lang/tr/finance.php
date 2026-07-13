@@ -147,6 +147,7 @@ return [
     'new_income_expense' => 'Gelir / Gider Kaydı',
     'edit_income_expense' => 'Kayıt Düzenle',
     'profit_loss' => 'Gelir / Gider Raporu',
+    'profit_loss_ledger_hint' => 'Bu rapor tahsilat, ödeme ve manuel gelir/gider kayıtlarını kasa hareketlerinden gösterir.',
     'transactions' => 'Hesap Hareketleri',
     'counterparty' => 'Karşı taraf',
     'tx_credit' => 'Alacak',

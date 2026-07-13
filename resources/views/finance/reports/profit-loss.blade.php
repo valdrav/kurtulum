@@ -6,13 +6,24 @@
 
 <div class="card mb-3">
     <div class="card-body py-3">
-        @include('partials.finance-period-filter', ['periodMeta' => $periodMeta, 'summary' => $summary, 'uid' => 'report', 'showExtra' => false])
+        @include('partials.finance-period-filter', [
+            'periodMeta' => $periodMeta,
+            'summary' => $summary,
+            'uid' => 'report',
+            'showExtra' => true,
+            'showLedgerFilters' => true,
+            'treasuryAccounts' => $treasuryAccounts ?? collect(),
+        ])
     </div>
 </div>
 
 @if(($summary['total_count'] ?? 0) === 0)
 <div class="alert alert-info mb-4">
     <i class="ti ti-info-circle me-1"></i>{{ __('dashboard.report_empty_hint') }}
+</div>
+@else
+<div class="alert alert-azure-lt mb-4 py-2">
+    <i class="ti ti-info-circle me-1"></i>{{ __('finance.profit_loss_ledger_hint') }}
 </div>
 @endif
 
@@ -117,7 +128,7 @@
             <thead>
                 <tr>
                     <th>{{ __('app.date') }}</th>
-                    <th>{{ __('finance.entry_type') }}</th>
+                    <th>{{ __('finance.ledger_source') }}</th>
                     <th>{{ __('finance.entry_title') }}</th>
                     <th>{{ __('finance.category') }}</th>
                     <th>{{ __('finance.treasury_account') }}</th>
@@ -127,14 +138,24 @@
             </thead>
             <tbody>
                 @forelse($entries as $item)
+                @php
+                    $entryType = $item->type === 'credit' ? 'income' : 'expense';
+                    $category = $ledger->categoryKey($item);
+                @endphp
                 <tr>
                     <td>{{ $item->transaction_date->format('d.m.Y') }}</td>
-                    <td><span class="badge bg-{{ $item->type==='income'?'success':'danger' }}-lt">{{ $item->type === 'income' ? __('finance.type_income') : __('finance.type_expense') }}</span></td>
-                    <td>{{ $item->displayTitle() }}</td>
-                    <td class="small">{{ $item->categoryLabel() }}</td>
+                    <td><span class="badge bg-azure-lt">{{ $ledger->sourceLabel($item) }}</span></td>
+                    <td>{{ $item->description ?: ($item->counterpartyLabel() ?? '—') }}</td>
+                    <td class="small">{{ $category['category'] }}</td>
                     <td class="small">{{ $item->account?->name ?? '—' }}</td>
-                    <td class="text-end">{{ number_format($item->normalizedAmount(), 2, ',', '.') }} ₺</td>
-                    <td>@include('partials.income-expense-actions', ['item' => $item])</td>
+                    <td class="text-end {{ $entryType === 'income' ? 'text-green' : 'text-red' }}">
+                        {{ $entryType === 'income' ? '+' : '−' }}{{ number_format($ledger->amountInDefaultCurrency($item), 2, ',', '.') }} ₺
+                    </td>
+                    <td>
+                        @if($item->editUrl())
+                        <a href="{{ $item->editUrl() }}" class="btn btn-sm btn-ghost-secondary" title="{{ __('app.edit') }}"><i class="ti ti-pencil"></i></a>
+                        @endif
+                    </td>
                 </tr>
                 @empty
                 <tr><td colspan="7" class="text-muted text-center py-4">{{ __('app.no_records') }}</td></tr>
