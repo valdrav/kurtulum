@@ -14,7 +14,7 @@
     ];
 @endphp
 
-<div class="files-app" data-files-app data-upload-labels="@json($uploadLabels)">
+<div class="files-app" data-files-app>
     <aside class="files-sidebar d-none d-lg-flex">
         <div class="files-sidebar-head">
             <i class="ti ti-files"></i>
@@ -322,5 +322,6 @@
 </div>
 
 @push('scripts')
-<script src="{{ asset('js/documents-upload.js') }}?v=1"></script>
+<script>window.__filesUploadLabels = {!! json_encode($uploadLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!};</script>
+<script src="{{ asset('js/documents-upload.js') }}?v=2"></script>
 @endpush

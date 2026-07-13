@@ -22,7 +22,7 @@
         const submitBtn = form?.querySelector('[type="submit"]');
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-        const labels = app.dataset.uploadLabels ? JSON.parse(app.dataset.uploadLabels) : {};
+        const labels = window.__filesUploadLabels || (app.dataset.uploadLabels ? JSON.parse(app.dataset.uploadLabels) : {});
 
         function setProgress(percent, label) {
             if (!progressWrap || !progressBar) return;
