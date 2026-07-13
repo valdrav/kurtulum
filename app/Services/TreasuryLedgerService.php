@@ -170,7 +170,7 @@ class TreasuryLedgerService
 
         return AccountTransaction::query()
             ->with([
-                'account:id,name,currency,is_treasury',
+                'account' => fn ($query) => $query->withTrashed()->select('id', 'uuid', 'name', 'currency', 'is_treasury'),
                 'reference' => fn (MorphTo $morphTo) => $morphTo->morphWith([
                     Collection::class => ['customer', 'account.customer'],
                     Payment::class => ['supplier', 'account.supplier'],

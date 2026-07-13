@@ -65,7 +65,7 @@ class FinanceController extends Controller
         $treasuryIds = $treasuryAccounts->pluck('id');
         $recentMovements = AccountTransaction::query()
             ->with([
-                'account:id,name,currency',
+                'account' => fn ($query) => $query->withTrashed()->select('id', 'uuid', 'name', 'currency'),
                 'reference' => fn (MorphTo $morphTo) => $morphTo->morphWith([
                     Collection::class => ['customer'],
                     Payment::class => ['supplier'],

@@ -110,7 +110,11 @@
                         <tr>
                             <td>{{ $movement->transaction_date->format('d.m.Y') }}</td>
                             <td>
-                                <a href="{{ route('finance.accounts.show', $movement->account) }}">{{ $movement->account?->name }}</a>
+                                @if($movement->account)
+                                <a href="{{ route('finance.accounts.show', $movement->account) }}">{{ $movement->account->name }}</a>
+                                @else
+                                <span class="text-muted">—</span>
+                                @endif
                             </td>
                             <td><span class="badge bg-azure-lt">{{ $ledger->sourceLabel($movement) }}</span></td>
                             <td>
