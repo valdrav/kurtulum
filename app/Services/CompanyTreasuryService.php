@@ -67,7 +67,7 @@ class CompanyTreasuryService
 
     public function totalBalanceTry(): float
     {
-        return (float) $this->accounts()->sum('current_balance');
+        return app(TreasuryLedgerService::class)->totalBalanceInDefaultCurrency();
     }
 
     /** @return array{income: float, expense: float, net: float} */

@@ -31,5 +31,5 @@ return [
     'db_port' => 'Port',
     'db_database' => 'Nom de la base',
     'db_username' => 'Utilisateur',
-    'db_password' => 'Mot de passe',
+    'db_password' => 'Mot de passe'
 ];

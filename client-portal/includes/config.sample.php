@@ -12,6 +12,6 @@ return [
     'api_token' => 'ef_BURAYA_ANAHTARINIZ',
 
     'users' => [
-        'admin' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+        'lama@kurtulum.com' => '$2y$10$Co.9IjKu7qQvuARDeVYEz.ALgXS5U4YGnwZXbLcpUM5oqctmnd3ze',
     ],
 ];

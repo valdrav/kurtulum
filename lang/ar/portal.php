@@ -37,5 +37,5 @@ return [
     'items' => 'البنود',
     'product' => 'المنتج',
     'quantity' => 'الكمية',
-    'unit_price' => 'سعر الوحدة',
+    'unit_price' => 'سعر الوحدة'
 ];

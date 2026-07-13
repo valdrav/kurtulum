@@ -39,6 +39,6 @@ return [
         'destination_port' => 'Port d\'arrivée',
         'cut_off_date' => 'Date cut-off',
         'loading_date' => 'Date de chargement',
-        'approval_instruction' => 'Approbation / Instruction',
-    ],
+        'approval_instruction' => 'Approbation / Instruction'
+    ]
 ];

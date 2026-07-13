@@ -39,6 +39,6 @@ return [
         'destination_port' => 'ميناء الوصول',
         'cut_off_date' => 'تاريخ القطع',
         'loading_date' => 'تاريخ التحميل',
-        'approval_instruction' => 'موافقة / تعليمات',
-    ],
+        'approval_instruction' => 'موافقة / تعليمات'
+    ]
 ];

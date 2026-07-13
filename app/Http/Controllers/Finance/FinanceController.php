@@ -18,6 +18,7 @@ use App\Services\CompanyTreasuryService;
 use App\Services\ExchangeRateService;
 use App\Services\IncomeExpenseReportService;
 use App\Services\OrderFinanceService;
+use App\Services\TreasuryLedgerService;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -53,7 +54,7 @@ class FinanceController extends Controller
         return redirect()->route('finance.treasury');
     }
 
-    public function treasury(Request $request, CompanyTreasuryService $treasury)
+    public function treasury(Request $request, CompanyTreasuryService $treasury, TreasuryLedgerService $ledger)
     {
         $year = (int) ($request->year ?: now()->year);
         $treasuryAccounts = $treasury->accounts();
@@ -61,7 +62,17 @@ class FinanceController extends Controller
         $months = $treasury->monthlyBreakdown($year);
         $totalCash = $treasury->totalBalanceTry();
 
-        $recentEntries = IncomeExpense::with('account')
+        $treasuryIds = $treasuryAccounts->pluck('id');
+        $recentMovements = AccountTransaction::query()
+            ->with([
+                'account:id,name,currency',
+                'reference' => fn (MorphTo $morphTo) => $morphTo->morphWith([
+                    Collection::class => ['customer'],
+                    Payment::class => ['supplier'],
+                    IncomeExpense::class => [],
+                ]),
+            ])
+            ->whereIn('account_id', $treasuryIds)
             ->whereYear('transaction_date', $year)
             ->latest('transaction_date')
             ->latest('id')
@@ -74,7 +85,7 @@ class FinanceController extends Controller
 
         return view('finance.treasury.index', compact(
             'year', 'treasuryAccounts', 'summary', 'months', 'totalCash',
-            'recentEntries', 'paymentMethods', 'defaultTreasury', 'orders'
+            'recentMovements', 'paymentMethods', 'defaultTreasury', 'orders', 'ledger'
         ));
     }
 
@@ -211,22 +222,30 @@ class FinanceController extends Controller
         return redirect()->route('finance.accounts.show', $account)->with('success', __('messages.saved'));
     }
 
-    public function showAccount(Account $account)
+    public function showAccount(Request $request, Account $account, TreasuryLedgerService $ledger)
     {
-        $account->load([
-            'customer',
-            'supplier',
-            'transactions' => fn ($q) => $q->with([
+        $account->load(['customer', 'supplier']);
+
+        $transactions = AccountTransaction::query()
+            ->where('account_id', $account->id)
+            ->with([
                 'reference' => fn (MorphTo $morphTo) => $morphTo->morphWith([
                     Collection::class => ['customer', 'account.customer'],
                     Payment::class => ['supplier', 'account.supplier'],
                     Order::class => ['customer', 'supplier'],
                     IncomeExpense::class => [],
                 ]),
-            ])->latest()->limit(100),
-        ]);
+            ])
+            ->latest('transaction_date')
+            ->latest('id')
+            ->paginate(50)
+            ->withQueryString();
 
-        return view('finance.accounts.show', compact('account'));
+        $runningBalances = $account->is_treasury
+            ? $ledger->runningBalancesAfter($account, $transactions)
+            : [];
+
+        return view('finance.accounts.show', compact('account', 'transactions', 'runningBalances', 'ledger'));
     }
 
     public function payments(Request $request)
@@ -429,12 +448,12 @@ class FinanceController extends Controller
         return $redirect->with('success', __('messages.created'));
     }
 
-    public function incomeExpenses(Request $request, IncomeExpenseReportService $reports)
+    public function incomeExpenses(Request $request, IncomeExpenseReportService $reports, TreasuryLedgerService $ledger)
     {
         if ($request->filled('year') && ! $request->filled('period')) {
             $request->merge([
                 'period' => 'year',
-                'date' => $request->input('year') . '-06-15',
+                'date' => $request->input('year') . '-01-01',
             ]);
         }
 
@@ -444,6 +463,25 @@ class FinanceController extends Controller
             $request->input('from'),
             $request->input('to')
         );
+
+        $treasuryAccounts = company_treasury()->accounts();
+        $defaultTreasury = company_treasury()->defaultAccount();
+        $totalCash = company_treasury()->totalBalanceTry();
+        $ledgerSummary = $ledger->periodSummary(
+            $periodMeta['start'],
+            $periodMeta['end'],
+            $request->filled('account_id') ? (int) $request->account_id : null
+        );
+
+        $movements = $ledger->paginateTransactions($request, $periodMeta['start'], $periodMeta['end']);
+
+        $selectedAccount = $request->filled('account_id')
+            ? $treasuryAccounts->firstWhere('id', (int) $request->account_id)
+            : null;
+
+        $runningBalances = $selectedAccount
+            ? $ledger->runningBalancesAfter($selectedAccount, $movements)
+            : [];
 
         $items = IncomeExpense::with('account')
             ->whereDate('transaction_date', '>=', $periodMeta['start']->toDateString())
@@ -461,18 +499,17 @@ class FinanceController extends Controller
             })
             ->latest('transaction_date')
             ->latest('id')
-            ->paginate(25)
+            ->paginate(25, ['*'], 'income_page')
             ->withQueryString();
 
         $summary = $reports->summary($periodMeta['start'], $periodMeta['end']);
-        $treasuryAccounts = company_treasury()->accounts();
-        $defaultTreasury = company_treasury()->defaultAccount();
         $paymentMethods = finance_categories()->paymentMethods();
         $orders = $this->ordersForExpenseForm();
 
         return view('finance.income-expenses.index', compact(
             'items', 'summary', 'treasuryAccounts', 'defaultTreasury', 'paymentMethods',
-            'periodMeta', 'orders'
+            'periodMeta', 'orders', 'movements', 'ledgerSummary', 'totalCash',
+            'runningBalances', 'selectedAccount', 'ledger'
         ));
     }
 

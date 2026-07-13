@@ -23,7 +23,7 @@ return [
     'settings' => 'Einstellungen',
     'audit_log' => 'Aktivitätsprotokoll',
     'updates' => 'Updates',
-    'profile' => 'Profil',
+    'profile' => 'Profile',
     'logout' => 'Abmelden',
     'login' => 'Anmelden',
     'save' => 'Speichern',
@@ -33,6 +33,8 @@ return [
     'delete' => 'Löschen',
     'search' => 'Suchen',
     'filter' => 'Filtern',
+    'from' => 'Von',
+    'to' => 'Bis',
     'actions' => 'Aktionen',
     'view' => 'Anzeigen',
     'back' => 'Zurück',
@@ -52,4 +54,8 @@ return [
     'welcome' => 'Willkommen',
     'no_records' => 'Keine Einträge gefunden',
     'confirm_delete' => 'Möchten Sie wirklich löschen?',
+    'confirm_title' => 'Bestätigung',
+    'close' => 'Schließen',
+    'confirm' => 'Bestätigen',
+    'restore' => 'Wiederherstellen'
 ];

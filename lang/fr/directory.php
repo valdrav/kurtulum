@@ -13,5 +13,5 @@ return [
     'full_name' => 'Nom complet',
     'phone' => 'Téléphone',
     'first_name' => 'Prénom',
-    'last_name' => 'Nom',
+    'last_name' => 'Nom'
 ];

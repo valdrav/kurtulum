@@ -148,24 +148,33 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title mb-0">{{ __('finance.recent_entries') }}</h3>
                 <div class="d-flex gap-1">
-                    <a href="{{ route('finance.income-expenses', ['year' => $year]) }}" class="btn btn-sm btn-ghost-secondary">{{ __('finance.view_all') }}</a>
+                    <a href="{{ route('finance.income-expenses', ['period' => 'year', 'date' => $year . '-01-01']) }}" class="btn btn-sm btn-ghost-secondary">{{ __('finance.view_all') }}</a>
                     <a href="{{ route('finance.profit-loss', ['period' => 'year', 'date' => $year . '-01-01']) }}" class="btn btn-sm btn-outline-primary">{{ __('finance.profit_loss') }}</a>
                 </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-vcenter table-sm card-table mb-0">
-                    <thead><tr><th>Tarih</th><th>Tip</th><th>Açıklama</th><th class="text-end">Tutar</th><th></th></tr></thead>
+                    <thead><tr><th>{{ __('app.date') }}</th><th>{{ __('finance.ledger_source') }}</th><th>{{ __('app.description') }}</th><th class="text-end">{{ __('app.amount') }}</th><th></th></tr></thead>
                     <tbody>
-                        @forelse($recentEntries as $item)
+                        @forelse($recentMovements as $movement)
                         <tr>
-                            <td>{{ $item->transaction_date->format('d.m') }}</td>
-                            <td><span class="badge bg-{{ $item->type==='income'?'success':'danger' }}-lt">{{ $item->type === 'income' ? __('finance.type_income') : __('finance.type_expense') }}</span></td>
-                            <td>{{ $item->displayTitle() }}</td>
-                            <td class="text-end {{ $item->type==='income'?'text-green':'text-red' }}">{{ number_format($item->amount_base ?? $item->amount, 2, ',', '.') }} ₺</td>
-                            <td>@include('partials.income-expense-actions', ['item' => $item])</td>
+                            <td>{{ $movement->transaction_date->format('d.m') }}</td>
+                            <td><span class="badge bg-azure-lt">{{ $ledger->sourceLabel($movement) }}</span></td>
+                            <td>
+                                <div>{{ $movement->description }}</div>
+                                <div class="text-muted small">{{ $movement->account?->name }}</div>
+                            </td>
+                            <td class="text-end {{ $movement->type==='credit'?'text-green':'text-red' }}">
+                                {{ $movement->type === 'credit' ? '+' : '−' }}{{ format_money((float) $movement->amount, $movement->currency, 2) }}
+                            </td>
+                            <td class="text-end">
+                                @if(can_access('finance.edit') && $movement->editUrl())
+                                <a href="{{ $movement->editUrl() }}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i></a>
+                                @endif
+                            </td>
                         </tr>
                         @empty
-                        <tr><td colspan="5" class="text-muted text-center py-3">{{ __('app.no_records') }}</td></tr>
+                        <tr><td colspan="5" class="text-muted text-center py-3">{{ __('finance.no_ledger_movements') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>

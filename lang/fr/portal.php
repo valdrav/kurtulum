@@ -37,5 +37,5 @@ return [
     'items' => 'Lignes',
     'product' => 'Produit',
     'quantity' => 'Quantité',
-    'unit_price' => 'Prix unitaire',
+    'unit_price' => 'Prix unitaire'
 ];

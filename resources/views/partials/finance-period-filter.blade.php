@@ -23,6 +23,25 @@
             <input type="date" name="date" class="form-control form-control-sm" value="{{ $currentDate }}" onchange="this.form.submit()">
         </div>
         @if($showExtra ?? true)
+        @if($showLedgerFilters ?? false)
+        <div class="col-md-2">
+            <label class="form-label small mb-1">{{ __('finance.treasury_account') }}</label>
+            <select name="account_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">{{ __('finance.wallet_all_accounts') }}</option>
+                @foreach($treasuryAccounts ?? [] as $account)
+                <option value="{{ $account->id }}" @selected((string) request('account_id') === (string) $account->id)>{{ $account->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-1">{{ __('finance.ledger_type') }}</label>
+            <select name="ledger_type" class="form-select form-select-sm">
+                <option value="">{{ __('finance.all_types') }}</option>
+                <option value="credit" @selected(request('ledger_type')==='credit')>{{ __('finance.tx_credit') }}</option>
+                <option value="debit" @selected(request('ledger_type')==='debit')>{{ __('finance.tx_debit') }}</option>
+            </select>
+        </div>
+        @endif
         <div class="col-md-2">
             <label class="form-label small mb-1">{{ __('finance.entry_type') }}</label>
             <select name="type" class="form-select form-select-sm">

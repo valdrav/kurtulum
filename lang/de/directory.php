@@ -11,7 +11,7 @@ return [
     'whatsapp' => 'WhatsApp',
     'description' => 'Beschreibung',
     'full_name' => 'Vollständiger Name',
-    'phone' => 'Telefon',
+    'phone' => 'Phone',
     'first_name' => 'Vorname',
-    'last_name' => 'Nachname',
+    'last_name' => 'Nachname'
 ];

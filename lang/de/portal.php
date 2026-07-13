@@ -37,5 +37,5 @@ return [
     'items' => 'Positionen',
     'product' => 'Produkt',
     'quantity' => 'Menge',
-    'unit_price' => 'Stückpreis',
+    'unit_price' => 'Stückpreis'
 ];

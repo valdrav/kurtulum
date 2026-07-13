@@ -33,6 +33,8 @@ return [
     'delete' => 'حذف',
     'search' => 'بحث',
     'filter' => 'تصفية',
+    'from' => 'من',
+    'to' => 'إلى',
     'actions' => 'الإجراءات',
     'view' => 'عرض',
     'back' => 'رجوع',
@@ -52,4 +54,8 @@ return [
     'welcome' => 'مرحباً',
     'no_records' => 'لا توجد سجلات',
     'confirm_delete' => 'هل أنت متأكد من الحذف؟',
+    'confirm_title' => 'تأكيد',
+    'close' => 'إغلاق',
+    'confirm' => 'تأكيد',
+    'restore' => 'استعادة'
 ];

@@ -89,11 +89,16 @@ class InstallController extends Controller
                 ->withErrors(['install' => 'Veritabanı adımı oturumu kayboldu. Lütfen tekrar deneyin.']);
         }
 
+        $validLocales = registry()->languageCodes();
+        if (empty($validLocales)) {
+            $validLocales = array_keys(config('ticari.locales', []));
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'password' => 'required|string|min:8|confirmed',
-            'locale' => 'required|in:tr,en,ar',
+            'locale' => 'required|in:'.implode(',', $validLocales),
         ]);
 
         try {

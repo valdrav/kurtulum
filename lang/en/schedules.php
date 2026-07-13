@@ -39,6 +39,6 @@ return [
         'destination_port' => 'Destination Port',
         'cut_off_date' => 'Cut-Off Date',
         'loading_date' => 'Loading Date',
-        'approval_instruction' => 'Approval / Instruction',
-    ],
+        'approval_instruction' => 'Approval / Instruction'
+    ]
 ];

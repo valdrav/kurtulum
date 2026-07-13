@@ -49,5 +49,5 @@ return [
     'type' => 'Type',
     'date' => 'Date',
     'add' => 'Add',
-    'print_pdf' => 'Print / PDF',
+    'print_pdf' => 'Print / PDF'
 ];

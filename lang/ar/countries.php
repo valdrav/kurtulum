@@ -1,0 +1,30 @@
+<?php
+
+return [
+    'TR' => 'Turkey',
+    'DE' => 'Germany',
+    'NL' => 'Netherlands',
+    'CN' => 'China',
+    'AE' => 'United Arab Emirates',
+    'SA' => 'Saudi Arabia',
+    'LY' => 'Libya',
+    'SD' => 'Sudan',
+    'EG' => 'Egypt',
+    'IT' => 'Italy',
+    'GR' => 'Greece',
+    'US' => 'United States',
+    'GB' => 'United Kingdom',
+    'FR' => 'France',
+    'ES' => 'Spain',
+    'RU' => 'Russia',
+    'UA' => 'Ukraine',
+    'RO' => 'Romania',
+    'BG' => 'Bulgaria',
+    'IQ' => 'Iraq',
+    'SY' => 'Syria',
+    'JO' => 'Jordan',
+    'IL' => 'Israel',
+    'MA' => 'Morocco',
+    'TN' => 'Tunisia',
+    'DZ' => 'Algeria'
+];

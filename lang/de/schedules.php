@@ -39,6 +39,6 @@ return [
         'destination_port' => 'Zielhafen',
         'cut_off_date' => 'Cut-Off Datum',
         'loading_date' => 'Ladedatum',
-        'approval_instruction' => 'Genehmigung / Anweisung',
-    ],
+        'approval_instruction' => 'Genehmigung / Anweisung'
+    ]
 ];

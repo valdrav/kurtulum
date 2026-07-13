@@ -131,6 +131,11 @@ class UserController extends Controller
 
     protected function validateUser(Request $request, ?User $user = null): array
     {
+        $validLocales = registry()->languageCodes();
+        if (empty($validLocales)) {
+            $validLocales = array_keys(config('ticari.locales', []));
+        }
+
         $rules = [
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
@@ -138,7 +143,7 @@ class UserController extends Controller
             'role' => 'required|exists:roles,name',
             'phone' => 'nullable|string|max:50',
             'department_id' => 'nullable|exists:departments,id',
-            'locale' => 'required|in:tr,en,ar',
+            'locale' => 'required|in:'.implode(',', $validLocales),
             'theme' => 'required|in:light,dark',
         ];
 

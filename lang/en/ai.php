@@ -1,10 +1,31 @@
 <?php
 
 return [
-    'not_configured' => 'AI is not configured. Enter your API key in settings.',
+    'not_configured' => 'AI is not configured. Enter your Groq or OpenAI API key in settings.',
+    'request_failed' => 'AI request failed. Please try again.',
+    'load_failed' => 'Could not load conversation.',
+    'delete_failed' => 'Could not delete conversation.',
     'generate_email' => 'Generate Email',
     'summarize' => 'Summarize Report',
     'operations' => 'Operations Suggestions',
     'financial' => 'Financial Analysis',
     'translate' => 'Translate',
+    'provider_label' => 'Provider: :provider',
+    'conversations' => 'My Conversations',
+    'new_chat' => 'New chat',
+    'chat_panel' => 'Chat',
+    'chat_placeholder' => 'Ask about orders, shipments or finance…',
+    'chat_privacy' => 'Conversations are visible only in your account.',
+    'enter_hint' => 'Enter to send · Shift+Enter for new line',
+    'thinking' => 'Thinking',
+    'send' => 'Send',
+    'delete_conversation' => 'Delete conversation',
+    'delete_conversation_confirm' => 'This conversation will be permanently deleted. Are you sure?',
+    'no_conversations' => 'No conversations yet — start a new chat',
+    'chat_intro' => 'Ask the ExportFlow assistant. It helps with orders, shipments, finance and operations.',
+    'you' => 'You',
+    'assistant' => 'Assistant',
+    'tools' => 'Tools',
+    'tool_placeholder' => 'Enter text or context…',
+    'run' => 'Run'
 ];

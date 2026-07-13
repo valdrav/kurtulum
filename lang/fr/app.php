@@ -23,7 +23,7 @@ return [
     'settings' => 'Paramètres',
     'audit_log' => 'Journal d\'activité',
     'updates' => 'Mises à jour',
-    'profile' => 'Profil',
+    'profile' => 'Profile',
     'logout' => 'Déconnexion',
     'login' => 'Connexion',
     'save' => 'Enregistrer',
@@ -33,6 +33,8 @@ return [
     'delete' => 'Supprimer',
     'search' => 'Rechercher',
     'filter' => 'Filtrer',
+    'from' => 'Début',
+    'to' => 'Fin',
     'actions' => 'Actions',
     'view' => 'Voir',
     'back' => 'Retour',
@@ -52,4 +54,8 @@ return [
     'welcome' => 'Bienvenue',
     'no_records' => 'Aucun enregistrement',
     'confirm_delete' => 'Confirmer la suppression ?',
+    'confirm_title' => 'Confirmation',
+    'close' => 'Fermer',
+    'confirm' => 'Confirmer',
+    'restore' => 'Restaurer'
 ];

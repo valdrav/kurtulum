@@ -145,10 +145,15 @@ class AiController extends Controller
 
     public function generateEmail(Request $request)
     {
+        $validLocales = registry()->languageCodes();
+        if (empty($validLocales)) {
+            $validLocales = array_keys(config('ticari.locales', []));
+        }
+
         $validated = $request->validate([
             'context' => 'required|string|max:5000',
             'tone' => 'nullable|string|max:50',
-            'language' => 'nullable|in:tr,en,ar',
+            'language' => 'nullable|in:'.implode(',', $validLocales),
         ]);
 
         $result = $this->ai->generateEmail(

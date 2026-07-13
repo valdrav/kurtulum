@@ -37,5 +37,5 @@ return [
     'items' => 'Line Items',
     'product' => 'Product',
     'quantity' => 'Quantity',
-    'unit_price' => 'Unit Price',
+    'unit_price' => 'Unit Price'
 ];
