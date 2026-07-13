@@ -36,7 +36,7 @@ class SyncDocumentPermissionsCommand extends Command
                 $role->givePermissionTo($create);
             }
 
-            if (in_array($roleName, ['admin', 'super-admin', 'patron'], true)) {
+            if (in_array($roleName, ['manager', 'admin', 'super-admin', 'patron'], true)) {
                 $role->givePermissionTo($delete);
             }
         }

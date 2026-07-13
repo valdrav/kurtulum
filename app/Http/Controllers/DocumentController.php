@@ -24,7 +24,7 @@ class DocumentController extends Controller
         $this->middleware('permission:documents.view|documents.create|documents.edit')->only([
             'store',
         ]);
-        $this->middleware('permission:documents.create|documents.delete|documents.edit')->only([
+        $this->middleware('permission:documents.view|documents.create|documents.delete|documents.edit')->only([
             'destroy', 'destroyFolder', 'backup',
         ]);
     }

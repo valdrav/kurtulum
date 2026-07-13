@@ -23,86 +23,90 @@
 <div class="files-app files-app--full" data-files-app data-default-folder-label="{{ __('documents.default_folder') }}">
     <section class="files-main">
         <div class="files-toolbar">
-            <div class="files-breadcrumb">
-                <a href="{{ route('documents.index') }}" class="files-crumb"><i class="ti ti-home-2"></i></a>
-                <i class="ti ti-chevron-right files-crumb-sep"></i>
-                @if($currentSlug !== null)
-                <a href="{{ route('documents.index') }}" class="files-crumb">{{ __('documents.all_folders') }}</a>
-                <i class="ti ti-chevron-right files-crumb-sep"></i>
-                <span class="files-crumb current">{{ $displayName ?? __('documents.depot') }}</span>
-                @else
-                <span class="files-crumb current">{{ __('documents.all_folders') }}</span>
-                @endif
+            <div class="files-toolbar-head">
+                <div class="files-breadcrumb">
+                    <a href="{{ route('documents.index') }}" class="files-crumb"><i class="ti ti-home-2"></i></a>
+                    <i class="ti ti-chevron-right files-crumb-sep"></i>
+                    @if($currentSlug !== null)
+                    <a href="{{ route('documents.index') }}" class="files-crumb">{{ __('documents.all_folders') }}</a>
+                    <i class="ti ti-chevron-right files-crumb-sep"></i>
+                    <span class="files-crumb current">{{ $displayName ?? __('documents.depot') }}</span>
+                    @else
+                    <span class="files-crumb current">{{ __('documents.all_folders') }}</span>
+                    @endif
+                </div>
+
+                <div class="files-toolbar-quick">
+                    <div class="btn-group files-view-toggle" role="group">
+                        @if($currentSlug !== null)
+                        <a href="{{ route('documents.folder', array_merge(['folder' => $currentSlug], array_merge($queryBase, ['view' => 'grid']))) }}"
+                           class="btn btn-sm {{ $viewMode === 'grid' ? 'btn-primary' : 'btn-ghost-secondary' }}"
+                           title="{{ __('documents.view_grid') }}"><i class="ti ti-layout-grid"></i></a>
+                        <a href="{{ route('documents.folder', array_merge(['folder' => $currentSlug], array_merge($queryBase, ['view' => 'list']))) }}"
+                           class="btn btn-sm {{ $viewMode === 'list' ? 'btn-primary' : 'btn-ghost-secondary' }}"
+                           title="{{ __('documents.view_list') }}"><i class="ti ti-list"></i></a>
+                        @else
+                        <a href="{{ route('documents.index', array_merge($queryBase, ['view' => 'grid'])) }}"
+                           class="btn btn-sm {{ $viewMode === 'grid' ? 'btn-primary' : 'btn-ghost-secondary' }}"
+                           title="{{ __('documents.view_grid') }}"><i class="ti ti-layout-grid"></i></a>
+                        <a href="{{ route('documents.index', array_merge($queryBase, ['view' => 'list'])) }}"
+                           class="btn btn-sm {{ $viewMode === 'list' ? 'btn-primary' : 'btn-ghost-secondary' }}"
+                           title="{{ __('documents.view_list') }}"><i class="ti ti-list"></i></a>
+                        @endif
+                    </div>
+
+                    @if($currentSlug !== null)
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-ghost-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="ti ti-arrows-sort me-1"></i>{{ __('documents.sort') }}
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            @foreach(['date' => __('documents.sort_date'), 'name' => __('documents.sort_name'), 'size' => __('documents.sort_size')] as $key => $label)
+                            <a class="dropdown-item {{ $sort === $key ? 'active' : '' }}"
+                               href="{{ route('documents.folder', array_merge(['folder' => $currentSlug], array_filter(['search' => request('search'), 'view' => $viewMode !== 'grid' ? $viewMode : null, 'sort' => $key !== 'date' ? $key : null]))) }}">
+                                {{ $label }}
+                            </a>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    @if($currentSlug !== null && $canDeleteDocs)
+                    <form action="{{ route('documents.folder.destroy', $currentSlug) }}" method="POST" class="d-inline"
+                          data-confirm="{{ __('documents.delete_folder_confirm') }}"
+                          data-confirm-title="{{ __('app.confirm_title') }}"
+                          data-confirm-button="{{ __('documents.delete_folder') }}">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ __('documents.delete_folder') }}">
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </form>
+                    @endif
+                </div>
             </div>
 
-            <div class="files-toolbar-actions">
-                <form method="GET" class="files-search">
-                    @if($viewMode !== 'grid')
-                    <input type="hidden" name="view" value="{{ $viewMode }}">
-                    @endif
-                    @if($currentSlug !== null && $sort !== 'date')
-                    <input type="hidden" name="sort" value="{{ $sort }}">
-                    @endif
-                    <i class="ti ti-search"></i>
-                    <input type="search" name="search" value="{{ $search ?? request('search') }}"
-                           placeholder="{{ $currentSlug !== null ? __('app.search') : __('documents.search_folders') }}...">
-                </form>
-
-                <div class="btn-group files-view-toggle" role="group">
-                    @if($currentSlug !== null)
-                    <a href="{{ route('documents.folder', array_merge(['folder' => $currentSlug], array_merge($queryBase, ['view' => 'grid']))) }}"
-                       class="btn btn-sm {{ $viewMode === 'grid' ? 'btn-primary' : 'btn-ghost-secondary' }}"
-                       title="{{ __('documents.view_grid') }}"><i class="ti ti-layout-grid"></i></a>
-                    <a href="{{ route('documents.folder', array_merge(['folder' => $currentSlug], array_merge($queryBase, ['view' => 'list']))) }}"
-                       class="btn btn-sm {{ $viewMode === 'list' ? 'btn-primary' : 'btn-ghost-secondary' }}"
-                       title="{{ __('documents.view_list') }}"><i class="ti ti-list"></i></a>
-                    @else
-                    <a href="{{ route('documents.index', array_merge($queryBase, ['view' => 'grid'])) }}"
-                       class="btn btn-sm {{ $viewMode === 'grid' ? 'btn-primary' : 'btn-ghost-secondary' }}"
-                       title="{{ __('documents.view_grid') }}"><i class="ti ti-layout-grid"></i></a>
-                    <a href="{{ route('documents.index', array_merge($queryBase, ['view' => 'list'])) }}"
-                       class="btn btn-sm {{ $viewMode === 'list' ? 'btn-primary' : 'btn-ghost-secondary' }}"
-                       title="{{ __('documents.view_list') }}"><i class="ti ti-list"></i></a>
-                    @endif
-                </div>
-
-                @if($currentSlug !== null)
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-ghost-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                        <i class="ti ti-arrows-sort me-1"></i>{{ __('documents.sort') }}
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end">
-                        @foreach(['date' => __('documents.sort_date'), 'name' => __('documents.sort_name'), 'size' => __('documents.sort_size')] as $key => $label)
-                        <a class="dropdown-item {{ $sort === $key ? 'active' : '' }}"
-                           href="{{ route('documents.folder', array_merge(['folder' => $currentSlug], array_filter(['search' => request('search'), 'view' => $viewMode !== 'grid' ? $viewMode : null, 'sort' => $key !== 'date' ? $key : null]))) }}">
-                            {{ $label }}
-                        </a>
-                        @endforeach
-                    </div>
-                </div>
+            <form method="GET" class="files-search">
+                @if($viewMode !== 'grid')
+                <input type="hidden" name="view" value="{{ $viewMode }}">
                 @endif
+                @if($currentSlug !== null && $sort !== 'date')
+                <input type="hidden" name="sort" value="{{ $sort }}">
+                @endif
+                <i class="ti ti-search"></i>
+                <input type="search" name="search" value="{{ $search ?? request('search') }}"
+                       placeholder="{{ $currentSlug !== null ? __('app.search') : __('documents.search_folders') }}...">
+            </form>
 
-                @if($canManageDocs)
+            @if($canManageDocs)
+            <div class="files-toolbar-foot">
                 <button type="button" class="btn btn-primary files-upload-btn-prominent" data-files-upload-target
                         data-folder="{{ $defaultUploadFolder }}"
                         @if($currentSlug === null) data-files-upload-pick="1" @endif>
                     <i class="ti ti-cloud-upload me-1"></i>
                     {{ $currentSlug !== null ? __('documents.upload_to_this_folder') : __('documents.upload_open_panel') }}
                 </button>
-                @endif
-
-                @if($currentSlug !== null && $canDeleteDocs)
-                <form action="{{ route('documents.folder.destroy', $currentSlug) }}" method="POST" class="d-inline"
-                      data-confirm="{{ __('documents.delete_folder_confirm') }}"
-                      data-confirm-title="{{ __('app.confirm_title') }}"
-                      data-confirm-button="{{ __('documents.delete_folder') }}">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ __('documents.delete_folder') }}">
-                        <i class="ti ti-trash"></i>
-                    </button>
-                </form>
-                @endif
             </div>
+            @endif
         </div>
 
         @if($canManageDocs)
@@ -226,8 +230,8 @@
                         @if($canManageDocs)
                         <div class="files-item-menu files-item-menu--visible">
                             <button type="button" class="btn btn-sm btn-primary w-100" data-files-upload-target
-                                    data-folder="{{ $folderValue }}">
-                                <i class="ti ti-upload me-1"></i>{{ __('documents.upload_to_this_folder') }}
+                                    data-folder="{{ $folderValue }}" title="{{ __('documents.upload_to_this_folder') }}">
+                                <i class="ti ti-upload me-1"></i><span class="files-btn-label">{{ __('documents.upload_short') }}</span>
                             </button>
                             @if($canDeleteDocs)
                             <form action="{{ route('documents.folder.destroy', $slug) }}" method="POST" class="mt-1"
@@ -294,7 +298,7 @@
                                 <div class="files-item-meta">{{ $d->humanSize() }}</div>
                             </div>
                         </a>
-                        <div class="files-item-menu">
+                        <div class="files-item-menu files-item-menu--visible">
                             <a href="{{ route('documents.download', $d) }}" class="btn btn-sm btn-ghost-secondary" title="{{ __('app.download') }}"><i class="ti ti-download"></i></a>
                             @if($canDeleteDocs)
                             <form method="POST" action="{{ route('documents.destroy', $d) }}" class="d-inline" data-confirm="{{ __('app.confirm_delete') }}">

@@ -19,9 +19,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const modalEl = document.getElementById('efConfirmModal');
-    if (!modalEl || typeof bootstrap === 'undefined') return;
+    const bootstrapLib = window.bootstrap;
+    if (!modalEl || !bootstrapLib) return;
 
-    const modal = new bootstrap.Modal(modalEl);
+    const modal = bootstrapLib.Modal.getOrCreateInstance(modalEl);
     const titleEl = document.getElementById('efConfirmModalLabel');
     const messageEl = document.getElementById('efConfirmModalMessage');
     const submitBtn = document.getElementById('efConfirmModalSubmit');
@@ -29,6 +30,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('form[data-confirm]').forEach(function (form) {
         form.addEventListener('submit', function (e) {
+            if (form.dataset.confirmed === '1') {
+                form.dataset.confirmed = '';
+                return;
+            }
             e.preventDefault();
             pendingForm = form;
             titleEl.textContent = form.dataset.confirmTitle || @json(__('app.confirm_title'));
